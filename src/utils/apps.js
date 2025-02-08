@@ -41,17 +41,16 @@ const apps = [
     action: "EXPLORER",
   },
   {
+    name: "Chrome",
+    icon: "chrome",
+    type: "app",
+    action: "CHROME",
+  },
+  {
     name: "Browser",
     icon: "edge",
     type: "app",
     action: "MSEDGE",
-  },
-  {
-    name: "Buy me a coffee",
-    icon: "buyme",
-    type: "app",
-    action: "EXTERNAL",
-    payload: "https://www.buymeacoffee.com/blueedgetechno",
   },
   {
     name: "Store",
@@ -65,7 +64,7 @@ const apps = [
     type: "app",
   },
   {
-    name: "Blue",
+    name: "PC",
     icon: "win/user",
     type: "app",
     action: "EXPLORER",
@@ -279,20 +278,6 @@ const apps = [
     name: "Cortana",
     icon: "cortana",
     type: "app",
-  },
-  {
-    name: "Github",
-    icon: "github",
-    type: "app",
-    action: "EXTERNAL",
-    payload: "https://github.com/blueedgetechno/win11React",
-  },
-  {
-    name: "Unescape",
-    icon: "unescape",
-    type: "action",
-    action: "EXTERNAL",
-    payload: "https://blueedge.me/unescape",
   },
   {
     name: "Discord",

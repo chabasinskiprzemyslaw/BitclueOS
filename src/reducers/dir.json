@@ -28,7 +28,6 @@
           "Common Files": {},
           "Dell": {},
           "dotnet": {},
-          "Git": {},
           "Goodix": {},
           "heroku": {},
           "Intel": {},
@@ -48,7 +47,6 @@
           "PowerToys": {},
           "Realtek": {},
           "Reference Assemblies": {},
-          "Riot Vanguard": {},
           "Rivet Networks": {},
           "Waves": {},
           "Windows Defender": {},
@@ -74,9 +72,9 @@
               "Public Videos": {}
             }
           },
-          "Blue": {
+          "PC": {
             "type": "folder",
-            "name": "Blue",
+            "name": "PC",
             "info": {
               "spid": "%user%",
               "icon": "user"
@@ -106,8 +104,6 @@
                   },
                   "Adobe": {},
                   "Attachments": {},
-                  "Battle Royal": {},
-                  "BioWare": {},
                   "Custom": {},
                   "Downloadable": {},
                   "Fax": {},
@@ -126,11 +122,8 @@
                   "icon": "down"
                 },
                 "data": {
-                  "Hitman 3": {},
-                  "Atomforces": {},
                   "Compressed": {},
-                  "textures": {},
-                  "Not A Virus": {}
+                  "textures": {}
                 }
               },
               "Music": {
@@ -163,34 +156,6 @@
                 "info": {
                   "spid": "%videos%",
                   "icon": "vid"
-                },
-                "data": {
-                  "porn-collection": {}
-                }
-              },
-              "Github": {
-                "info": {
-                  "spid": "%github%"
-                },
-                "data": {
-                  "atomforces": {},
-                  "blueapi": {},
-                  "BlueBlog": {},
-                  "BlueBlogs---A-social-platform": {},
-                  "blueedgetechno": {},
-                  "blueedgetechno.github.io": {},
-                  "blueimage": {},
-                  "bluelab": {},
-                  "blueothello": {},
-                  "blueweb": {},
-                  "codeblue": {},
-                  "handwritten-digit-recognition": {},
-                  "jiosaavn": {},
-                  "jiosaavn-api": {},
-                  "minesweeper": {},
-                  "othello": {},
-                  "Saavn-Downloader": {},
-                  "Sanfoundary": {}
                 }
               },
               "OneDrive": {
