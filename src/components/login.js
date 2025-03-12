@@ -19,7 +19,6 @@ async function login() {
     const token = res.credential.accessToken;
     const user = res.additionalUserInfo.username;
     const email = res.user.email;
-    console.log(res);
   });
 }
 export default login;

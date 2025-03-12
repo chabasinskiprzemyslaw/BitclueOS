@@ -180,7 +180,7 @@ const defState = {
   ],
   apprib: [
     "netflix",
-    "whatsApp",
+    "whatsApp1",
     "telegram",
     "facebook",
     "amazon prime",

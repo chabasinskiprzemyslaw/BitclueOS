@@ -112,6 +112,29 @@ body[data-theme="dark"] .wnstore {
   }
 }
 
+.chrome {
+  --bg1: #f9f9f9;
+
+  background: var(--fakeMica);
+  color: var(--dark-txt);
+
+  .restWindow {
+    background: var(--bg1);
+  }
+}
+
+.whatsapp {
+  --bg1: #f9f9f9;
+
+  background: var(--fakeMica);
+  color: var(--dark-txt);
+
+  .restWindow {
+    background: var(--bg1);
+  }
+}
+
+
 body[data-theme="dark"] .notepad {
   --bg1: #282828;
 }

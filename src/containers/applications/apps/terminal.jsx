@@ -10,7 +10,7 @@ import dirs from "./assets/dir.json";
 export const WnTerminal = () => {
   const wnapp = useSelector((state) => state.apps.terminal);
   const [stack, setStack] = useState(["OS [Version 10.0.22000.51]", ""]);
-  const [pwd, setPwd] = useState("C:\\Users\\Blue");
+  const [pwd, setPwd] = useState("C:\\Users\\PC");
   const [lastCmd, setLsc] = useState(0);
   const [wntitle, setWntitle] = useState("Terminal");
 
@@ -25,7 +25,6 @@ export const WnTerminal = () => {
           IpDetails.push(data);
         });
     } catch (error) {
-      console.log(error);
       // handling the error
       IpDetails.push({
         ip: "__network_error",
@@ -44,7 +43,6 @@ export const WnTerminal = () => {
 
     if (pwd != "C:\\") {
       for (var i = 0; i < curr.length; i++) {
-        // console.log(tdir);
         tdir = tdir[curr[i]];
       }
     }
@@ -79,7 +77,6 @@ export const WnTerminal = () => {
       if (arg.length) {
         tmpStack.push("Installing app");
         var arg = arg.toString().split(" ");
-        console.log(arg);
         var AppName = arg[0];
         var IframeUrl = arg[1];
         var IconUrl = arg[2];
@@ -108,13 +105,10 @@ export const WnTerminal = () => {
           var app = apps[i];
           var Appcname = app.getElementsByClassName("appName")[0];
           var menu = app.getElementsByClassName("uicon")[0];
-          console.log(Appcname.innerHTML);
           if (Appcname.innerHTML == AppName) {
             var Mainmenu = menu;
-            console.log(menu);
           }
         }
-        console.log(Mainmenu);
 
         delApp("delete", Mainmenu);
         tmpStack.push("App uninstalled");
