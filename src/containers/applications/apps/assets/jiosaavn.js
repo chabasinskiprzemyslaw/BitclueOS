@@ -113,16 +113,14 @@ class JioSaavn {
   }
 
   getDefault() {
-    // console.log("Okay");
     return new Promise((resolve) => {
       this.fetchSong(
-        this.defaultSongs[floor(random() * this.defaultSongs.length)],
+        this.defaultSongs[floor(random() * this.defaultSongs.length)]
       )
         .then((res) => {
           resolve([this.mapToSong(res)]);
         })
         .catch((err) => {
-          console.log(err);
           resolve(this.dfdata);
         });
     });

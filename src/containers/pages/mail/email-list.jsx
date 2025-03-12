@@ -1,8 +1,8 @@
 "use client"
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { sampleEmails } from "../data/emails"
-import { cn } from "@/lib/utils"
+import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs"
+import { sampleEmails } from "./data/emails";
+import { cn } from "../../../lib/utils";
 
 export function EmailList({ activeTab, setActiveTab, onEmailSelect }) {
   const filteredEmails = sampleEmails.filter((email) => email.category === activeTab)

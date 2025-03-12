@@ -2,16 +2,18 @@
 
 import { useState } from "react"
 import { Menu, Search, Settings, HelpCircle, Grid } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "../../../components/ui/button"
+import { Input } from "../../../components/ui/input"
 import { Sidebar } from "./sidebar"
 import { EmailList } from "./email-list"
 import { EmailView } from "./email-view"
+import { ComposeEmail } from "./compose-email"
 
-export function Layout() {
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [activeTab, setActiveTab] = useState("primary")
-  const [selectedEmail, setSelectedEmail] = useState(null)
+export default function Layout() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState("primary");
+  const [selectedEmail, setSelectedEmail] = useState(null);
+  const [isComposing, setIsComposing] = useState(false);
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -43,13 +45,14 @@ export function Layout() {
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar isCollapsed={isCollapsed} />
+        <Sidebar isCollapsed={isCollapsed} onCompose={() => setIsComposing(true)} />
         {selectedEmail ? (
           <EmailView email={selectedEmail} onClose={() => setSelectedEmail(null)} />
         ) : (
           <EmailList activeTab={activeTab} setActiveTab={setActiveTab} onEmailSelect={setSelectedEmail} />
         )}
       </div>
+      {isComposing && <ComposeEmail onClose={() => setIsComposing(false)} />}
     </div>
   )
 }

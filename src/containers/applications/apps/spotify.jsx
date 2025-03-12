@@ -44,7 +44,6 @@ export const Spotify = () => {
     var act = e.target.dataset.action,
       payload = e.target.dataset.payload;
 
-    // console.log(act, payload);
     if (act == "discv") {
       setTab(payload);
     } else if (act == "play") setPause(false);
@@ -84,7 +83,6 @@ export const Spotify = () => {
         tdata: aldata,
       });
     } else if (act == "song") {
-      // console.log(payload);
       if (payload.includes(",")) {
         var pos = JSON.parse(payload),
           songid = data.home[pos[0]].cards[pos[1]].data;

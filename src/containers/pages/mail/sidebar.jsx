@@ -1,8 +1,8 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "../../../components/ui/button"
 import { PenSquare, Inbox, Star, Clock, Send, File, Tag, Trash } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "../../../lib/utils";
 
 const sidebarItems = [
   { icon: Inbox, label: "Inbox", count: 14356 },
@@ -14,7 +14,7 @@ const sidebarItems = [
   { icon: Trash, label: "Trash" },
 ]
 
-export function Sidebar({ isCollapsed }) {
+export function Sidebar({ isCollapsed, onCompose }) {
   return (
     <div
       className={cn(
@@ -22,7 +22,7 @@ export function Sidebar({ isCollapsed }) {
         isCollapsed ? "w-[4.5rem]" : "w-64",
       )}
     >
-      <Button className="justify-start gap-2 mb-2" size={isCollapsed ? "icon" : "default"}>
+      <Button className="justify-start gap-2 mb-2" size={isCollapsed ? "icon" : "default"} onClick={onCompose}>
         <PenSquare className="h-4 w-4" />
         {!isCollapsed && <span>Compose</span>}
       </Button>

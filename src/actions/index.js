@@ -100,7 +100,7 @@ export const performApp = (act, menu) => {
       var app = Object.keys(apps).filter(
         (x) =>
           apps[x].action == data.type ||
-          (apps[x].payload == data.payload && apps[x].payload != null),
+          (apps[x].payload == data.payload && apps[x].payload != null)
       );
 
       app = apps[app];
@@ -193,7 +193,6 @@ const loadWidget = async () => {
     },
     date = new Date();
 
-  // console.log('fetching ON THIS DAY');
   var wikiurl = "https://en.wikipedia.org/api/rest_v1/feed/onthisday/events";
   await axios
     .get(`${wikiurl}/${date.getMonth()}/${date.getDay()}`)
@@ -212,7 +211,6 @@ const loadWidget = async () => {
     })
     .catch((error) => {});
 
-  // console.log('fetching NEWS');
   await axios
     .get("https://github.win11react.com/api-cache/news.json")
     .then((res) => res.data)

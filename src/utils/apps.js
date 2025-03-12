@@ -47,6 +47,12 @@ const apps = [
     action: "CHROME",
   },
   {
+    name: "WhatsApp",
+    icon: "whatsapp",
+    type: "app",
+    action: "WHATSAPP",
+  },
+  {
     name: "Browser",
     icon: "edge",
     type: "app",

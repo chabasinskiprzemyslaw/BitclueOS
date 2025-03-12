@@ -37,7 +37,6 @@ export const Camera = () => {
 
       navigator.mediaDevices.getUserMedia(constraints).then((dstream) => {
         setStream(dstream);
-        console.log(dstream);
         video.srcObject = dstream;
       });
     } else {

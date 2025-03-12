@@ -45,8 +45,8 @@ export const Chrome = () => {
     setTimeout(() => {
       setLoading(false);
       const page = internalDNS[url] || NotFoundPage;
-      setActiveTab(() => page); // Wrap the component in a function
-    }, 2000); // Simulate loading delay
+      setActiveTab(() => page);
+    }, 2000);
   };
 
   return (

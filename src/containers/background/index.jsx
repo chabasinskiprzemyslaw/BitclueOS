@@ -26,7 +26,6 @@ export const BootScreen = (props) => {
   useEffect(() => {
     if (props.dir < 0) {
       setTimeout(() => {
-        console.log("blackout");
         setBlackOut(true);
       }, 4000);
     }

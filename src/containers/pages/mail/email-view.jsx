@@ -12,9 +12,9 @@ import {
   ReplyAll,
   Forward,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Avatar } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
+import { Button } from "../../../components/ui/button"
+import { Avatar } from "../../../components/ui/avatar"
+import { Separator } from "../../../components/ui/separator"
 
 export function EmailView({ email, onClose }) {
   if (!email) return null

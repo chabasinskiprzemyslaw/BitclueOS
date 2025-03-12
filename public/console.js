@@ -16,7 +16,6 @@ window.pythonRunner = new BrythonRunner({
   stdin: {
     async readline() {
       var userInput = prompt();
-      console.log("Received StdIn: " + userInput);
       return userInput;
     },
   },

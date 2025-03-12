@@ -39,6 +39,7 @@ export const StartMenu = () => {
     tmpApps.sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
 
     for (i = 0; i < 27; i++) {
+      //sortuje wszystkie aplikacje alfabetycznie i grupuje je w tablicy
       allApps[i] = [];
     }
 
