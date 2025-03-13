@@ -91,7 +91,8 @@ export const WhatsApp = () => {
   const [error, setError] = useState(null);
   // Add state for possible responses
   const [possibleResponses, setPossibleResponses] = useState([]);
-  const [inputDisabled, setInputDisabled] = useState(false);
+  // Always keep input disabled
+  const [inputDisabled, setInputDisabled] = useState(true);
   
   // Authentication states - Get token from localStorage
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -144,10 +145,8 @@ export const WhatsApp = () => {
           const lastMessage = selectedChat.messages[selectedChat.messages.length - 1];
           if (lastMessage.possibleResponses && lastMessage.possibleResponses.length > 0) {
             setPossibleResponses(lastMessage.possibleResponses);
-            setInputDisabled(true);
           } else {
             setPossibleResponses([]);
-            setInputDisabled(false);
           }
         }
         
@@ -226,10 +225,8 @@ export const WhatsApp = () => {
           const lastMessage = formattedMessages[formattedMessages.length - 1];
           if (lastMessage.possibleResponses && lastMessage.possibleResponses.length > 0) {
             setPossibleResponses(lastMessage.possibleResponses);
-            setInputDisabled(true);
           } else {
             setPossibleResponses([]);
-            setInputDisabled(false);
           }
         }
         
@@ -385,6 +382,9 @@ export const WhatsApp = () => {
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
+    // Clear possible responses immediately to prevent UI flicker
+    setPossibleResponses([]);
+
     // Update UI immediately for better UX
     const updatedChat = {
       ...activeChat,
@@ -396,9 +396,6 @@ export const WhatsApp = () => {
     setChats((prevChats) => prevChats.map((chat) => (chat.id === activeChat.id ? updatedChat : chat)));
     setActiveChat(updatedChat);
     setMessageInput("");
-    
-    // Clear possible responses after selection
-    setPossibleResponses([]);
     
     // Send message to API
     sendMessageToApi(activeChat.id, content, nextMessageId);
@@ -446,13 +443,56 @@ export const WhatsApp = () => {
         return;
       }
       
-      // If we have a nextMessageId, we should receive a new message in response
-      // Fetch the updated messages to get the next message in the conversation
-      if (nextMessageId) {
-        // Small delay to ensure the server has processed the message
-        setTimeout(() => {
-          fetchChatMessages(chatId);
-        }, 500);
+      // Process the response to get the new message from the server
+      try {
+        const responseData = await response.json();
+        
+        // If we got a valid response with a message, add it to the conversation
+        if (responseData && responseData.id) {
+          // Format the new message from the server
+          const serverMessage = {
+            id: responseData.id,
+            text: responseData.content,
+            sent: false,
+            time: formatDateTime(responseData.sentAt || responseData.timestamp),
+            senderName: responseData.senderDisplayName,
+            possibleResponses: responseData.possibleResponses || []
+          };
+          
+          // Update the chat with the new message from the server
+          const updatedChat = {
+            ...activeChat,
+            messages: [...activeChat.messages, serverMessage],
+            lastMessage: serverMessage.text,
+            timestamp: serverMessage.time
+          };
+          
+          setChats(prevChats => prevChats.map(chat => 
+            chat.id === chatId ? updatedChat : chat
+          ));
+          setActiveChat(updatedChat);
+          
+          // Update possible responses if the new message has them
+          if (serverMessage.possibleResponses && serverMessage.possibleResponses.length > 0) {
+            setPossibleResponses(serverMessage.possibleResponses);
+          }
+        } else {
+          // If we have a nextMessageId but didn't get a valid response, fetch all messages
+          if (nextMessageId) {
+            // Small delay to ensure the server has processed the message
+            setTimeout(() => {
+              fetchChatMessages(chatId);
+            }, 500);
+          }
+        }
+      } catch (parseError) {
+        console.error("Error parsing response:", parseError);
+        // If we couldn't parse the response but have a nextMessageId, fetch all messages
+        if (nextMessageId) {
+          setTimeout(() => {
+            fetchChatMessages(chatId);
+          }, 500);
+        }
       }
     } catch (err) {
       console.error("Error sending message:", err);
@@ -775,20 +815,20 @@ export const WhatsApp = () => {
 
                   {/* Message Input */}
                   <form onSubmit={handleSendMessage} className="p-4 bg-[#202C33] flex items-center gap-4">
-                    <Button type="button" variant="ghost" size="icon" className="text-gray-400">
+                    <Button type="button" variant="ghost" size="icon" className="text-gray-400" disabled>
                       <Smile className="h-6 w-6" />
                     </Button>
-                    <Button type="button" variant="ghost" size="icon" className="text-gray-400">
+                    <Button type="button" variant="ghost" size="icon" className="text-gray-400" disabled>
                       <Paperclip className="h-6 w-6" />
                     </Button>
                     <Input
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
-                      placeholder={inputDisabled ? "Please select a response above" : "Type a message"}
-                      className={`bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0 ${inputDisabled ? 'opacity-50' : ''}`}
-                      disabled={inputDisabled}
+                      placeholder={possibleResponses.length > 0 ? "Please select a response above" : "Waiting for options..."}
+                      className="bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0 opacity-50"
+                      disabled={true}
                     />
-                    <Button type="submit" variant="ghost" size="icon" className="text-gray-400" disabled={inputDisabled}>
+                    <Button type="submit" variant="ghost" size="icon" className="text-gray-400" disabled>
                       <Mic className="h-6 w-6" />
                     </Button>
                   </form>
