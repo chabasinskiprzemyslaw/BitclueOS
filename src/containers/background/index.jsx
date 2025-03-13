@@ -216,7 +216,7 @@ export const LockScreen = (props) => {
             ext
           />
           <div className="mt-2 text-xl font-medium text-white">
-            {userName || "Blue Edge"}
+            {userName || "PC"}
           </div>
           
           {showLoginForm ? (

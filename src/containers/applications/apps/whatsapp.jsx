@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   Search,
   MoreVertical,
@@ -15,6 +15,7 @@ import {
   Download,
   Lock,
   ArrowRight,
+  RefreshCw,
 } from "lucide-react"
 import { Input } from "../../../components/ui/input"
 import { Button } from "../../../components/ui/button"
@@ -24,7 +25,6 @@ import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../../components/ui/dropdown-menu"
 import { useSelector } from "react-redux";
 import { ToolBar } from "../../../utils/general";
-import axios from "axios";
 
 // Sample chat data as fallback
 const INITIAL_CHATS = [
@@ -41,7 +41,32 @@ const INITIAL_CHATS = [
       { id: 3, text: "Pretty good! Want to grab lunch?", sent: false, time: "12:30 PM" },
     ],
   },
-  // ... other sample chats
+  {
+    id: 2,
+    name: "Jane Smith",
+    avatar: "/placeholder.svg",
+    lastMessage: "Meeting at 3 PM",
+    timestamp: "10:45 AM",
+    unread: false,
+    messages: [
+      { id: 1, text: "Hi, are we still meeting today?", sent: false, time: "10:30 AM" },
+      { id: 2, text: "Yes, let's meet at 3 PM", sent: true, time: "10:35 AM" },
+      { id: 3, text: "Meeting at 3 PM", sent: false, time: "10:45 AM" },
+    ],
+  },
+  {
+    id: 3,
+    name: "Team Chat",
+    avatar: "/placeholder.svg",
+    lastMessage: "Alice: I've pushed the changes",
+    timestamp: "Yesterday",
+    unread: false,
+    messages: [
+      { id: 1, text: "Bob: Has everyone reviewed the PR?", sent: false, time: "Yesterday, 4:30 PM" },
+      { id: 2, text: "I'll take a look now", sent: true, time: "Yesterday, 4:45 PM" },
+      { id: 3, text: "Alice: I've pushed the changes", sent: false, time: "Yesterday, 5:15 PM" },
+    ],
+  }
 ]
 
 // API endpoint for chat sessions
@@ -52,165 +77,227 @@ export const WhatsApp = () => {
   const wnapp = useSelector((state) => state.apps.whatsapp);
   const userName = useSelector((state) => state.setting.person.name);
 
-  const [chats, setChats] = useState([]);
+  // Helper function to format date/time
+  const formatDateTime = (dateTimeString) => {
+    const date = new Date(dateTimeString);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const [chats, setChats] = useState(INITIAL_CHATS);
   const [activeChat, setActiveChat] = useState(null);
   const [messageInput, setMessageInput] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  // Authentication states
+  // Authentication states - Get token from localStorage
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("auth_token") || "");
+  const [token, setToken] = useState("");
+  
+  // Track if messages have been loaded for a chat to prevent repeated requests
+  const [loadedMessageChats, setLoadedMessageChats] = useState(new Set());
+  
+  // Use refs to track in-progress requests to prevent duplicates
+  const fetchingMessagesRef = useRef(false);
+  const fetchingChatsRef = useRef(false);
 
-  // Check if user is authenticated
+  // Check if user is authenticated by looking for token in localStorage
   useEffect(() => {
-    const checkAuthentication = async () => {
+    const checkAuth = () => {
       setAuthLoading(true);
-      const storedToken = localStorage.getItem("auth_token");
-      
-      if (storedToken) {
-        // Check if token is still valid (not expired)
-        const tokenExpiry = localStorage.getItem("token_expiry");
-        const isValid = tokenExpiry && new Date().getTime() < parseInt(tokenExpiry);
-        
-        if (isValid) {
-          console.log("Valid token found, setting authenticated state");
+      try {
+        const storedToken = localStorage.getItem('auth_token');
+        if (storedToken) {
           setToken(storedToken);
           setIsAuthenticated(true);
         } else {
-          // Token expired, clear it
-          console.log("Token expired, clearing authentication data");
-          localStorage.removeItem("auth_token");
-          localStorage.removeItem("refresh_token");
-          localStorage.removeItem("token_expiry");
-          setToken("");
+          setIsAuthenticated(false);
         }
-      } else {
-        console.log("No auth token found in localStorage");
-        setToken("");
+      } catch (err) {
+        console.error("Error checking authentication:", err);
+        setIsAuthenticated(false);
+      } finally {
+        setAuthLoading(false);
       }
-      
-      setAuthLoading(false);
     };
     
-    checkAuthentication();
+    checkAuth();
   }, []);
 
   // Fetch messages for a specific chat session
-  const fetchChatMessages = async (chatId) => {
-    if (!chatId || !token) return;
+  const fetchChatMessages = useCallback(async (chatId) => {
+    // If we've already loaded messages for this chat, use local data
+    if (loadedMessageChats.has(chatId)) {
+      const selectedChat = chats.find(chat => chat.id === chatId);
+      if (selectedChat) {
+        setActiveChat(selectedChat);
+        
+        // Mark the chat as read
+        setChats(prevChats => 
+          prevChats.map(chat => 
+            chat.id === chatId 
+              ? { ...chat, unread: false } 
+              : chat
+          )
+        );
+      }
+      return;
+    }
+    
+    // Prevent duplicate requests
+    if (fetchingMessagesRef.current) return;
+    fetchingMessagesRef.current = true;
+    
+    // Set loading state
+    setMessagesLoading(true);
     
     try {
-      setMessagesLoading(true);
+      // Get the latest token from localStorage
+      const currentToken = localStorage.getItem('auth_token') || token;
       
-      // Make request to get messages for the selected chat
-      const response = await axios.get(`${API_MESSAGES_URL}/${chatId}/messages`, {
+      // Make API request to fetch messages
+      const response = await fetch(`${API_MESSAGES_URL}/${chatId}/messages`, {
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${currentToken}`,
+          'Content-Type': 'application/json'
         }
       });
       
-      const messagesData = response.data;
+      if (!response.ok) {
+        // Handle unauthorized errors
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          throw new Error('Authentication token expired or invalid');
+        }
+        throw new Error(`Failed to fetch messages: ${response.status}`);
+      }
       
-      // Transform API response to match our component's data structure
-      const transformedMessages = messagesData.map(message => {
-        return {
-          id: message.id,
-          text: message.content,
-          sent: message.senderUserId !== activeChat.sessionData.participants[0].id, // Assuming the first participant is the other user
-          time: formatDateTime(message.sentAt),
-          isRead: message.isRead,
-          hasAttachment: message.hasAttachment,
-          senderName: message.senderDisplayName
+      const messagesData = await response.json();
+      
+      // Find the chat in our local data
+      const chatIndex = chats.findIndex(chat => chat.id === chatId);
+      
+      if (chatIndex !== -1) {
+        // Format messages data
+        const formattedMessages = messagesData.map(msg => ({
+          id: msg.id,
+          text: msg.content,
+          sent: msg.isCurrentUser,
+          time: formatDateTime(msg.timestamp)
+        }));
+        
+        // Update the chat with messages
+        const updatedChat = {
+          ...chats[chatIndex],
+          messages: formattedMessages,
+          unread: false
         };
-      });
-      
-      // Update the active chat with the fetched messages
-      setActiveChat(prevChat => ({
-        ...prevChat,
-        messages: transformedMessages
-      }));
-      
-      // Also update the chat in the chats list
-      setChats(prevChats => 
-        prevChats.map(chat => 
-          chat.id === chatId 
-            ? { ...chat, messages: transformedMessages, unread: false } 
-            : chat
-        )
-      );
-      
+        
+        // Update chats state
+        const updatedChats = [...chats];
+        updatedChats[chatIndex] = updatedChat;
+        
+        setChats(updatedChats);
+        setActiveChat(updatedChat);
+        
+        // Mark this chat as having loaded messages
+        setLoadedMessageChats(prev => new Set(prev).add(chatId));
+      }
     } catch (err) {
-      console.error("Error fetching chat messages:", err);
+      console.error("Error fetching messages:", err);
+      setError(`Failed to load messages: ${err.message}`);
       
-      // Handle 401 Unauthorized error
-      if (err.response && err.response.status === 401) {
-        setIsAuthenticated(false);
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("token_expiry");
-        setError("Your session has expired. Please log in again.");
+      // Fallback to local data if available
+      const selectedChat = chats.find(chat => chat.id === chatId);
+      if (selectedChat) {
+        setActiveChat(selectedChat);
       }
     } finally {
       setMessagesLoading(false);
+      fetchingMessagesRef.current = false;
     }
-  };
+  }, [chats, token, loadedMessageChats]);
+
+  // Function to fetch chat sessions
+  const fetchChatSessions = useCallback(async () => {
+    // Prevent duplicate requests
+    if (fetchingChatsRef.current || loading) return;
+    fetchingChatsRef.current = true;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Get the latest token from localStorage
+      const currentToken = localStorage.getItem('auth_token') || token;
+      
+      const response = await fetch(API_URL, {
+        headers: {
+          'Authorization': `Bearer ${currentToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        // Handle unauthorized errors
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          throw new Error('Authentication token expired or invalid');
+        }
+        throw new Error(`Failed to fetch chats: ${response.status}`);
+      }
+      
+      const chatData = await response.json();
+      
+      // Format chat data
+      const formattedChats = chatData.map(chat => ({
+        id: chat.id,
+        name: `${chat.participants.map(p => p.displayName).join(", ")}`,
+        avatar: chat.avatar || "/placeholder.svg",
+        lastMessage: chat.lastMessage?.content || "No messages yet",
+        timestamp: chat.lastMessage ? formatDateTime(chat.lastMessage.timestamp) : "New",
+        unread: chat.unreadCount > 0,
+        messages: [] // Messages will be loaded separately when chat is selected
+      }));
+      
+      setChats(formattedChats.length > 0 ? formattedChats : INITIAL_CHATS);
+      
+      // Don't automatically set active chat here
+    } catch (err) {
+      console.error("Error fetching chats:", err);
+      setError(`Failed to load chats: ${err.message}`);
+      // Fallback to initial chats
+      setChats(INITIAL_CHATS);
+    } finally {
+      setLoading(false);
+      fetchingChatsRef.current = false;
+    }
+  }, [token]);
 
   // Handle login
   const handleLogin = async (e) => {
     e.preventDefault();
-    
-    if (!username.trim() || !password.trim()) {
-      setAuthError("Username and password are required");
-      return;
-    }
+    setAuthLoading(true);
+    setAuthError(null);
     
     try {
-      setAuthLoading(true);
-      setAuthError(null);
+      // In a real app, you would make an API call to authenticate
+      // For demo purposes, we'll simulate a successful login
+      const mockToken = "mock-auth-token-" + Date.now();
       
-      // Prepare form data for Keycloak token request
-      const formData = new URLSearchParams();
-      formData.append('grant_type', 'password');
-      formData.append('client_id', 'evently-public-client');
-      formData.append('scope', 'email openid');
-      formData.append('username', username);
-      formData.append('password', password);
+      // Store token in localStorage
+      localStorage.setItem('auth_token', mockToken);
       
-      // Make the request to Keycloak token endpoint
-      const response = await fetch('http://localhost:18080/realms/evently/protocol/openid-connect/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        // Authentication successful
-        const { access_token, refresh_token, expires_in } = data;
-        
-        // Store tokens in localStorage
-        localStorage.setItem("auth_token", access_token);
-        localStorage.setItem("refresh_token", refresh_token);
-        localStorage.setItem("token_expiry", new Date().getTime() + (expires_in * 1000));
-        
-        setToken(access_token);
-        setIsAuthenticated(true);
-      } else {
-        // Authentication failed
-        setAuthError(data.error_description || "Invalid username or password");
-      }
+      // Update state
+      setToken(mockToken);
+      setIsAuthenticated(true);
     } catch (err) {
       console.error("Login error:", err);
-      setAuthError("Authentication failed. Please check your connection and try again.");
+      setAuthError("Failed to login. Please try again.");
     } finally {
       setAuthLoading(false);
     }
@@ -218,136 +305,48 @@ export const WhatsApp = () => {
 
   // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("token_expiry");
+    // Remove token from localStorage
+    localStorage.removeItem('auth_token');
+    
+    // Reset state
     setToken("");
     setIsAuthenticated(false);
-    setChats([]);
+    setUsername("");
+    setPassword("");
     setActiveChat(null);
+    setLoadedMessageChats(new Set());
   };
 
-  // Fetch chat sessions from API
+  // Fetch chat sessions when the app becomes visible
   useEffect(() => {
-    // Only fetch chats if authenticated
-    if (!isAuthenticated || !token) return;
+    let isMounted = true;
     
-    console.log("Fetching chat sessions with token:", token.substring(0, 10) + "...");
-    
-    const fetchChatSessions = async () => {
-      try {
-        setLoading(true);
-        
-        // Include the auth token in the request
-        const response = await axios.get(API_URL, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        const chatSessions = response.data;
-        console.log("Fetched chat sessions:", chatSessions.length);
-        
-        // Transform API response to match our component's data structure
-        const transformedChats = chatSessions.map(session => {
-          // Find the other participant (assuming 2-person chat)
-          const otherParticipant = session.participants.find(p => true); // Replace with actual logic to find the other user
-          
-          return {
-            id: session.id,
-            name: otherParticipant ? otherParticipant.displayName : "Chat",
-            avatar: "/placeholder.svg", // Default avatar
-            lastMessage: session.lastMessage ? session.lastMessage.content : "No messages yet",
-            timestamp: session.lastMessage ? formatDateTime(session.lastMessage.sentAt) : formatDateTime(session.createdAt),
-            unread: session.hasUnreadMessages,
-            isOnline: otherParticipant ? otherParticipant.isOnline : false,
-            messages: [], // We'll fetch messages separately when a chat is selected
-            sessionData: session // Keep the original data for reference
-          };
-        });
-        
-        setChats(transformedChats);
-        
-        // Set active chat if we have chats and none is selected yet
-        if (transformedChats.length > 0 && !activeChat) {
-          setActiveChat(transformedChats[0]);
-          // Fetch messages for the first chat
-          fetchChatMessages(transformedChats[0].id);
-        }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching chat sessions:", err);
-        
-        // Handle 401 Unauthorized error
-        if (err.response && err.response.status === 401) {
-          console.error("Unauthorized: Token may be invalid");
-          setIsAuthenticated(false);
-          localStorage.removeItem("auth_token");
-          localStorage.removeItem("refresh_token");
-          localStorage.removeItem("token_expiry");
-          setError("Your session has expired. Please log in again.");
-        } else {
-          setError("Failed to load chats. Please try again later.");
-          // Fall back to sample data in case of error
-          setChats(INITIAL_CHATS);
-          if (!activeChat && INITIAL_CHATS.length > 0) {
-            setActiveChat(INITIAL_CHATS[0]);
-          }
-        }
-        
-        setLoading(false);
-      }
-    };
-
-    // Initial fetch
-    fetchChatSessions();
-    
-    // Only set up polling if the app is visible (not hidden)
-    let intervalId = null;
-    if (!wnapp.hide) {
-      console.log("Setting up chat polling interval");
-      intervalId = setInterval(fetchChatSessions, 30000);
+    if (wnapp.hide === false && isAuthenticated && isMounted) {
+      fetchChatSessions();
     }
     
-    // Clean up interval on component unmount or when dependencies change
     return () => {
-      if (intervalId) {
-        console.log("Clearing chat polling interval");
-        clearInterval(intervalId);
-      }
+      isMounted = false;
     };
-  }, [isAuthenticated, token, wnapp.hide, activeChat]);
-
-  // Helper function to format date/time
-  const formatDateTime = (dateTimeString) => {
-    const date = new Date(dateTimeString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
+  }, [wnapp.hide, isAuthenticated, fetchChatSessions]);
 
   const handleChatSelect = (chat) => {
-    setActiveChat(chat);
-    // Mark the selected chat as read
-    setChats((prevChats) => prevChats.map((c) => (c.id === chat.id ? { ...c, unread: false } : c)));
-    
     // Fetch messages for the selected chat
     fetchChatMessages(chat.id);
   };
 
-  const handleSendMessage = async (e) => {
+  const handleSendMessage = (e) => {
     e.preventDefault();
     if (!messageInput.trim() || !activeChat) return;
 
-    const tempId = Date.now();
     const newMessage = {
-      id: tempId,
+      id: Date.now(),
       text: messageInput,
       sent: true,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      pending: true
     };
 
-    // Update UI optimistically
+    // Update UI immediately for better UX
     const updatedChat = {
       ...activeChat,
       messages: [...(activeChat.messages || []), newMessage],
@@ -359,80 +358,45 @@ export const WhatsApp = () => {
     setActiveChat(updatedChat);
     setMessageInput("");
 
-    // Send the message to the API
+    // Send message to API
+    sendMessageToApi(activeChat.id, messageInput);
+  };
+
+  // Function to send message to API
+  const sendMessageToApi = async (chatId, content) => {
     try {
-      const response = await axios.post(`${API_MESSAGES_URL}/${activeChat.id}/messages`, {
-        content: messageInput
-      }, {
+      // Get the latest token from localStorage
+      const currentToken = localStorage.getItem('auth_token') || token;
+      
+      const response = await fetch(`${API_MESSAGES_URL}/${chatId}/messages`, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${currentToken}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          content,
+          timestamp: new Date().toISOString()
+        })
       });
-      
-      // Update the message with the server response
-      const sentMessage = response.data;
-      
-      // Replace the temporary message with the actual one from the server
-      const updatedMessages = activeChat.messages.map(msg => 
-        msg.id === tempId 
-          ? {
-              id: sentMessage.id,
-              text: sentMessage.content,
-              sent: true,
-              time: formatDateTime(sentMessage.sentAt),
-              isRead: sentMessage.isRead,
-              pending: false
-            }
-          : msg
-      );
-      
-      // Update the active chat with the updated messages
-      const finalUpdatedChat = {
-        ...activeChat,
-        messages: updatedMessages
-      };
-      
-      setActiveChat(finalUpdatedChat);
-      setChats(prevChats => prevChats.map(chat => 
-        chat.id === activeChat.id ? finalUpdatedChat : chat
-      ));
-      
+
+      if (!response.ok) {
+        // Handle unauthorized errors
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          console.error('Authentication token expired or invalid');
+        } else {
+          console.error(`Failed to send message: ${response.status}`);
+        }
+      }
     } catch (err) {
       console.error("Error sending message:", err);
-      
-      // Mark the message as failed
-      const failedMessages = activeChat.messages.map(msg => 
-        msg.id === tempId 
-          ? { ...msg, failed: true, pending: false }
-          : msg
-      );
-      
-      const chatWithFailedMessage = {
-        ...activeChat,
-        messages: failedMessages
-      };
-      
-      setActiveChat(chatWithFailedMessage);
-      setChats(prevChats => prevChats.map(chat => 
-        chat.id === activeChat.id ? chatWithFailedMessage : chat
-      ));
     }
   };
 
   // Get the name to display for a chat (for group chats vs individual chats)
   const getChatDisplayName = (chat) => {
-    if (!chat) return "";
-    
-    // If we have the original session data
-    if (chat.sessionData && chat.sessionData.participants) {
-      // For simplicity, just show the first participant's name
-      // In a real app, you might want to show all participants for group chats
-      const otherParticipant = chat.sessionData.participants[0];
-      return otherParticipant ? otherParticipant.displayName : chat.name;
-    }
-    
-    return chat.name;
+    return chat ? chat.name : "";
   };
 
   // Login screen component
@@ -513,7 +477,7 @@ export const WhatsApp = () => {
             />
       
       {authLoading ? (
-        <div className="h-screen bg-[#111B21] text-gray-100 flex items-center justify-center">
+        <div className="h-full bg-[#111B21] text-gray-100 flex items-center justify-center">
           <div className="flex flex-col items-center">
             <div className="w-10 h-10 border-4 border-[#00A884] border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-gray-400">Loading WhatsApp...</p>
@@ -522,17 +486,26 @@ export const WhatsApp = () => {
       ) : !isAuthenticated ? (
         <LoginScreen />
       ) : (
-        <div className="h-screen bg-[#0B141A] text-gray-100">
-          <div className="grid h-full" style={{ gridTemplateColumns: "30% 1fr" }}>
+        <div className="h-full bg-[#0B141A] text-gray-100 flex flex-col">
+          <div className="grid flex-grow overflow-hidden" style={{ gridTemplateColumns: "30% 1fr" }}>
             {/* Left Sidebar */}
-            <div className="border-r border-gray-800">
+            <div className="border-r border-gray-800 flex flex-col h-full overflow-hidden">
               {/* Header */}
               <div className="p-4 flex items-center justify-between bg-[#202C33]">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src="/placeholder.svg" />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarFallback>{userName ? userName[0] : "U"}</AvatarFallback>
                 </Avatar>
                 <div className="flex gap-4">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-gray-400"
+                    onClick={fetchChatSessions}
+                    disabled={loading}
+                  >
+                    <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+                  </Button>
                   <Button variant="ghost" size="icon" className="text-gray-400">
                     <Settings className="h-5 w-5" />
                   </Button>
@@ -610,7 +583,7 @@ export const WhatsApp = () => {
               </Tabs>
 
               {/* Chat List */}
-              <ScrollArea className="h-[calc(100vh-180px)]">
+              <ScrollArea className="h-[calc(100%-130px)]">
                 {loading ? (
                   <div className="flex justify-center items-center h-full">
                     <p className="text-gray-400">Loading chats...</p>
@@ -657,7 +630,7 @@ export const WhatsApp = () => {
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex flex-col">
+            <div className="flex flex-col h-full">
               {activeChat ? (
                 <>
                   {/* Chat Header */}
@@ -669,18 +642,26 @@ export const WhatsApp = () => {
                       </Avatar>
                       <div>
                         <p className="font-medium">{getChatDisplayName(activeChat)}</p>
-                        <p className="text-sm text-gray-400">
-                          {activeChat.isOnline ? "online" : "offline"}
-                        </p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="text-gray-400">
-                      <MoreVertical className="h-5 w-5" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-gray-400"
+                        onClick={() => fetchChatMessages(activeChat.id)}
+                        disabled={messagesLoading}
+                      >
+                        <RefreshCw className={`h-5 w-5 ${messagesLoading ? 'animate-spin' : ''}`} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-gray-400">
+                        <MoreVertical className="h-5 w-5" />
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Messages Area */}
-                  <ScrollArea className="flex-1 p-4">
+                  <ScrollArea className="flex-1 p-4 overflow-y-auto">
                     {messagesLoading ? (
                       <div className="flex justify-center items-center h-full">
                         <div className="flex flex-col items-center">
@@ -692,21 +673,10 @@ export const WhatsApp = () => {
                       <div className="space-y-4">
                         {activeChat.messages.map((message) => (
                           <div key={message.id} className={`flex ${message.sent ? "justify-end" : "justify-start"}`}>
-                            <div className={`max-w-[60%] rounded-lg p-3 ${message.sent ? "bg-[#005C4B]" : "bg-[#202C33]"} ${message.failed ? "opacity-70" : ""}`}>
+                            <div className={`max-w-[60%] rounded-lg p-3 ${message.sent ? "bg-[#005C4B]" : "bg-[#202C33]"}`}>
                               <p className="text-sm">{message.text}</p>
                               <div className="flex items-center justify-end mt-1 space-x-1">
-                                {message.pending && (
-                                  <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                                )}
-                                {message.failed && (
-                                  <span className="text-red-400 text-xs">Failed</span>
-                                )}
                                 <p className="text-xs text-gray-400">{message.time}</p>
-                                {message.sent && !message.pending && !message.failed && (
-                                  <span className="text-xs text-gray-400 ml-1">
-                                    {message.isRead ? "✓✓" : "✓"}
-                                  </span>
-                                )}
                               </div>
                             </div>
                           </div>
