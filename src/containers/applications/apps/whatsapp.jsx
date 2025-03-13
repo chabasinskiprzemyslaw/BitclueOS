@@ -410,17 +410,23 @@ export const WhatsApp = () => {
       // Get the latest token from localStorage
       const currentToken = localStorage.getItem('auth_token') || token;
       
+      // Prepare the request payload according to the required format
       const payload = {
-        content,
-        timestamp: new Date().toISOString()
+        chatSessionId: chatId,
+        content: content,
+        hasAttachment: false // Set to false by default since we're not handling attachments yet
       };
       
-      // Add nextMessageId if provided
+      // Add metadata for nextMessageId if provided
       if (nextMessageId) {
-        payload.nextMessageId = nextMessageId;
+        payload.metadata = {
+          nextMessageId: nextMessageId,
+          responseType: 'predefined'
+        };
       }
       
-      const response = await fetch(`${API_MESSAGES_URL}/${chatId}/messages`, {
+      // Make the API request to the correct endpoint
+      const response = await fetch(`https://localhost:5001/chats/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${currentToken}`,
@@ -713,9 +719,6 @@ export const WhatsApp = () => {
                       >
                         <RefreshCw className={`h-5 w-5 ${messagesLoading ? 'animate-spin' : ''}`} />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-gray-400">
-                        <MoreVertical className="h-5 w-5" />
-                      </Button>
                     </div>
                   </div>
 
@@ -791,8 +794,8 @@ export const WhatsApp = () => {
                   </form>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                  <p>Select a chat to start messaging</p>
+                <div className="flex-grow flex items-center justify-center">
+                  <p className="text-gray-400">Select a chat to start messaging</p>
                 </div>
               )}
             </div>
@@ -801,4 +804,4 @@ export const WhatsApp = () => {
       )}
     </div>
   );
-}
+};
