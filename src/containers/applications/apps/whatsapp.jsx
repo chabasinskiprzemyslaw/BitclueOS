@@ -89,6 +89,9 @@ export const WhatsApp = () => {
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Add state for possible responses
+  const [possibleResponses, setPossibleResponses] = useState([]);
+  const [inputDisabled, setInputDisabled] = useState(false);
   
   // Authentication states - Get token from localStorage
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -135,6 +138,18 @@ export const WhatsApp = () => {
       const selectedChat = chats.find(chat => chat.id === chatId);
       if (selectedChat) {
         setActiveChat(selectedChat);
+        
+        // Check for possible responses in the last message
+        if (selectedChat.messages && selectedChat.messages.length > 0) {
+          const lastMessage = selectedChat.messages[selectedChat.messages.length - 1];
+          if (lastMessage.possibleResponses && lastMessage.possibleResponses.length > 0) {
+            setPossibleResponses(lastMessage.possibleResponses);
+            setInputDisabled(true);
+          } else {
+            setPossibleResponses([]);
+            setInputDisabled(false);
+          }
+        }
         
         // Mark the chat as read
         setChats(prevChats => 
@@ -187,7 +202,9 @@ export const WhatsApp = () => {
           id: msg.id,
           text: msg.content,
           sent: msg.isCurrentUser,
-          time: formatDateTime(msg.timestamp)
+          time: formatDateTime(msg.timestamp || msg.sentAt),
+          senderName: msg.senderDisplayName,
+          possibleResponses: msg.possibleResponses || []
         }));
         
         // Update the chat with messages
@@ -203,6 +220,18 @@ export const WhatsApp = () => {
         
         setChats(updatedChats);
         setActiveChat(updatedChat);
+        
+        // Check for possible responses in the last message
+        if (formattedMessages.length > 0) {
+          const lastMessage = formattedMessages[formattedMessages.length - 1];
+          if (lastMessage.possibleResponses && lastMessage.possibleResponses.length > 0) {
+            setPossibleResponses(lastMessage.possibleResponses);
+            setInputDisabled(true);
+          } else {
+            setPossibleResponses([]);
+            setInputDisabled(false);
+          }
+        }
         
         // Mark this chat as having loaded messages
         setLoadedMessageChats(prev => new Set(prev).add(chatId));
@@ -337,11 +366,21 @@ export const WhatsApp = () => {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!messageInput.trim() || !activeChat) return;
+    if ((!messageInput.trim() && !e.currentTarget.dataset.responseId) || !activeChat) return;
+
+    // Get the message content - either from input or from selected response
+    const content = e.currentTarget.dataset.responseId 
+      ? possibleResponses.find(r => r.optionIndex.toString() === e.currentTarget.dataset.responseId)?.text || messageInput
+      : messageInput;
+    
+    // Get the nextMessageId if this is a predefined response
+    const nextMessageId = e.currentTarget.dataset.responseId 
+      ? possibleResponses.find(r => r.optionIndex.toString() === e.currentTarget.dataset.responseId)?.nextMessageId
+      : null;
 
     const newMessage = {
       id: Date.now(),
-      text: messageInput,
+      text: content,
       sent: true,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
@@ -350,23 +389,36 @@ export const WhatsApp = () => {
     const updatedChat = {
       ...activeChat,
       messages: [...(activeChat.messages || []), newMessage],
-      lastMessage: messageInput,
+      lastMessage: content,
       timestamp: newMessage.time,
     };
 
     setChats((prevChats) => prevChats.map((chat) => (chat.id === activeChat.id ? updatedChat : chat)));
     setActiveChat(updatedChat);
     setMessageInput("");
-
+    
+    // Clear possible responses after selection
+    setPossibleResponses([]);
+    
     // Send message to API
-    sendMessageToApi(activeChat.id, messageInput);
+    sendMessageToApi(activeChat.id, content, nextMessageId);
   };
 
   // Function to send message to API
-  const sendMessageToApi = async (chatId, content) => {
+  const sendMessageToApi = async (chatId, content, nextMessageId = null) => {
     try {
       // Get the latest token from localStorage
       const currentToken = localStorage.getItem('auth_token') || token;
+      
+      const payload = {
+        content,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Add nextMessageId if provided
+      if (nextMessageId) {
+        payload.nextMessageId = nextMessageId;
+      }
       
       const response = await fetch(`${API_MESSAGES_URL}/${chatId}/messages`, {
         method: 'POST',
@@ -374,10 +426,7 @@ export const WhatsApp = () => {
           'Authorization': `Bearer ${currentToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          content,
-          timestamp: new Date().toISOString()
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -388,6 +437,16 @@ export const WhatsApp = () => {
         } else {
           console.error(`Failed to send message: ${response.status}`);
         }
+        return;
+      }
+      
+      // If we have a nextMessageId, we should receive a new message in response
+      // Fetch the updated messages to get the next message in the conversation
+      if (nextMessageId) {
+        // Small delay to ensure the server has processed the message
+        setTimeout(() => {
+          fetchChatMessages(chatId);
+        }, 500);
       }
     } catch (err) {
       console.error("Error sending message:", err);
@@ -674,6 +733,9 @@ export const WhatsApp = () => {
                         {activeChat.messages.map((message) => (
                           <div key={message.id} className={`flex ${message.sent ? "justify-end" : "justify-start"}`}>
                             <div className={`max-w-[60%] rounded-lg p-3 ${message.sent ? "bg-[#005C4B]" : "bg-[#202C33]"}`}>
+                              {message.senderName && !message.sent && (
+                                <p className="text-xs text-teal-400 mb-1">{message.senderName}</p>
+                              )}
                               <p className="text-sm">{message.text}</p>
                               <div className="flex items-center justify-end mt-1 space-x-1">
                                 <p className="text-xs text-gray-400">{message.time}</p>
@@ -689,6 +751,25 @@ export const WhatsApp = () => {
                     )}
                   </ScrollArea>
 
+                  {/* Possible Responses */}
+                  {possibleResponses.length > 0 && (
+                    <div className="p-3 bg-[#1A2C35] border-t border-gray-800">
+                      <p className="text-xs text-gray-400 mb-2">Choose a response:</p>
+                      <div className="space-y-2">
+                        {possibleResponses.map((response) => (
+                          <button
+                            key={response.optionIndex}
+                            data-response-id={response.optionIndex}
+                            onClick={handleSendMessage}
+                            className="w-full text-left p-2 rounded bg-[#2A3942] hover:bg-[#34444E] text-gray-100 text-sm transition-colors"
+                          >
+                            {response.text}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Message Input */}
                   <form onSubmit={handleSendMessage} className="p-4 bg-[#202C33] flex items-center gap-4">
                     <Button type="button" variant="ghost" size="icon" className="text-gray-400">
@@ -700,10 +781,11 @@ export const WhatsApp = () => {
                     <Input
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
-                      placeholder="Type a message"
-                      className="bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0"
+                      placeholder={inputDisabled ? "Please select a response above" : "Type a message"}
+                      className={`bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0 ${inputDisabled ? 'opacity-50' : ''}`}
+                      disabled={inputDisabled}
                     />
-                    <Button type="submit" variant="ghost" size="icon" className="text-gray-400">
+                    <Button type="submit" variant="ghost" size="icon" className="text-gray-400" disabled={inputDisabled}>
                       <Mic className="h-6 w-6" />
                     </Button>
                   </form>
