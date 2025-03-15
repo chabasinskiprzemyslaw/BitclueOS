@@ -118,7 +118,7 @@ const ChatArea = ({
             ))}
             
             {/* Typing indicator */}
-            {activeChat && typingUsers[activeChat.id] && Object.keys(typingUsers[activeChat.id]).length > 0 && (
+            {typingUsers && typingUsers.length > 0 && (
               <div className="flex justify-start">
                 <div className="bg-[#202C33] rounded-lg p-3 max-w-[60%]">
                   <div className="flex items-center space-x-2">
@@ -127,7 +127,11 @@ const ChatArea = ({
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "600ms" }}></div>
                     </div>
-                    <p className="text-xs text-gray-400">typing...</p>
+                    <p className="text-xs text-gray-400">
+                      {typingUsers.length === 1 
+                        ? `${typingUsers[0].name} is typing...` 
+                        : `${typingUsers.length} people are typing...`}
+                    </p>
                   </div>
                 </div>
               </div>

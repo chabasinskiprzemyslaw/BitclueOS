@@ -72,6 +72,12 @@ const useTypingIndicator = ({ hubConnectionRef, activeChat }) => {
   useEffect(() => {
     const connection = hubConnectionRef?.current;
     
+    // Expose the handlers globally so they can be called from the SignalR connection
+    window.typingIndicatorHandlers = {
+      handleUserTyping,
+      handleUserStoppedTyping
+    };
+    
     if (connection) {
       // Register event handlers
       connection.on('UserTyping', handleUserTyping);
@@ -90,8 +96,17 @@ const useTypingIndicator = ({ hubConnectionRef, activeChat }) => {
         
         // Clear typing users state
         setTypingUsers([]);
+        
+        // Clean up global handlers
+        delete window.typingIndicatorHandlers;
       };
     }
+    
+    // Clean up function if connection doesn't exist
+    return () => {
+      // Clean up global handlers
+      delete window.typingIndicatorHandlers;
+    };
   }, [hubConnectionRef, handleUserTyping, handleUserStoppedTyping]);
   
   // Send typing indicator to the server

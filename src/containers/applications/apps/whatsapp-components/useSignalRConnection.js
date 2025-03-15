@@ -148,10 +148,41 @@ const useSignalRConnection = ({
                 minute: "2-digit" 
               }),
               senderName: message.senderDisplayName,
-              possibleResponses: message.possibleResponses || []
+              // Extract response data if available
+              responseData: message.response ? {
+                id: message.response.id,
+                messageId: message.response.messageId,
+                nextMessageId: message.response.nextMessageId,
+                options: message.response.options || [],
+                scenarioId: message.response.scenarioId
+              } : null
             };
 
             debugLog("message:", message);
+            
+            // Extract options immediately if they exist
+            if (message.response && message.response.options && message.response.options.length > 0) {
+              debugLog("Message contains response options, setting immediately:", message.response.options);
+              
+              // Format the response options for the UI - handle both string arrays and object arrays
+              const formattedOptions = message.response.options.map((option, index) => {
+                // If option is a string, create a simple option object
+                if (typeof option === 'string') {
+                  return {
+                    optionIndex: index,
+                    text: option
+                  };
+                }
+                // If option is an object, extract relevant properties
+                return {
+                  optionIndex: option.id || index,
+                  text: option.text || option.content || option.optionText || String(option)
+                };
+              });
+              
+              // Set the possible responses immediately
+              setPossibleResponses(formattedOptions);
+            }
             
             // Get the current activeChat from the ref
             // This ensures we're always using the latest value
@@ -202,49 +233,87 @@ const useSignalRConnection = ({
               if (!messageExists) {
                 debugLog("Adding new message to active chat");
                 
-                // First, replace any temporary messages with the same content
-                setActiveChat(prevActiveChat => {
-                  if (!prevActiveChat) return prevActiveChat;
-                  
-                  // Check if we have a temporary message with the same content
-                  const updatedMessages = prevActiveChat.messages.filter(msg => {
-                    // Keep all messages that are not temporary or have different content
-                    return !(msg.isTemporary && msg.text === message.content);
-                  });
-                  
-                  // Add the new message
-                  const newMessages = [...updatedMessages, formattedMessage];
-                  
-                  // Create updated chat with new message
-                  const updatedChat = {
-                    ...prevActiveChat,
-                    messages: newMessages,
-                    lastMessage: formattedMessage.text,
-                    timestamp: formattedMessage.time
+                // If the message is from another user (not the current user), simulate typing
+                if (!message.isCurrentUser) {
+                  // First, trigger typing indicator
+                  const typingUser = {
+                    id: message.senderId || 'other-user',
+                    displayName: message.senderDisplayName || 'Someone'
                   };
                   
-                  // Update possible responses if the new message has them
-                  if (formattedMessage.possibleResponses && formattedMessage.possibleResponses.length > 0) {
-                    debugLog("Setting possible responses:", formattedMessage.possibleResponses);
-                    setPossibleResponses(formattedMessage.possibleResponses);
-                  }
+                  // Simulate typing indicator
+                  setTypingUsers(typingUser, message.chatSessionId.toString(), true);
                   
-                  return updatedChat;
-                });
+                  // Calculate a realistic typing delay based on message length
+                  const messageLength = message.content.length;
+                  const typingSpeed = 30; // characters per second
+                  const minDelay = 1000; // minimum delay in milliseconds
+                  const maxDelay = 3000; // maximum delay in milliseconds
+                  
+                  // Calculate delay: longer messages take longer to type, but with limits
+                  let typingDelay = Math.min(
+                    maxDelay, 
+                    Math.max(minDelay, messageLength * (1000 / typingSpeed))
+                  );
+                  
+                  // Add some randomness to make it feel more natural
+                  typingDelay += Math.random() * 500;
+                  
+                  debugLog(`Simulating typing for ${typingDelay}ms before showing message`);
+                  
+                  // After the delay, remove typing indicator and show the message
+                  setTimeout(() => {
+                    // Remove typing indicator
+                    setTypingUsers(typingUser, message.chatSessionId.toString(), false);
+                    
+                    // Now add the message
+                    addMessageAfterTyping();
+                  }, typingDelay);
+                } else {
+                  // If it's the current user's message, add it immediately
+                  addMessageAfterTyping();
+                }
                 
-                // Also update the chat in the chat list
-                setChats(prevChats => {
-                  return prevChats.map(chat => {
-                    if (chat.id.toString() === message.chatSessionId.toString()) {
-                      return {
-                        ...chat,
-                        lastMessage: message.content,
-                        timestamp: formattedMessage.time
-                      };
-                    }
-                    return chat;
+                // Function to add the message (used both after typing delay and immediately)
+                function addMessageAfterTyping() {
+                  // First, replace any temporary messages with the same content
+                  setActiveChat(prevActiveChat => {
+                    if (!prevActiveChat) return prevActiveChat;
+                    
+                    // Check if we have a temporary message with the same content
+                    const updatedMessages = prevActiveChat.messages.filter(msg => {
+                      // Keep all messages that are not temporary or have different content
+                      return !(msg.isTemporary && msg.text === message.content);
+                    });
+                    
+                    // Add the new message
+                    const newMessages = [...updatedMessages, formattedMessage];
+                    
+                    // Create updated chat with new message
+                    const updatedChat = {
+                      ...prevActiveChat,
+                      messages: newMessages,
+                      lastMessage: formattedMessage.text,
+                      timestamp: formattedMessage.time
+                    };
+                    
+                    return updatedChat;
                   });
-                });
+                  
+                  // Also update the chat in the chat list
+                  setChats(prevChats => {
+                    return prevChats.map(chat => {
+                      if (chat.id.toString() === message.chatSessionId.toString()) {
+                        return {
+                          ...chat,
+                          lastMessage: message.content,
+                          timestamp: formattedMessage.time
+                        };
+                      }
+                      return chat;
+                    });
+                  });
+                }
               } else {
                 debugLog("Message already exists in chat, skipping update");
               }

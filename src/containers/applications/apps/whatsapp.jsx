@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import {
   Search,
   MoreVertical,
@@ -103,9 +103,25 @@ export const WhatsApp = () => {
     setChats,
     setPossibleResponses,
     setTypingUsers: (user, chatId, isTyping = true) => {
-      // This will be handled by the typing indicator hook
+      // Forward to the typing indicator hook if it's ready
       if (typingIndicatorHookReady) {
-        // Forward to the typing indicator hook if it's ready
+        if (isTyping) {
+          // Add user to typing users
+          debugLog(`Adding typing indicator for user ${user.displayName || user.id} in chat ${chatId}`);
+          
+          // Call the handleUserTyping function from the typing indicator hook
+          if (window.typingIndicatorHandlers && window.typingIndicatorHandlers.handleUserTyping) {
+            window.typingIndicatorHandlers.handleUserTyping(user, chatId);
+          }
+        } else {
+          // Remove user from typing users
+          debugLog(`Removing typing indicator for user ${user.displayName || user.id} in chat ${chatId}`);
+          
+          // Call the handleUserStoppedTyping function from the typing indicator hook
+          if (window.typingIndicatorHandlers && window.typingIndicatorHandlers.handleUserStoppedTyping) {
+            window.typingIndicatorHandlers.handleUserStoppedTyping(user, chatId);
+          }
+        }
       }
     },
     fetchChatSessions: () => {
@@ -240,6 +256,93 @@ export const WhatsApp = () => {
       }
     }
   });
+
+  // Scroll to bottom of messages
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  // Function to simulate typing and then show a message
+  // This can be used for testing or when we don't have a real backend connection
+  const simulateTypingAndMessage = useCallback((text, senderName = "Bot", avatarUrl = "/placeholder.svg") => {
+    if (!activeChat) return;
+    
+    // Create a user object for the typing indicator
+    const user = {
+      id: `sim-${Date.now()}`,
+      displayName: senderName,
+      avatar: avatarUrl
+    };
+    
+    // Calculate a realistic typing delay based on message length
+    const messageLength = text.length;
+    const typingSpeed = 30; // characters per second
+    const minDelay = 1000; // minimum delay in milliseconds
+    const maxDelay = 3000; // maximum delay in milliseconds
+    
+    // Calculate delay: longer messages take longer to type, but with limits
+    let typingDelay = Math.min(
+      maxDelay, 
+      Math.max(minDelay, messageLength * (1000 / typingSpeed))
+    );
+    
+    // Add some randomness to make it feel more natural
+    typingDelay += Math.random() * 500;
+    
+    debugLog(`Simulating typing for ${typingDelay}ms before showing message: "${text}"`);
+    
+    // Show typing indicator
+    if (window.typingIndicatorHandlers && window.typingIndicatorHandlers.handleUserTyping) {
+      window.typingIndicatorHandlers.handleUserTyping(user, activeChat.id.toString());
+    }
+    
+    // After the delay, remove typing indicator and show the message
+    setTimeout(() => {
+      // Remove typing indicator
+      if (window.typingIndicatorHandlers && window.typingIndicatorHandlers.handleUserStoppedTyping) {
+        window.typingIndicatorHandlers.handleUserStoppedTyping(user, activeChat.id.toString());
+      }
+      
+      // Add the message
+      const newMessage = {
+        id: `sim-msg-${Date.now()}`,
+        text: text,
+        sent: false,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        senderName: senderName
+      };
+      
+      setActiveChat(prevChat => {
+        if (!prevChat) return prevChat;
+        
+        return {
+          ...prevChat,
+          messages: [...prevChat.messages, newMessage],
+          lastMessage: text,
+          timestamp: newMessage.time
+        };
+      });
+      
+      // Also update the chat in the chat list
+      setChats(prevChats => {
+        return prevChats.map(chat => {
+          if (chat.id === activeChat.id) {
+            return {
+              ...chat,
+              lastMessage: text,
+              timestamp: newMessage.time
+            };
+          }
+          return chat;
+        });
+      });
+      
+      // Scroll to bottom
+      scrollToBottom();
+    }, typingDelay);
+  }, [activeChat]);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -531,13 +634,6 @@ export const WhatsApp = () => {
       // Send the message to the API
       sendMessageToApi(activeChat.id, messageInput);
       setMessageInput("");
-    }
-  };
-
-  // Scroll to bottom of messages
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 
