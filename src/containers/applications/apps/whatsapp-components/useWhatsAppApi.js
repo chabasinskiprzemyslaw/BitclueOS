@@ -91,7 +91,7 @@ const useWhatsAppApi = ({
       }));
       
       // If we have an active chat, make sure to preserve its messages
-      if (activeChat) {
+      if (activeChat && activeChat.id) {
         const updatedChats = formattedChats.map(chat => {
           if (chat.id === activeChat.id) {
             return {

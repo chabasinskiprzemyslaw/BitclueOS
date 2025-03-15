@@ -73,6 +73,7 @@ export const WhatsApp = () => {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState(null);
   const [token, setToken] = useState("");
+  const [userId, setUserId] = useState(""); // Add userId state for notifications
   
   // Track if messages have been loaded for a chat to prevent repeated requests
   const [loadedMessageChats, setLoadedMessageChats] = useState(new Set());
@@ -111,10 +112,52 @@ export const WhatsApp = () => {
       if (apiInitializedRef.current) {
         fetchChatSessions();
       }
+    },
+    // Add handler for unread message notifications
+    handleUnreadMessage: (message) => {
+      if (!message) return;
+      
+      debugLog("Received unread message notification:", message);
+      
+      // Update the chat list to show unread indicator
+      setChats(prevChats => {
+        const chatIndex = prevChats.findIndex(chat => 
+          chat.id.toString() === message.chatSessionId.toString()
+        );
+        
+        if (chatIndex === -1) {
+          // If we don't have this chat in our list yet, fetch chats again
+          debugLog("Chat not found in list, fetching chat sessions");
+          setTimeout(() => fetchChatSessions(), 500);
+          return prevChats;
+        }
+        
+        // Only mark as unread if it's not the active chat
+        // Safely check if activeChat exists and has an id before calling toString()
+        const isActiveChat = activeChat && activeChat.id && 
+          activeChat.id.toString() === message.chatSessionId.toString();
+        
+        // Create a new array to avoid mutation
+        const updatedChats = [...prevChats];
+        
+        // Update the specific chat
+        updatedChats[chatIndex] = {
+          ...updatedChats[chatIndex],
+          lastMessage: message.content,
+          timestamp: new Date(message.timestamp || message.sentAt).toLocaleTimeString([], { 
+            hour: "2-digit", 
+            minute: "2-digit" 
+          }),
+          unread: !isActiveChat, // Only mark as unread if it's not the active chat
+          unreadCount: !isActiveChat 
+            ? (updatedChats[chatIndex].unreadCount || 0) + 1 
+            : 0 // Reset count if it's the active chat
+        };
+        
+        return updatedChats;
+      });
     }
   });
-
-
 
   // Track if the typing indicator hook is ready
   const [typingIndicatorHookReady, setTypingIndicatorHookReady] = useState(false);
@@ -223,7 +266,7 @@ export const WhatsApp = () => {
   // Handle active chat changes for SignalR
   useEffect(() => {
     // If we have an active chat and a SignalR connection, join the chat group
-    if (activeChat && hubConnectionRef.current && connectionStatus === CONNECTION_STATUS.CONNECTED) {
+    if (activeChat && activeChat.id && hubConnectionRef.current && connectionStatus === CONNECTION_STATUS.CONNECTED) {
       const chatId = activeChat.id.toString();
       debugLog(`Joining SignalR group for active chat ${chatId}`);
       
@@ -231,6 +274,20 @@ export const WhatsApp = () => {
         .catch(err => {
           console.error(`Error joining chat session ${chatId}:`, err);
         });
+      
+      // Mark messages as read when chat is opened
+      setChats(prevChats => {
+        return prevChats.map(chat => {
+          if (chat.id.toString() === chatId) {
+            return {
+              ...chat,
+              unread: false,
+              unreadCount: 0 // Reset unread count
+            };
+          }
+          return chat;
+        });
+      });
       
       // Clean up function to leave the chat group when the active chat changes
       return () => {
@@ -246,13 +303,52 @@ export const WhatsApp = () => {
     }
   }, [activeChat?.id, connectionStatus]);
 
+  // Join user notification group when authenticated
+  useEffect(() => {
+    if (isAuthenticated && userId && hubConnectionRef.current && 
+        connectionStatus === CONNECTION_STATUS.CONNECTED) {
+      debugLog(`Joining user notification group for user ${userId}`);
+      
+      hubConnectionRef.current.invoke("JoinUserNotificationGroup", userId)
+        .catch(err => {
+          console.error(`Error joining user notification group for user ${userId}:`, err);
+        });
+      
+      // Clean up function to leave the notification group when component unmounts or user logs out
+      return () => {
+        if (hubConnectionRef.current && connectionStatus === CONNECTION_STATUS.CONNECTED) {
+          debugLog(`Leaving user notification group for user ${userId}`);
+          
+          hubConnectionRef.current.invoke("LeaveUserNotificationGroup", userId)
+            .catch(err => {
+              console.error(`Error leaving user notification group for user ${userId}:`, err);
+            });
+        }
+      };
+    }
+  }, [isAuthenticated, userId, connectionStatus]);
+
   // Check if user is authenticated
   const checkAuth = () => {
     const storedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    const storedUserInfo = localStorage.getItem(STORAGE_KEYS.USER_INFO);
     
     if (storedToken) {
       setToken(storedToken);
       setIsAuthenticated(true);
+      
+      // Get user ID from stored user info if available
+      if (storedUserInfo) {
+        try {
+          const userInfo = JSON.parse(storedUserInfo);
+          if (userInfo.id) {
+            setUserId(userInfo.id);
+          }
+        } catch (err) {
+          console.error("Error parsing stored user info:", err);
+        }
+      }
+      
       setAuthLoading(false);
       
       // Fetch chat sessions after authentication
@@ -276,12 +372,18 @@ export const WhatsApp = () => {
       // Simulate successful login for demo purposes
       // In a real app, you would make an API call here
       const mockToken = "mock_token_" + Math.random().toString(36).substring(2);
+      const mockUserId = "user_" + Math.random().toString(36).substring(2);
       
-      // Store token in localStorage
+      // Store token and user info in localStorage
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, mockToken);
+      localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify({
+        id: mockUserId,
+        name: username || userName
+      }));
       
       // Update state
       setToken(mockToken);
+      setUserId(mockUserId);
       setIsAuthenticated(true);
       
       // Fetch chat sessions after login
@@ -298,11 +400,21 @@ export const WhatsApp = () => {
 
   // Handle logout
   const handleLogout = () => {
-    // Clear token from localStorage
+    // Leave user notification group before logging out
+    if (hubConnectionRef.current && connectionStatus === CONNECTION_STATUS.CONNECTED && userId) {
+      hubConnectionRef.current.invoke("LeaveUserNotificationGroup", userId)
+        .catch(err => {
+          console.error(`Error leaving user notification group for user ${userId}:`, err);
+        });
+    }
+    
+    // Clear token and user info from localStorage
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER_INFO);
     
     // Update state
     setToken("");
+    setUserId("");
     setIsAuthenticated(false);
     setActiveChat(null);
     setChats(INITIAL_CHATS);
@@ -324,8 +436,23 @@ export const WhatsApp = () => {
     
     // First set the active chat to trigger UI update immediately
     if (activeChat?.id !== chat.id) {
-      setActiveChat([]);
+      // Set to null instead of empty array to avoid toString() error
+      setActiveChat(null);
       setPossibleResponses([]);
+      
+      // Mark chat as read when selected
+      setChats(prevChats => {
+        return prevChats.map(c => {
+          if (c.id === chat.id) {
+            return {
+              ...c,
+              unread: false,
+              unreadCount: 0 // Reset unread count
+            };
+          }
+          return c;
+        });
+      });
       
       fetchChatMessages(chat.id);
     }
@@ -334,6 +461,12 @@ export const WhatsApp = () => {
   // Handle sending a message
   const handleSendMessage = (e) => {
     e.preventDefault();
+    
+    // Make sure we have an active chat
+    if (!activeChat || !activeChat.id) {
+      console.error("Cannot send message: No active chat");
+      return;
+    }
     
     // If there are possible responses, check if a response button was clicked
     if (possibleResponses.length > 0) {

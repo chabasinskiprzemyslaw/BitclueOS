@@ -30,7 +30,7 @@ const useTypingIndicator = ({ hubConnectionRef, activeChat }) => {
   // Handle user typing event
   const handleUserTyping = useCallback((user, chatId) => {
     // Only update if it's for the active chat
-    if (activeChat && activeChat.id.toString() === chatId.toString()) {
+    if (activeChat && activeChat.id && activeChat.id.toString() === chatId.toString()) {
       // Check if user is already in the typing list
       setTypingUsers(prev => {
         const existingUserIndex = prev.findIndex(u => u.id === user.id);
@@ -63,7 +63,7 @@ const useTypingIndicator = ({ hubConnectionRef, activeChat }) => {
   // Handle user stopped typing event
   const handleUserStoppedTyping = useCallback((user, chatId) => {
     // Only update if it's for the active chat
-    if (activeChat && activeChat.id.toString() === chatId.toString()) {
+    if (activeChat && activeChat.id && activeChat.id.toString() === chatId.toString()) {
       clearTypingIndicator(user.id);
     }
   }, [activeChat, clearTypingIndicator]);
@@ -97,7 +97,7 @@ const useTypingIndicator = ({ hubConnectionRef, activeChat }) => {
   // Send typing indicator to the server
   const sendTypingIndicator = useCallback(
     debounce((isTyping) => {
-      if (hubConnectionRef?.current && activeChat) {
+      if (hubConnectionRef?.current && activeChat && activeChat.id) {
         try {
           if (isTyping) {
             hubConnectionRef.current.invoke('SendTypingIndicator', activeChat.id.toString());

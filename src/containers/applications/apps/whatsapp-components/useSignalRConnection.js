@@ -25,6 +25,7 @@ import { debugLog } from './utils';
  * @param {Function} params.setPossibleResponses - Function to set possible responses
  * @param {Function} params.setTypingUsers - Function to set typing users
  * @param {Function} params.fetchChatSessions - Function to fetch chat sessions
+ * @param {Function} params.handleUnreadMessage - Function to handle unread message notifications
  * @returns {Object} SignalR connection reference
  */
 const useSignalRConnection = ({
@@ -37,7 +38,8 @@ const useSignalRConnection = ({
   setChats,
   setPossibleResponses,
   setTypingUsers,
-  fetchChatSessions
+  fetchChatSessions,
+  handleUnreadMessage
 }) => {
   // Connection reference
   const hubConnectionRef = useRef(null);
@@ -103,6 +105,21 @@ const useSignalRConnection = ({
               debugLog(`Rejoining chat session ${currentActiveChat.id} after reconnection`);
               connection.invoke("JoinChatSession", currentActiveChat.id.toString())
                 .catch(err => console.error(`Error rejoining chat session ${currentActiveChat.id}:`, err));
+            }
+            
+            // Get user ID from localStorage to rejoin notification group
+            try {
+              const userInfoStr = localStorage.getItem('user_info');
+              if (userInfoStr) {
+                const userInfo = JSON.parse(userInfoStr);
+                if (userInfo && userInfo.id) {
+                  debugLog(`Rejoining user notification group ${userInfo.id} after reconnection`);
+                  connection.invoke("JoinUserNotificationGroup", userInfo.id)
+                    .catch(err => console.error(`Error rejoining user notification group ${userInfo.id}:`, err));
+                }
+              }
+            } catch (err) {
+              console.error("Error parsing user info for notification group rejoin:", err);
             }
           });
           
@@ -257,70 +274,65 @@ const useSignalRConnection = ({
                   unread: true
                 };
                 
-                // If this chat has messages loaded, add the message to its messages array
-                if (updatedChats[chatIndex].messages && updatedChats[chatIndex].messages.length > 0) {
-                  // Check if the message already exists
-                  const messageExists = updatedChats[chatIndex].messages.some(msg => msg.id === message.id);
-                  
-                  if (!messageExists) {
-                    updatedChats[chatIndex].messages = [
-                      ...updatedChats[chatIndex].messages,
-                      formattedMessage
-                    ];
-                  }
-                }
-                
                 return updatedChats;
               });
             }
           });
           
           // Set up typing indicator handler
-          connection.on("UserTyping", (user, chatId) => {
-            debugLog("User typing event:", { user, chatId });
+          connection.on("UserTyping", (username, chatSessionId, isTyping) => {
+            debugLog(`User ${username} is ${isTyping ? 'typing' : 'not typing'} in chat ${chatSessionId}`);
             
-            if (activeChat && activeChat.id.toString() === chatId.toString()) {
-              setTypingUsers(user, chatId);
+            // Only update typing indicators for the active chat
+            const currentActiveChat = activeChatRef.current;
+            if (currentActiveChat && currentActiveChat.id && 
+                currentActiveChat.id.toString() === chatSessionId.toString()) {
+              setTypingUsers(username, chatSessionId, isTyping);
             }
           });
           
-          connection.on("UserStoppedTyping", (user, chatId) => {
-            debugLog("User stopped typing event:", { user, chatId });
+          // Set up unread message notification handler
+          connection.on("UnreadMessage", (message) => {
+            debugLog("Received unread message notification:", message);
             
-            if (activeChat && activeChat.id.toString() === chatId.toString()) {
-              setTypingUsers(user, chatId, false);
+            // Only process if we have a handler
+            if (handleUnreadMessage) {
+              handleUnreadMessage(message);
             }
           });
           
           // Start the connection
           await connection.start();
-          debugLog("Connected to SignalR hub");
+          debugLog("SignalR connection established");
           setConnectionStatus(CONNECTION_STATUS.CONNECTED);
           
-          // Only join the active chat session if we have one
-          const currentActiveChat = activeChatRef.current;
-          if (currentActiveChat) {
-            debugLog(`Joining chat session ${currentActiveChat.id} after connection`);
-            connection.invoke("JoinChatSession", currentActiveChat.id.toString())
-              .catch(err => console.error(`Error joining chat session ${currentActiveChat.id}:`, err));
+          // Start heartbeat to keep connection alive
+          if (heartbeatIntervalRef.current) {
+            clearInterval(heartbeatIntervalRef.current);
           }
           
-          // Set up a heartbeat to keep the connection alive
-          heartbeatIntervalRef.current = setInterval(async () => {
+          heartbeatIntervalRef.current = setInterval(() => {
             if (connection.state === signalR.HubConnectionState.Connected) {
-              try {
-                await connection.invoke("JoinChatSession", HEARTBEAT_GROUP);
-                debugLog("Heartbeat sent to SignalR hub");
-              } catch (err) {
-                console.error("Error sending heartbeat:", err);
-              }
+              debugLog("Sending heartbeat ping");
+              connection.invoke("JoinChatSession", HEARTBEAT_GROUP)
+                .then(() => {
+                  // Immediately leave the heartbeat group
+                  return connection.invoke("LeaveChatSession", HEARTBEAT_GROUP);
+                })
+                .catch(err => {
+                  console.error("Error sending heartbeat:", err);
+                });
             }
           }, HEARTBEAT_INTERVAL);
+          
         } catch (err) {
           console.error("Error establishing SignalR connection:", err);
           setConnectionStatus(CONNECTION_STATUS.ERROR);
-          hubConnectionRef.current = null;
-          // Don't retry automatically - let the user trigger reconnection
+          
+          // Reset the initialization flag to allow retrying
+          setTimeout(() => {
+            hasInitializedRef.current = false;
+          }, 5000);
         }
       };
       
@@ -329,35 +341,12 @@ const useSignalRConnection = ({
     
     // Clean up function
     return () => {
-      // Only clean up the heartbeat interval, but keep the connection
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = null;
       }
-      
-      // We're not stopping the connection on component unmount
-      // This prevents connection cycling when components re-render
-      // The connection will be properly closed when the app is closed or on logout
     };
-  }, [isAuthenticated, token, activeChat, activeChatRef, setActiveChat, setChats, setPossibleResponses, setConnectionStatus, setTypingUsers, fetchChatSessions]);
-  
-  // Handle active chat changes
-  useEffect(() => {
-    const connection = hubConnectionRef.current;
-    const currentActiveChat = activeChatRef.current;
-    
-    if (connection && connection.state === signalR.HubConnectionState.Connected && currentActiveChat) {
-      // Join the new chat session
-      const chatId = currentActiveChat.id.toString();
-      debugLog(`Joining SignalR group for active chat ${chatId}`);
-      
-      connection.invoke("JoinChatSession", chatId)
-        .catch(err => console.error(`Error joining chat session ${chatId}:`, err));
-      
-      // Update the ReceiveMessage handler to use the latest activeChat
-      debugLog("Updating SignalR handlers with new activeChat:", currentActiveChat.id);
-    }
-  }, [activeChat?.id, activeChatRef]);
+  }, [isAuthenticated, token]);
   
   return hubConnectionRef;
 };

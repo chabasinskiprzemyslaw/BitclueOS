@@ -20,6 +20,29 @@ const ChatSidebar = ({
   userName, 
   handleLogout 
 }) => {
+  // Filter chats for the "Unread" tab
+  const unreadChats = chats.filter(chat => chat.unread);
+  
+  // State for active tab
+  const [activeTab, setActiveTab] = React.useState("all");
+  
+  // Get chats to display based on active tab
+  const getDisplayChats = () => {
+    switch (activeTab) {
+      case "unread":
+        return unreadChats;
+      case "favorites":
+        return chats.filter(chat => chat.favorite);
+      case "groups":
+        return chats.filter(chat => chat.isGroup);
+      case "all":
+      default:
+        return chats;
+    }
+  };
+  
+  const displayChats = getDisplayChats();
+  
   return (
     <div className="border-r border-gray-800 flex flex-col h-full overflow-hidden">
       {/* Header */}
@@ -85,7 +108,7 @@ const ChatSidebar = ({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="all" className="px-2">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="px-2">
         <TabsList className="bg-transparent gap-2">
           <TabsTrigger
             value="all"
@@ -95,9 +118,14 @@ const ChatSidebar = ({
           </TabsTrigger>
           <TabsTrigger
             value="unread"
-            className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100"
+            className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100 relative"
           >
             Unread
+            {unreadChats.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {unreadChats.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger
             value="favorites"
@@ -120,9 +148,13 @@ const ChatSidebar = ({
           <div className="flex justify-center items-center h-full">
             <p className="text-gray-400">Loading chats...</p>
           </div>
+        ) : displayChats.length === 0 ? (
+          <div className="flex justify-center items-center h-full">
+            <p className="text-gray-400">No chats to display</p>
+          </div>
         ) : (
           <div className="space-y-1">
-            {chats.map((chat) => (
+            {displayChats.map((chat) => (
               <div
                 key={chat.id}
                 onClick={() => handleChatSelect(chat)}
@@ -130,9 +162,16 @@ const ChatSidebar = ({
                   ${activeChat && activeChat.id === chat.id ? "bg-[#2A3942]" : "hover:bg-[#202C33]"}
                   ${chat.unread ? "bg-[#202C33]" : ""}`}
               >
-                <Avatar className="h-12 w-12">
+                <Avatar className="h-12 w-12 relative">
                   <AvatarImage src={chat.avatar} />
                   <AvatarFallback>{getChatDisplayName(chat)[0]}</AvatarFallback>
+                  {chat.unread && (
+                    <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {typeof chat.unreadCount === 'number' && chat.unreadCount > 0 
+                        ? chat.unreadCount > 9 ? '9+' : chat.unreadCount 
+                        : ''}
+                    </span>
+                  )}
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline">
