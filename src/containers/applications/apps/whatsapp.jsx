@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Search,
   MoreVertical,
@@ -25,76 +25,48 @@ import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../../components/ui/dropdown-menu"
 import { useSelector } from "react-redux";
 import { ToolBar } from "../../../utils/general";
+// Import SignalR
+import * as signalR from "@microsoft/signalr";
 
-// Sample chat data as fallback
-const INITIAL_CHATS = [
-  {
-    id: 1,
-    name: "John Doe",
-    avatar: "/placeholder.svg",
-    lastMessage: "Hey, how are you?",
-    timestamp: "12:30 PM",
-    unread: true,
-    messages: [
-      { id: 1, text: "Hey, how are you?", sent: false, time: "12:25 PM" },
-      { id: 2, text: "I'm good, thanks! How about you?", sent: true, time: "12:27 PM" },
-      { id: 3, text: "Pretty good! Want to grab lunch?", sent: false, time: "12:30 PM" },
-    ],
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    avatar: "/placeholder.svg",
-    lastMessage: "Meeting at 3 PM",
-    timestamp: "10:45 AM",
-    unread: false,
-    messages: [
-      { id: 1, text: "Hi, are we still meeting today?", sent: false, time: "10:30 AM" },
-      { id: 2, text: "Yes, let's meet at 3 PM", sent: true, time: "10:35 AM" },
-      { id: 3, text: "Meeting at 3 PM", sent: false, time: "10:45 AM" },
-    ],
-  },
-  {
-    id: 3,
-    name: "Team Chat",
-    avatar: "/placeholder.svg",
-    lastMessage: "Alice: I've pushed the changes",
-    timestamp: "Yesterday",
-    unread: false,
-    messages: [
-      { id: 1, text: "Bob: Has everyone reviewed the PR?", sent: false, time: "Yesterday, 4:30 PM" },
-      { id: 2, text: "I'll take a look now", sent: true, time: "Yesterday, 4:45 PM" },
-      { id: 3, text: "Alice: I've pushed the changes", sent: false, time: "Yesterday, 5:15 PM" },
-    ],
-  }
-]
+// Import custom hooks
+import useSignalRConnection from "./whatsapp-components/useSignalRConnection";
+import useWhatsAppApi from "./whatsapp-components/useWhatsAppApi";
+import useTypingIndicator from "./whatsapp-components/useTypingIndicator";
+import useNpcTypingSimulation from "./whatsapp-components/useNpcTypingSimulation";
+
+// Import components
+import ChatSidebar from "./whatsapp-components/ChatSidebar";
+import ChatArea from "./whatsapp-components/ChatArea";
+import LoginScreen from "./whatsapp-components/LoginScreen";
+import Message from "./whatsapp-components/Message";
+import TypingIndicator from "./whatsapp-components/TypingIndicator";
+
+// Import constants and utilities
+import { INITIAL_CHATS, STORAGE_KEYS, CONNECTION_STATUS } from "./whatsapp-components/constants";
+import { debugLog } from "./whatsapp-components/utils";
 
 // API endpoint for chat sessions
 const API_URL = "https://localhost:5001/chats/sessions";
 const API_MESSAGES_URL = "https://localhost:5001/chats";
+const HUB_URL = "https://localhost:5001/hubs/chat";
+
+// Create a special heartbeat group ID that won't conflict with real chat IDs
+const HEARTBEAT_GROUP = "heartbeat-ping";
 
 export const WhatsApp = () => {
   const wnapp = useSelector((state) => state.apps.whatsapp);
   const userName = useSelector((state) => state.setting.person.name);
 
-  // Helper function to format date/time
-  const formatDateTime = (dateTimeString) => {
-    const date = new Date(dateTimeString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-
+  // State management
   const [chats, setChats] = useState(INITIAL_CHATS);
   const [activeChat, setActiveChat] = useState(null);
   const [messageInput, setMessageInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState(null);
-  // Add state for possible responses
   const [possibleResponses, setPossibleResponses] = useState([]);
-  // Always keep input disabled
-  const [inputDisabled, setInputDisabled] = useState(true);
   
-  // Authentication states - Get token from localStorage
+  // Authentication states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [username, setUsername] = useState("");
@@ -105,225 +77,220 @@ export const WhatsApp = () => {
   // Track if messages have been loaded for a chat to prevent repeated requests
   const [loadedMessageChats, setLoadedMessageChats] = useState(new Set());
   
-  // Use refs to track in-progress requests to prevent duplicates
-  const fetchingMessagesRef = useRef(false);
-  const fetchingChatsRef = useRef(false);
-
-  // Check if user is authenticated by looking for token in localStorage
+  // Connection status
+  const [connectionStatus, setConnectionStatus] = useState(CONNECTION_STATUS.DISCONNECTED);
+  
+  // Refs
+  const messagesEndRef = useRef(null);
+  const apiInitializedRef = useRef(false);
+  const activeChatRef = useRef(null);
+  
+  // Update activeChatRef whenever activeChat changes
   useEffect(() => {
-    const checkAuth = () => {
-      setAuthLoading(true);
-      try {
-        const storedToken = localStorage.getItem('auth_token');
-        if (storedToken) {
-          setToken(storedToken);
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-        }
-      } catch (err) {
-        console.error("Error checking authentication:", err);
-        setIsAuthenticated(false);
-      } finally {
-        setAuthLoading(false);
+    activeChatRef.current = activeChat;
+    debugLog("Updated activeChatRef with new activeChat:", activeChat?.id);
+  }, [activeChat]);
+
+  // Initialize SignalR connection using our custom hook
+  const hubConnectionRef = useSignalRConnection({
+    isAuthenticated,
+    token,
+    activeChat,
+    activeChatRef,
+    setConnectionStatus,
+    setActiveChat,
+    setChats,
+    setPossibleResponses,
+    setTypingUsers: (user, chatId, isTyping = true) => {
+      // This will be handled by the typing indicator hook
+      if (typingIndicatorHookReady) {
+        // Forward to the typing indicator hook if it's ready
       }
-    };
+    },
+    fetchChatSessions: () => {
+      if (apiInitializedRef.current) {
+        fetchChatSessions();
+      }
+    }
+  });
+
+
+
+  // Track if the typing indicator hook is ready
+  const [typingIndicatorHookReady, setTypingIndicatorHookReady] = useState(false);
+
+  // Initialize API hook
+  const { 
+    fetchChatSessions, 
+    fetchChatMessages, 
+    sendMessageToApi 
+  } = useWhatsAppApi({
+    token,
+    activeChat,
+    chats,
+    setChats,
+    setActiveChat,
+    setPossibleResponses,
+    setError,
+    setLoading,
+    setMessagesLoading,
+    setIsAuthenticated,
+    loadedMessageChats,
+    setLoadedMessageChats,
+    connectionStatus,
+    hubConnectionRef,
+    loading
+  });
+
+  // Mark API as initialized
+  useEffect(() => {
+    if (!apiInitializedRef.current) {
+      apiInitializedRef.current = true;
+      debugLog("API initialized");
+    }
     
+    return () => {
+      // Reset initialization flags on unmount
+      apiInitializedRef.current = false;
+      
+      // Close SignalR connection if it exists
+      if (hubConnectionRef.current) {
+        hubConnectionRef.current.stop()
+          .catch(err => console.error("Error stopping SignalR connection on unmount:", err));
+      }
+      
+      // Clear any timeouts or intervals
+      clearAllTypingSimulations();
+    };
+  }, []);
+
+  // Initialize typing indicator hook
+  const { typingUsers, sendTypingIndicator } = useTypingIndicator({
+    hubConnectionRef,
+    activeChat
+  });
+
+  // Mark typing indicator hook as ready
+  useEffect(() => {
+    setTypingIndicatorHookReady(true);
+    debugLog("Typing indicator hook ready");
+    return () => {
+      setTypingIndicatorHookReady(false);
+    };
+  }, []);
+
+  // Initialize NPC typing simulation hook
+  const { 
+    simulateNpcTyping, 
+    simulateSequentialNpcTyping, 
+    clearAllTypingSimulations 
+  } = useNpcTypingSimulation({
+    setTypingUsers: (users) => {
+      // This would be implemented if we want to simulate typing indicators
+    },
+    addMessage: (message) => {
+      if (activeChat) {
+        setActiveChat(prevChat => ({
+          ...prevChat,
+          messages: [...prevChat.messages, message]
+        }));
+      }
+    }
+  });
+
+  // Check authentication on component mount
+  useEffect(() => {
     checkAuth();
   }, []);
 
-  // Fetch messages for a specific chat session
-  const fetchChatMessages = useCallback(async (chatId) => {
-    // If we've already loaded messages for this chat, use local data
-    if (loadedMessageChats.has(chatId)) {
-      const selectedChat = chats.find(chat => chat.id === chatId);
-      if (selectedChat) {
-        setActiveChat(selectedChat);
-        
-        // Check for possible responses in the last message
-        if (selectedChat.messages && selectedChat.messages.length > 0) {
-          const lastMessage = selectedChat.messages[selectedChat.messages.length - 1];
-          if (lastMessage.possibleResponses && lastMessage.possibleResponses.length > 0) {
-            setPossibleResponses(lastMessage.possibleResponses);
-          } else {
-            setPossibleResponses([]);
-          }
-        }
-        
-        // Mark the chat as read
-        setChats(prevChats => 
-          prevChats.map(chat => 
-            chat.id === chatId 
-              ? { ...chat, unread: false } 
-              : chat
-          )
-        );
-      }
-      return;
-    }
-    
-    // Prevent duplicate requests
-    if (fetchingMessagesRef.current) return;
-    fetchingMessagesRef.current = true;
-    
-    // Set loading state
-    setMessagesLoading(true);
-    
-    try {
-      // Get the latest token from localStorage
-      const currentToken = localStorage.getItem('auth_token') || token;
-      
-      // Make API request to fetch messages
-      const response = await fetch(`${API_MESSAGES_URL}/${chatId}/messages`, {
-        headers: {
-          'Authorization': `Bearer ${currentToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        // Handle unauthorized errors
-        if (response.status === 401) {
-          setIsAuthenticated(false);
-          throw new Error('Authentication token expired or invalid');
-        }
-        throw new Error(`Failed to fetch messages: ${response.status}`);
-      }
-      
-      const messagesData = await response.json();
-      
-      // Find the chat in our local data
-      const chatIndex = chats.findIndex(chat => chat.id === chatId);
-      
-      if (chatIndex !== -1) {
-        // Format messages data
-        const formattedMessages = messagesData.map(msg => ({
-          id: msg.id,
-          text: msg.content,
-          sent: msg.isCurrentUser,
-          time: formatDateTime(msg.timestamp || msg.sentAt),
-          senderName: msg.senderDisplayName,
-          possibleResponses: msg.possibleResponses || []
-        }));
-        
-        // Update the chat with messages
-        const updatedChat = {
-          ...chats[chatIndex],
-          messages: formattedMessages,
-          unread: false
-        };
-        
-        // Update chats state
-        const updatedChats = [...chats];
-        updatedChats[chatIndex] = updatedChat;
-        
-        setChats(updatedChats);
-        setActiveChat(updatedChat);
-        
-        // Check for possible responses in the last message
-        if (formattedMessages.length > 0) {
-          const lastMessage = formattedMessages[formattedMessages.length - 1];
-          if (lastMessage.possibleResponses && lastMessage.possibleResponses.length > 0) {
-            setPossibleResponses(lastMessage.possibleResponses);
-          } else {
-            setPossibleResponses([]);
-          }
-        }
-        
-        // Mark this chat as having loaded messages
-        setLoadedMessageChats(prev => new Set(prev).add(chatId));
-      }
-    } catch (err) {
-      console.error("Error fetching messages:", err);
-      setError(`Failed to load messages: ${err.message}`);
-      
-      // Fallback to local data if available
-      const selectedChat = chats.find(chat => chat.id === chatId);
-      if (selectedChat) {
-        setActiveChat(selectedChat);
-      }
-    } finally {
-      setMessagesLoading(false);
-      fetchingMessagesRef.current = false;
-    }
-  }, [chats, token, loadedMessageChats]);
+  // Scroll to bottom of messages when they change
+  useEffect(() => {
+    scrollToBottom();
+  }, [activeChat?.messages, typingUsers]);
 
-  // Function to fetch chat sessions
-  const fetchChatSessions = useCallback(async () => {
-    // Prevent duplicate requests
-    if (fetchingChatsRef.current || loading) return;
-    fetchingChatsRef.current = true;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Get the latest token from localStorage
-      const currentToken = localStorage.getItem('auth_token') || token;
+  // Force refresh of messages when active chat changes
+  useEffect(() => {
+    if (activeChat) {
+      // This ensures the UI updates even if React doesn't detect changes
+      const refreshTimer = setTimeout(() => {
+        setActiveChat({...activeChat});
+      }, 50);
       
-      const response = await fetch(API_URL, {
-        headers: {
-          'Authorization': `Bearer ${currentToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        // Handle unauthorized errors
-        if (response.status === 401) {
-          setIsAuthenticated(false);
-          throw new Error('Authentication token expired or invalid');
-        }
-        throw new Error(`Failed to fetch chats: ${response.status}`);
-      }
-      
-      const chatData = await response.json();
-      
-      // Format chat data
-      const formattedChats = chatData.map(chat => ({
-        id: chat.id,
-        name: `${chat.participants.map(p => p.displayName).join(", ")}`,
-        avatar: chat.avatar || "/placeholder.svg",
-        lastMessage: chat.lastMessage?.content || "No messages yet",
-        timestamp: chat.lastMessage ? formatDateTime(chat.lastMessage.timestamp) : "New",
-        unread: chat.unreadCount > 0,
-        messages: [] // Messages will be loaded separately when chat is selected
-      }));
-      
-      setChats(formattedChats.length > 0 ? formattedChats : INITIAL_CHATS);
-      
-      // Don't automatically set active chat here
-    } catch (err) {
-      console.error("Error fetching chats:", err);
-      setError(`Failed to load chats: ${err.message}`);
-      // Fallback to initial chats
-      setChats(INITIAL_CHATS);
-    } finally {
-      setLoading(false);
-      fetchingChatsRef.current = false;
+      return () => clearTimeout(refreshTimer);
     }
-  }, [token]);
+  }, [activeChat?.id]);
+
+  // Handle active chat changes for SignalR
+  useEffect(() => {
+    // If we have an active chat and a SignalR connection, join the chat group
+    if (activeChat && hubConnectionRef.current && connectionStatus === CONNECTION_STATUS.CONNECTED) {
+      const chatId = activeChat.id.toString();
+      debugLog(`Joining SignalR group for active chat ${chatId}`);
+      
+      hubConnectionRef.current.invoke("JoinChatSession", chatId)
+        .catch(err => {
+          console.error(`Error joining chat session ${chatId}:`, err);
+        });
+      
+      // Clean up function to leave the chat group when the active chat changes
+      return () => {
+        if (hubConnectionRef.current && connectionStatus === CONNECTION_STATUS.CONNECTED) {
+          debugLog(`Leaving SignalR group for chat ${chatId}`);
+          
+          hubConnectionRef.current.invoke("LeaveChatSession", chatId)
+            .catch(err => {
+              console.error(`Error leaving chat session ${chatId}:`, err);
+            });
+        }
+      };
+    }
+  }, [activeChat?.id, connectionStatus]);
+
+  // Check if user is authenticated
+  const checkAuth = () => {
+    const storedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    
+    if (storedToken) {
+      setToken(storedToken);
+      setIsAuthenticated(true);
+      setAuthLoading(false);
+      
+      // Fetch chat sessions after authentication
+      setTimeout(() => {
+        fetchChatSessions();
+      }, 500);
+    } else {
+      setIsAuthenticated(false);
+      setAuthLoading(false);
+    }
+  };
 
   // Handle login
   const handleLogin = async (e) => {
     e.preventDefault();
+    
     setAuthLoading(true);
     setAuthError(null);
     
     try {
-      // In a real app, you would make an API call to authenticate
-      // For demo purposes, we'll simulate a successful login
-      const mockToken = "mock-auth-token-" + Date.now();
+      // Simulate successful login for demo purposes
+      // In a real app, you would make an API call here
+      const mockToken = "mock_token_" + Math.random().toString(36).substring(2);
       
       // Store token in localStorage
-      localStorage.setItem('auth_token', mockToken);
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, mockToken);
       
       // Update state
       setToken(mockToken);
       setIsAuthenticated(true);
+      
+      // Fetch chat sessions after login
+      setTimeout(() => {
+        fetchChatSessions();
+      }, 500);
     } catch (err) {
       console.error("Login error:", err);
-      setAuthError("Failed to login. Please try again.");
+      setAuthError("Invalid username or password");
     } finally {
       setAuthLoading(false);
     }
@@ -331,236 +298,131 @@ export const WhatsApp = () => {
 
   // Handle logout
   const handleLogout = () => {
-    // Remove token from localStorage
-    localStorage.removeItem('auth_token');
+    // Clear token from localStorage
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     
-    // Reset state
+    // Update state
     setToken("");
     setIsAuthenticated(false);
-    setUsername("");
-    setPassword("");
     setActiveChat(null);
-    setLoadedMessageChats(new Set());
-  };
-
-  // Fetch chat sessions when the app becomes visible
-  useEffect(() => {
-    let isMounted = true;
+    setChats(INITIAL_CHATS);
     
-    if (wnapp.hide === false && isAuthenticated && isMounted) {
-      fetchChatSessions();
+    // Close SignalR connection
+    if (hubConnectionRef.current) {
+      debugLog("Closing SignalR connection on logout");
+      hubConnectionRef.current.stop()
+        .catch(err => console.error("Error stopping SignalR connection:", err));
+      // The connection reference will be cleared in the onclose handler
     }
     
-    return () => {
-      isMounted = false;
-    };
-  }, [wnapp.hide, isAuthenticated, fetchChatSessions]);
-
-  const handleChatSelect = (chat) => {
-    // Fetch messages for the selected chat
-    fetchChatMessages(chat.id);
+    setConnectionStatus(CONNECTION_STATUS.DISCONNECTED);
   };
 
+  // Handle chat selection
+  const handleChatSelect = (chat) => {
+    debugLog(`Selecting chat ${chat.id} handleChatSelect`);
+    
+    // First set the active chat to trigger UI update immediately
+    if (activeChat?.id !== chat.id) {
+      setActiveChat([]);
+      setPossibleResponses([]);
+      
+      fetchChatMessages(chat.id);
+    }
+  };
+
+  // Handle sending a message
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if ((!messageInput.trim() && !e.currentTarget.dataset.responseId) || !activeChat) return;
-
-    // Get the message content - either from input or from selected response
-    const content = e.currentTarget.dataset.responseId 
-      ? possibleResponses.find(r => r.optionIndex.toString() === e.currentTarget.dataset.responseId)?.text || messageInput
-      : messageInput;
     
-    // Get the nextMessageId if this is a predefined response
-    const nextMessageId = e.currentTarget.dataset.responseId 
-      ? possibleResponses.find(r => r.optionIndex.toString() === e.currentTarget.dataset.responseId)?.nextMessageId
-      : null;
-
-    const newMessage = {
-      id: Date.now(),
-      text: content,
-      sent: true,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    // Clear possible responses immediately to prevent UI flicker
-    setPossibleResponses([]);
-
-    // Update UI immediately for better UX
-    const updatedChat = {
-      ...activeChat,
-      messages: [...(activeChat.messages || []), newMessage],
-      lastMessage: content,
-      timestamp: newMessage.time,
-    };
-
-    setChats((prevChats) => prevChats.map((chat) => (chat.id === activeChat.id ? updatedChat : chat)));
-    setActiveChat(updatedChat);
-    setMessageInput("");
-    
-    // Send message to API
-    sendMessageToApi(activeChat.id, content, nextMessageId);
-  };
-
-  // Function to send message to API
-  const sendMessageToApi = async (chatId, content, nextMessageId = null) => {
-    try {
-      // Get the latest token from localStorage
-      const currentToken = localStorage.getItem('auth_token') || token;
+    // If there are possible responses, check if a response button was clicked
+    if (possibleResponses.length > 0) {
+      const responseId = e.target.dataset.responseId;
       
-      // Prepare the request payload according to the required format
-      const payload = {
-        chatSessionId: chatId,
-        content: content,
-        hasAttachment: false // Set to false by default since we're not handling attachments yet
+      if (responseId) {
+        const selectedResponse = possibleResponses.find(
+          (r) => r.optionIndex.toString() === responseId
+        );
+        
+        if (selectedResponse) {
+          // Add the selected response to the chat immediately for instant feedback
+          // but mark it as "sending" rather than sent
+          const newMessage = {
+            id: `temp-${Date.now()}`,
+            text: selectedResponse.text,
+            sent: true,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isTemporary: true, // Mark as temporary until confirmed by server
+            isSending: true // Mark as currently sending
+          };
+          
+          // Update activeChat with the new message
+          setActiveChat(prevChat => ({
+            ...prevChat,
+            messages: [...prevChat.messages, newMessage]
+          }));
+          
+          // Send the selected response
+          sendMessageToApi(
+            activeChat.id,
+            selectedResponse.text,
+            selectedResponse.optionIndex
+          );
+          
+          // Clear possible responses
+          setPossibleResponses([]);
+          return;
+        }
+      }
+    }
+    
+    // If we have message input, send it
+    if (messageInput.trim()) {
+      // Add the message to the chat immediately for instant feedback
+      // but mark it as "sending" rather than sent
+      const newMessage = {
+        id: `temp-${Date.now()}`,
+        text: messageInput,
+        sent: true,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isTemporary: true, // Mark as temporary until confirmed by server
+        isSending: true // Mark as currently sending
       };
       
-      // Add metadata for nextMessageId if provided
-      if (nextMessageId) {
-        payload.metadata = {
-          nextMessageId: nextMessageId,
-          responseType: 'predefined'
-        };
-      }
+      // Update activeChat with the new message
+      setActiveChat(prevChat => ({
+        ...prevChat,
+        messages: [...prevChat.messages, newMessage]
+      }));
       
-      // Make the API request to the correct endpoint
-      const response = await fetch(`https://localhost:5001/chats/messages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${currentToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        // Handle unauthorized errors
-        if (response.status === 401) {
-          setIsAuthenticated(false);
-          console.error('Authentication token expired or invalid');
-        } else {
-          console.error(`Failed to send message: ${response.status}`);
-        }
-        return;
-      }
-      
-      // Process the response to get the new message from the server
-      try {
-        const responseData = await response.json();
-        
-        // If we got a valid response with a message, add it to the conversation
-        if (responseData && responseData.id) {
-          // Format the new message from the server
-          const serverMessage = {
-            id: responseData.id,
-            text: responseData.content,
-            sent: false,
-            time: formatDateTime(responseData.sentAt || responseData.timestamp),
-            senderName: responseData.senderDisplayName,
-            possibleResponses: responseData.possibleResponses || []
-          };
-          
-          // Update the chat with the new message from the server
-          const updatedChat = {
-            ...activeChat,
-            messages: [...activeChat.messages, serverMessage],
-            lastMessage: serverMessage.text,
-            timestamp: serverMessage.time
-          };
-          
-          setChats(prevChats => prevChats.map(chat => 
-            chat.id === chatId ? updatedChat : chat
-          ));
-          setActiveChat(updatedChat);
-          
-          // Update possible responses if the new message has them
-          if (serverMessage.possibleResponses && serverMessage.possibleResponses.length > 0) {
-            setPossibleResponses(serverMessage.possibleResponses);
-          }
-        } else {
-          // If we have a nextMessageId but didn't get a valid response, fetch all messages
-          if (nextMessageId) {
-            // Small delay to ensure the server has processed the message
-            setTimeout(() => {
-              fetchChatMessages(chatId);
-            }, 500);
-          }
-        }
-      } catch (parseError) {
-        console.error("Error parsing response:", parseError);
-        // If we couldn't parse the response but have a nextMessageId, fetch all messages
-        if (nextMessageId) {
-          setTimeout(() => {
-            fetchChatMessages(chatId);
-          }, 500);
-        }
-      }
-    } catch (err) {
-      console.error("Error sending message:", err);
+      // Send the message to the API
+      sendMessageToApi(activeChat.id, messageInput);
+      setMessageInput("");
     }
   };
 
-  // Get the name to display for a chat (for group chats vs individual chats)
-  const getChatDisplayName = (chat) => {
-    return chat ? chat.name : "";
+  // Scroll to bottom of messages
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
-  // Login screen component
-  const LoginScreen = () => (
-    <div className="flex flex-col items-center justify-center h-full bg-[#111B21] text-gray-100">
-      <div className="w-80 p-6 bg-[#202C33] rounded-lg shadow-lg">
-        <div className="flex justify-center mb-6">
-          <Lock className="h-12 w-12 text-[#00A884]" />
-        </div>
-        <h2 className="text-xl font-semibold text-center mb-6">Sign in to WhatsApp</h2>
-        
-        {authError && (
-          <div className="mb-4 p-2 bg-red-900/30 border border-red-800 rounded text-red-200 text-sm">
-            {authError}
-          </div>
-        )}
-        
-        <form onSubmit={handleLogin}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium mb-1 text-gray-300">
-                Username
-              </label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-1 focus-visible:ring-[#00A884]"
-                placeholder="Enter your username"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1 text-gray-300">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-1 focus-visible:ring-[#00A884]"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-[#00A884] hover:bg-[#008f6e] text-white"
-              disabled={authLoading}
-            >
-              {authLoading ? "Signing in..." : "Sign in"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+  // Show connection status message
+  const getConnectionStatusMessage = () => {
+    switch (connectionStatus) {
+      case CONNECTION_STATUS.ERROR:
+        return "Connection error. Please check your network.";
+      case CONNECTION_STATUS.RECONNECTING:
+        return "Reconnecting to server...";
+      case CONNECTION_STATUS.CONNECTING:
+        return "Connecting to server...";
+      default:
+        return null;
+    }
+  };
+
+  const connectionStatusMessage = getConnectionStatusMessage();
 
   return (
     <div
@@ -574,271 +436,64 @@ export const WhatsApp = () => {
       data-hide={wnapp.hide}
       id={wnapp.icon + "App"}
     >
-      <ToolBar
-              app={wnapp.action}
+      <ToolBar app={wnapp.action}
               icon={wnapp.icon}
               size={wnapp.size}
               name="WhatsApp"
             />
       
-      {authLoading ? (
-        <div className="h-full bg-[#111B21] text-gray-100 flex items-center justify-center">
-          <div className="flex flex-col items-center">
-            <div className="w-10 h-10 border-4 border-[#00A884] border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-400">Loading WhatsApp...</p>
-          </div>
+      {/* Connection status indicator */}
+      {connectionStatusMessage && (
+        <div className={`text-white text-xs p-1 text-center ${
+          connectionStatus === CONNECTION_STATUS.ERROR 
+            ? 'bg-red-900/70'
+            : connectionStatus === CONNECTION_STATUS.RECONNECTING
+              ? 'bg-yellow-900/70'
+              : 'bg-blue-900/70'
+        }`}>
+          {connectionStatusMessage}
         </div>
-      ) : !isAuthenticated ? (
-        <LoginScreen />
+      )}
+      
+      {!isAuthenticated ? (
+        <LoginScreen
+          username={username}
+          setUsername={setUsername}
+          password={password}
+          setPassword={setPassword}
+          handleLogin={handleLogin}
+          authLoading={authLoading}
+          authError={authError}
+        />
       ) : (
-        <div className="h-full bg-[#0B141A] text-gray-100 flex flex-col">
-          <div className="grid flex-grow overflow-hidden" style={{ gridTemplateColumns: "30% 1fr" }}>
-            {/* Left Sidebar */}
-            <div className="border-r border-gray-800 flex flex-col h-full overflow-hidden">
-              {/* Header */}
-              <div className="p-4 flex items-center justify-between bg-[#202C33]">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src="/placeholder.svg" />
-                  <AvatarFallback>{userName ? userName[0] : "U"}</AvatarFallback>
-                </Avatar>
-                <div className="flex gap-4">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-gray-400"
-                    onClick={fetchChatSessions}
-                    disabled={loading}
-                  >
-                    <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-gray-400">
-                    <Settings className="h-5 w-5" />
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-gray-400">
-                        <MoreVertical className="h-5 w-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 bg-[#233138] border-none text-gray-100">
-                      <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer">
-                        <Users className="mr-2 h-4 w-4" />
-                        <span>New group</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer">
-                        <Star className="mr-2 h-4 w-4" />
-                        <span>Starred messages</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer">
-                        <Check className="mr-2 h-4 w-4" />
-                        <span>Select chats</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer" onClick={handleLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log out</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer">
-                        <Download className="mr-2 h-4 w-4" />
-                        <span>Get WhatsApp for Windows</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-
-              {/* Search */}
-              <div className="p-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search"
-                    className="pl-9 bg-[#202C33] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0"
-                  />
-                </div>
-              </div>
-
-              {/* Tabs */}
-              <Tabs defaultValue="all" className="px-2">
-                <TabsList className="bg-transparent gap-2">
-                  <TabsTrigger
-                    value="all"
-                    className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100"
-                  >
-                    All
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="unread"
-                    className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100"
-                  >
-                    Unread
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="favorites"
-                    className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100"
-                  >
-                    Favorites
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="groups"
-                    className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100"
-                  >
-                    Groups
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              {/* Chat List */}
-              <ScrollArea className="h-[calc(100%-130px)]">
-                {loading ? (
-                  <div className="flex justify-center items-center h-full">
-                    <p className="text-gray-400">Loading chats...</p>
-                  </div>
-                ) : error ? (
-                  <div className="flex justify-center items-center h-full">
-                    <p className="text-red-400">{error}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {chats.map((chat) => (
-                      <div
-                        key={chat.id}
-                        onClick={() => handleChatSelect(chat)}
-                        className={`flex items-center gap-3 p-3 cursor-pointer transition-colors
-                          ${activeChat && activeChat.id === chat.id ? "bg-[#2A3942]" : "hover:bg-[#202C33]"}
-                          ${chat.unread ? "bg-[#202C33]" : ""}`}
-                      >
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={chat.avatar} />
-                          <AvatarFallback>{getChatDisplayName(chat)[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-baseline">
-                            <p className={`text-sm font-medium truncate ${chat.unread ? "text-white" : "text-gray-300"}`}>
-                              {getChatDisplayName(chat)}
-                            </p>
-                            <span className={`text-xs ${chat.unread ? "text-teal-400" : "text-gray-400"}`}>
-                              {chat.timestamp}
-                            </span>
-                          </div>
-                          <div className="flex items-center">
-                            {chat.unread && <div className="w-2 h-2 bg-teal-400 rounded-full mr-2"></div>}
-                            <p className={`text-sm truncate ${chat.unread ? "text-white" : "text-gray-400"}`}>
-                              {chat.lastMessage}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </div>
-
-            {/* Main Chat Area */}
-            <div className="flex flex-col h-full">
-              {activeChat ? (
-                <>
-                  {/* Chat Header */}
-                  <div className="p-4 flex items-center justify-between bg-[#202C33]">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={activeChat.avatar} />
-                        <AvatarFallback>{getChatDisplayName(activeChat)[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{getChatDisplayName(activeChat)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-gray-400"
-                        onClick={() => fetchChatMessages(activeChat.id)}
-                        disabled={messagesLoading}
-                      >
-                        <RefreshCw className={`h-5 w-5 ${messagesLoading ? 'animate-spin' : ''}`} />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Messages Area */}
-                  <ScrollArea className="flex-1 p-4 overflow-y-auto">
-                    {messagesLoading ? (
-                      <div className="flex justify-center items-center h-full">
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                          <p className="text-gray-400 text-sm">Loading messages...</p>
-                        </div>
-                      </div>
-                    ) : activeChat.messages && activeChat.messages.length > 0 ? (
-                      <div className="space-y-4">
-                        {activeChat.messages.map((message) => (
-                          <div key={message.id} className={`flex ${message.sent ? "justify-end" : "justify-start"}`}>
-                            <div className={`max-w-[60%] rounded-lg p-3 ${message.sent ? "bg-[#005C4B]" : "bg-[#202C33]"}`}>
-                              {message.senderName && !message.sent && (
-                                <p className="text-xs text-teal-400 mb-1">{message.senderName}</p>
-                              )}
-                              <p className="text-sm">{message.text}</p>
-                              <div className="flex items-center justify-end mt-1 space-x-1">
-                                <p className="text-xs text-gray-400">{message.time}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex justify-center items-center h-full">
-                        <p className="text-gray-400">No messages yet. Start a conversation!</p>
-                      </div>
-                    )}
-                  </ScrollArea>
-
-                  {/* Possible Responses */}
-                  {possibleResponses.length > 0 && (
-                    <div className="p-3 bg-[#1A2C35] border-t border-gray-800">
-                      <p className="text-xs text-gray-400 mb-2">Choose a response:</p>
-                      <div className="space-y-2">
-                        {possibleResponses.map((response) => (
-                          <button
-                            key={response.optionIndex}
-                            data-response-id={response.optionIndex}
-                            onClick={handleSendMessage}
-                            className="w-full text-left p-2 rounded bg-[#2A3942] hover:bg-[#34444E] text-gray-100 text-sm transition-colors"
-                          >
-                            {response.text}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Message Input */}
-                  <form onSubmit={handleSendMessage} className="p-4 bg-[#202C33] flex items-center gap-4">
-                    <Button type="button" variant="ghost" size="icon" className="text-gray-400" disabled>
-                      <Smile className="h-6 w-6" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className="text-gray-400" disabled>
-                      <Paperclip className="h-6 w-6" />
-                    </Button>
-                    <Input
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      placeholder={possibleResponses.length > 0 ? "Please select a response above" : "Waiting for options..."}
-                      className="bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0 opacity-50"
-                      disabled={true}
-                    />
-                    <Button type="submit" variant="ghost" size="icon" className="text-gray-400" disabled>
-                      <Mic className="h-6 w-6" />
-                    </Button>
-                  </form>
-                </>
-              ) : (
-                <div className="flex-grow flex items-center justify-center">
-                  <p className="text-gray-400">Select a chat to start messaging</p>
-                </div>
-              )}
-            </div>
+        <div className="flex-1 flex overflow-hidden">
+          {/* Chat Sidebar */}
+          <div className="w-[350px] flex-shrink-0">
+            <ChatSidebar
+              chats={chats}
+              activeChat={activeChat}
+              handleChatSelect={handleChatSelect}
+              fetchChatSessions={fetchChatSessions}
+              loading={loading}
+              userName={userName}
+              handleLogout={handleLogout}
+            />
+          </div>
+          
+          {/* Chat Area */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <ChatArea
+              activeChat={activeChat}
+              connectionStatus={connectionStatus}
+              messagesLoading={messagesLoading}
+              fetchChatMessages={fetchChatMessages}
+              typingUsers={typingUsers}
+              messageInput={messageInput}
+              setMessageInput={setMessageInput}
+              handleSendMessage={handleSendMessage}
+              possibleResponses={possibleResponses}
+              messagesEndRef={messagesEndRef}
+            />
           </div>
         </div>
       )}
