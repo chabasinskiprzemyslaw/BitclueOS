@@ -450,6 +450,32 @@ export const WhatsApp = () => {
         } catch (err) {
           console.error("Error parsing stored user info:", err);
         }
+      } else {
+        // If we have a token but no user info, try to extract user info from the token
+        try {
+          // JWT tokens are in the format: header.payload.signature
+          // We need to decode the payload (second part)
+          const tokenParts = storedToken.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            
+            // Extract user info from token claims
+            const userInfo = {
+              id: payload.sub || payload.preferred_username,
+              name: payload.name || payload.preferred_username,
+              email: payload.email
+            };
+            
+            // Store user info
+            localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
+            
+            if (userInfo.id) {
+              setUserId(userInfo.id);
+            }
+          }
+        } catch (err) {
+          console.error("Error extracting user info from token:", err);
+        }
       }
       
       setAuthLoading(false);
@@ -472,21 +498,35 @@ export const WhatsApp = () => {
     setAuthError(null);
     
     try {
-      // Simulate successful login for demo purposes
-      // In a real app, you would make an API call here
-      const mockToken = "mock_token_" + Math.random().toString(36).substring(2);
-      const mockUserId = "user_" + Math.random().toString(36).substring(2);
+      // Get the auth token from localStorage (set by Keycloak in the LockScreen component)
+      const authToken = localStorage.getItem('auth_token');
       
-      // Store token and user info in localStorage
-      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, mockToken);
-      localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify({
-        id: mockUserId,
-        name: username || userName
-      }));
+      if (!authToken) {
+        throw new Error("No authentication token found. Please log in from the lock screen first.");
+      }
+      
+      // Decode the JWT token to get user information
+      const tokenParts = authToken.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error("Invalid token format");
+      }
+      
+      const payload = JSON.parse(atob(tokenParts[1]));
+      
+      // Extract user info from token claims
+      const userInfo = {
+        id: payload.sub || payload.preferred_username,
+        name: payload.name || payload.preferred_username || username || userName,
+        email: payload.email
+      };
+      
+      // Store token and user info in localStorage using the app's storage keys
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, authToken);
+      localStorage.setItem(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo));
       
       // Update state
-      setToken(mockToken);
-      setUserId(mockUserId);
+      setToken(authToken);
+      setUserId(userInfo.id);
       setIsAuthenticated(true);
       
       // Fetch chat sessions after login
@@ -495,7 +535,7 @@ export const WhatsApp = () => {
       }, 500);
     } catch (err) {
       console.error("Login error:", err);
-      setAuthError("Invalid username or password");
+      setAuthError(err.message || "Authentication failed. Please try again.");
     } finally {
       setAuthLoading(false);
     }
@@ -503,34 +543,28 @@ export const WhatsApp = () => {
 
   // Handle logout
   const handleLogout = () => {
-    // Leave user notification group before logging out
-    if (hubConnectionRef.current && connectionStatus === CONNECTION_STATUS.CONNECTED && userId) {
-      hubConnectionRef.current.invoke("LeaveUserNotificationGroup", userId)
-        .catch(err => {
-          console.error(`Error leaving user notification group for user ${userId}:`, err);
-        });
-    }
-    
-    // Clear token and user info from localStorage
+    // Clear authentication data
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER_INFO);
     
+    // Also clear Keycloak tokens
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("token_expiry");
+    
     // Update state
-    setToken("");
-    setUserId("");
+    setToken(null);
+    setUserId(null);
     setIsAuthenticated(false);
+    setChats([]);
     setActiveChat(null);
-    setChats(INITIAL_CHATS);
     
-    // Close SignalR connection
+    // Disconnect from SignalR hub
     if (hubConnectionRef.current) {
-      debugLog("Closing SignalR connection on logout");
-      hubConnectionRef.current.stop()
-        .catch(err => console.error("Error stopping SignalR connection:", err));
-      // The connection reference will be cleared in the onclose handler
+      hubConnectionRef.current.stop().catch(err => {
+        console.error("Error stopping SignalR connection:", err);
+      });
     }
-    
-    setConnectionStatus(CONNECTION_STATUS.DISCONNECTED);
   };
 
   // Handle chat selection

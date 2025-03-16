@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { API_URL, API_MESSAGES_URL } from './constants';
+import { API_URL, API_MESSAGES_URL, STORAGE_KEYS } from './constants';
 import { debugLog, formatDateTime } from './utils';
 
 /**
@@ -58,8 +58,8 @@ const useWhatsAppApi = ({
     setError(null);
     
     try {
-      // Get the latest token from localStorage
-      const currentToken = localStorage.getItem('auth_token') || token;
+      // Get the latest token from localStorage - try both keys for compatibility
+      const currentToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || localStorage.getItem('auth_token') || token;
       
       const response = await fetch(API_URL, {
         headers: {
@@ -139,8 +139,8 @@ const useWhatsAppApi = ({
     setMessagesLoading(true);
     
     try {
-      // Get the latest token from localStorage
-      const currentToken = localStorage.getItem('auth_token') || token;
+      // Get the latest token from localStorage - try both keys for compatibility
+      const currentToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || localStorage.getItem('auth_token') || token;
       
       // Make API request to fetch messages
       const response = await fetch(`${API_MESSAGES_URL}/${chatId}/messages`, {
@@ -244,8 +244,8 @@ const useWhatsAppApi = ({
     try {
       debugLog("Sending message to API:", { chatId, content, nextMessageId });
       
-      // Get the latest token from localStorage
-      const currentToken = localStorage.getItem('auth_token') || token;
+      // Get the latest token from localStorage - try both keys for compatibility
+      const currentToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || localStorage.getItem('auth_token') || token;
       
       // Prepare the request payload according to the required format
       const payload = {

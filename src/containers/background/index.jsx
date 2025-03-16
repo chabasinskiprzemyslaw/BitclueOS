@@ -3,6 +3,18 @@ import { useDispatch, useSelector } from "react-redux";
 import Battery from "../../components/shared/Battery";
 import { Icon, Image } from "../../utils/general";
 import "./back.scss";
+// Import Keycloak
+import Keycloak from 'keycloak-js';
+
+// Initialize Keycloak instance
+const keycloakConfig = {
+  url: 'http://localhost:18080',
+  realm: 'evently',
+  clientId: 'evently-public-client'
+};
+
+// Create Keycloak instance
+const keycloak = new Keycloak(keycloakConfig);
 
 export const Background = () => {
   const wall = useSelector((state) => state.wallpaper);
@@ -80,27 +92,82 @@ export const LockScreen = (props) => {
 
   // Check if user is already authenticated
   useEffect(() => {
-    const storedToken = localStorage.getItem("auth_token");
-    if (storedToken) {
-      // Check if token is still valid (not expired)
-      const tokenExpiry = localStorage.getItem("token_expiry");
-      const isValid = tokenExpiry && new Date().getTime() < parseInt(tokenExpiry);
-      
-      if (isValid) {
+    // Initialize Keycloak
+    initKeycloak();
+  }, []);
+
+  // Initialize Keycloak
+  const initKeycloak = async () => {
+    try {
+      // Try to refresh the token if user was previously logged in
+      const authenticated = await keycloak.init({
+        onLoad: 'check-sso',
+        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+        checkLoginIframe: false
+      });
+
+      if (authenticated) {
+        // User is authenticated
         setIsAuthenticated(true);
+        
+        // Store tokens in localStorage
+        localStorage.setItem("auth_token", keycloak.token);
+        localStorage.setItem("refresh_token", keycloak.refreshToken);
+        localStorage.setItem("token_expiry", new Date().getTime() + (keycloak.tokenParsed.exp * 1000));
+        
         // Auto unlock if user is already authenticated
         setUnLock(true);
         setTimeout(() => {
           dispatch({ type: "WALLUNLOCK" });
         }, 500);
+        
+        // Set up token refresh
+        setupTokenRefresh();
       } else {
-        // Token expired, clear it
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("token_expiry");
+        // Check if we have tokens in localStorage
+        const storedToken = localStorage.getItem("auth_token");
+        if (storedToken) {
+          // Check if token is still valid (not expired)
+          const tokenExpiry = localStorage.getItem("token_expiry");
+          const isValid = tokenExpiry && new Date().getTime() < parseInt(tokenExpiry);
+          
+          if (isValid) {
+            setIsAuthenticated(true);
+            // Auto unlock if user is already authenticated
+            setUnLock(true);
+            setTimeout(() => {
+              dispatch({ type: "WALLUNLOCK" });
+            }, 500);
+          } else {
+            // Token expired, clear it
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("refresh_token");
+            localStorage.removeItem("token_expiry");
+          }
+        }
       }
+    } catch (error) {
+      console.error("Failed to initialize Keycloak:", error);
     }
-  }, []);
+  };
+
+  // Set up token refresh
+  const setupTokenRefresh = () => {
+    // Set up token refresh interval
+    setInterval(() => {
+      keycloak.updateToken(70).then((refreshed) => {
+        if (refreshed) {
+          // Update tokens in localStorage
+          localStorage.setItem("auth_token", keycloak.token);
+          localStorage.setItem("refresh_token", keycloak.refreshToken);
+          localStorage.setItem("token_expiry", new Date().getTime() + (keycloak.tokenParsed.exp * 1000));
+          console.log('Token refreshed');
+        }
+      }).catch(() => {
+        console.error('Failed to refresh token');
+      });
+    }, 60000); // Check for token refresh every minute
+  };
 
   const handleLogin = async () => {
     // Validate inputs
@@ -118,6 +185,17 @@ export const LockScreen = (props) => {
     setAuthError(null);
     
     try {
+      // Use Keycloak JavaScript adapter for login
+      const authenticated = await keycloak.login({
+        loginHint: username,
+        redirectUri: window.location.origin,
+        // We're not using redirectUri because we want to handle the login in our app
+        // Instead, we'll use the direct grant flow (Resource Owner Password Credentials)
+      });
+      
+      // If we get here, it means the redirect didn't happen (which is expected for direct grant)
+      // So we need to manually authenticate with username and password
+      
       // Prepare form data for Keycloak token request
       const formData = new URLSearchParams();
       formData.append('grant_type', 'password');
@@ -146,6 +224,15 @@ export const LockScreen = (props) => {
         localStorage.setItem("refresh_token", refresh_token);
         localStorage.setItem("token_expiry", new Date().getTime() + (expires_in * 1000));
         
+        // Update Keycloak instance with the new tokens
+        keycloak.token = access_token;
+        keycloak.refreshToken = refresh_token;
+        keycloak.tokenParsed = JSON.parse(atob(access_token.split('.')[1]));
+        keycloak.refreshTokenParsed = JSON.parse(atob(refresh_token.split('.')[1]));
+        
+        // Set up token refresh
+        setupTokenRefresh();
+        
         setIsAuthenticated(true);
         setUnLock(true);
         setTimeout(() => {
@@ -171,6 +258,17 @@ export const LockScreen = (props) => {
         setShowLoginForm(true);
       }
     }
+  };
+
+  // Add a logout function that uses Keycloak
+  const handleLogout = () => {
+    // Clear local storage
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("token_expiry");
+    
+    // Logout from Keycloak
+    keycloak.logout({ redirectUri: window.location.origin });
   };
 
   // If already authenticated, don't show login form

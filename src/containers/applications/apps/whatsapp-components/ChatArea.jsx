@@ -148,7 +148,7 @@ const ChatArea = ({
       </ScrollArea>
 
       {/* Possible Responses */}
-      {possibleResponses.length > 0 && (
+      {typingUsers.length === 0 && possibleResponses.length > 0 && (
         <div className="p-3 bg-[#1A2C35] border-t border-gray-800">
           <p className="text-xs text-gray-400 mb-2">Choose a response:</p>
           <div className="space-y-2">
