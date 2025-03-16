@@ -146,11 +146,26 @@ const ChatSidebar = ({
       <ScrollArea className="h-[calc(100%-130px)]">
         {loading ? (
           <div className="flex justify-center items-center h-full">
-            <p className="text-gray-400">Loading chats...</p>
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-400">Loading chats...</p>
+            </div>
           </div>
         ) : displayChats.length === 0 ? (
-          <div className="flex justify-center items-center h-full">
-            <p className="text-gray-400">No chats to display</p>
+          <div className="flex flex-col justify-center items-center h-full text-center px-4">
+            <div className="w-16 h-16 mb-4 opacity-50">
+              <img src="/icons/chat.png" alt="No Chats" className="w-full h-full" />
+            </div>
+            <h3 className="text-gray-300 text-lg mb-2">No Chats Available</h3>
+            <p className="text-gray-400 text-sm">
+              {activeTab === "all" 
+                ? "Start a new conversation or wait for incoming messages"
+                : activeTab === "unread"
+                  ? "No unread messages"
+                  : activeTab === "favorites"
+                    ? "No favorite chats yet"
+                    : "No group chats available"}
+            </p>
           </div>
         ) : (
           <div className="space-y-1">

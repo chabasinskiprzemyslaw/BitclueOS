@@ -98,6 +98,7 @@ export const LockScreen = (props) => {
 
   // Initialize Keycloak
   const initKeycloak = async () => {
+    console.log("Initializing Keycloak");
     try {
       // Try to refresh the token if user was previously logged in
       const authenticated = await keycloak.init({
@@ -106,19 +107,28 @@ export const LockScreen = (props) => {
         checkLoginIframe: false
       });
 
+      console.log("Keycloak initialized");
+
       if (authenticated) {
+        console.log("Keycloak authenticated");
+
         // User is authenticated
         setIsAuthenticated(true);
         
         // Store tokens in localStorage
         localStorage.setItem("auth_token", keycloak.token);
+        console.log("Auth token stored");
         localStorage.setItem("refresh_token", keycloak.refreshToken);
+        console.log("Refresh token stored");
         localStorage.setItem("token_expiry", new Date().getTime() + (keycloak.tokenParsed.exp * 1000));
+        console.log("Token expiry stored");
         
         // Auto unlock if user is already authenticated
         setUnLock(true);
+        console.log("Unlocked");
         setTimeout(() => {
           dispatch({ type: "WALLUNLOCK" });
+          console.log("Wall unlocked");
         }, 500);
         
         // Set up token refresh

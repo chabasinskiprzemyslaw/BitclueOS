@@ -57,14 +57,18 @@ export const WhatsApp = () => {
   const wnapp = useSelector((state) => state.apps.whatsapp);
   const userName = useSelector((state) => state.setting.person.name);
 
+  // Add state to track Keycloak initialization
+  const [keycloakInitialized, setKeycloakInitialized] = useState(false);
+  
   // State management
-  const [chats, setChats] = useState(INITIAL_CHATS);
+  const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messageInput, setMessageInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState(null);
   const [possibleResponses, setPossibleResponses] = useState([]);
+  const [appLoading, setAppLoading] = useState(true);
   
   // Authentication states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -73,7 +77,7 @@ export const WhatsApp = () => {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState(null);
   const [token, setToken] = useState("");
-  const [userId, setUserId] = useState(""); // Add userId state for notifications
+  const [userId, setUserId] = useState("");
   
   // Track if messages have been loaded for a chat to prevent repeated requests
   const [loadedMessageChats, setLoadedMessageChats] = useState(new Set());
@@ -344,10 +348,68 @@ export const WhatsApp = () => {
     }, typingDelay);
   }, [activeChat]);
 
-  // Check authentication on component mount
+  // Add effect to wait for Keycloak initialization
   useEffect(() => {
-    checkAuth();
+    const checkKeycloakInit = () => {
+      // Check if we can find any indication that Keycloak is done
+      if (document.body.classList.contains('keycloak-initialized') || localStorage.getItem('auth_token')) {
+        debugLog("Keycloak initialization detected");
+        setKeycloakInitialized(true);
+        return true;
+      }
+      return false;
+    };
+
+    // If not initialized, set up a polling mechanism
+    if (!checkKeycloakInit()) {
+      debugLog("Waiting for Keycloak initialization...");
+      const pollInterval = setInterval(() => {
+        if (checkKeycloakInit()) {
+          clearInterval(pollInterval);
+        }
+      }, 100); // Check every 100ms
+
+      // Clean up interval if component unmounts
+      return () => clearInterval(pollInterval);
+    }
   }, []);
+
+  // Modify the initialization effect to wait for Keycloak
+  useEffect(() => {
+    const initializeApp = async () => {
+      setAppLoading(true);
+      debugLog("Initializing WhatsApp application...");
+      
+      // Wait for Keycloak to be initialized
+      if (!keycloakInitialized) {
+        debugLog("Waiting for Keycloak initialization before proceeding...");
+        return;
+      }
+
+      await checkAuth();
+      
+      // If authenticated after checkAuth, fetch chat sessions
+      const storedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      if (storedToken) {
+        debugLog("Auth token found, fetching initial chat sessions...");
+        await fetchChatSessions();
+      } else {
+        debugLog("No auth token found, skipping chat session fetch");
+      }
+      
+      setAppLoading(false);
+    };
+    
+    initializeApp();
+  }, [keycloakInitialized]); // Add keycloakInitialized as a dependency
+
+  // Add a new effect to handle initial data loading when authentication changes
+  useEffect(() => {
+    if (isAuthenticated && !appLoading) {
+      debugLog("Authentication state changed to authenticated, fetching chats...");
+      fetchChatSessions();
+    }
+  }, [isAuthenticated]);
 
   // Scroll to bottom of messages when they change
   useEffect(() => {
@@ -431,12 +493,14 @@ export const WhatsApp = () => {
     }
   }, [isAuthenticated, userId, connectionStatus]);
 
-  // Check if user is authenticated
-  const checkAuth = () => {
+  // Modify checkAuth to be async
+  const checkAuth = async () => {
+    debugLog("Checking authentication status...");
     const storedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     const storedUserInfo = localStorage.getItem(STORAGE_KEYS.USER_INFO);
     
     if (storedToken) {
+      debugLog("Found stored token, validating...");
       setToken(storedToken);
       setIsAuthenticated(true);
       
@@ -446,6 +510,7 @@ export const WhatsApp = () => {
           const userInfo = JSON.parse(storedUserInfo);
           if (userInfo.id) {
             setUserId(userInfo.id);
+            debugLog("User info loaded successfully");
           }
         } catch (err) {
           console.error("Error parsing stored user info:", err);
@@ -479,12 +544,8 @@ export const WhatsApp = () => {
       }
       
       setAuthLoading(false);
-      
-      // Fetch chat sessions after authentication
-      setTimeout(() => {
-        fetchChatSessions();
-      }, 500);
     } else {
+      debugLog("No stored token found, setting as unauthenticated");
       setIsAuthenticated(false);
       setAuthLoading(false);
     }
@@ -705,29 +766,18 @@ export const WhatsApp = () => {
               name="WhatsApp"
             />
       
-      {/* Connection status indicator */}
-      {connectionStatusMessage && (
-        <div className={`text-white text-xs p-1 text-center ${
-          connectionStatus === CONNECTION_STATUS.ERROR 
-            ? 'bg-red-900/70'
-            : connectionStatus === CONNECTION_STATUS.RECONNECTING
-              ? 'bg-yellow-900/70'
-              : 'bg-blue-900/70'
-        }`}>
-          {connectionStatusMessage}
+      {/* App Loading Screen */}
+      {(!keycloakInitialized || appLoading) ? (
+        <div className="flex-1 flex flex-col items-center justify-center h-full bg-[#111B21] text-gray-300">
+          <div className="w-16 h-16 mb-4">
+            <img src="/icons/whatsapp.png" alt="WhatsApp" className="w-full h-full" />
+          </div>
+          <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-lg">Loading WhatsApp</p>
+          <p className="text-sm text-gray-500">
+            {!keycloakInitialized ? "Waiting for authentication..." : "End-to-end encrypted"}
+          </p>
         </div>
-      )}
-      
-      {!isAuthenticated ? (
-        <LoginScreen
-          username={username}
-          setUsername={setUsername}
-          password={password}
-          setPassword={setPassword}
-          handleLogin={handleLogin}
-          authLoading={authLoading}
-          authError={authError}
-        />
       ) : (
         <div className="flex-1 flex overflow-hidden">
           {/* Chat Sidebar */}

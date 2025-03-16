@@ -61,6 +61,12 @@ const useWhatsAppApi = ({
       // Get the latest token from localStorage - try both keys for compatibility
       const currentToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || localStorage.getItem('auth_token') || token;
       
+      if (!currentToken) {
+        debugLog("No token available for fetchChatSessions");
+        throw new Error('No authentication token available');
+      }
+
+      debugLog("Making API request to fetch chat sessions...");
       const response = await fetch(API_URL, {
         headers: {
           'Authorization': `Bearer ${currentToken}`,
@@ -68,9 +74,12 @@ const useWhatsAppApi = ({
         }
       });
       
+      debugLog(`API response status: ${response.status}`);
+      
       if (!response.ok) {
         // Handle unauthorized errors
         if (response.status === 401) {
+          debugLog("Unauthorized: Token expired or invalid");
           setIsAuthenticated(false);
           throw new Error('Authentication token expired or invalid');
         }
@@ -78,6 +87,7 @@ const useWhatsAppApi = ({
       }
       
       const chatData = await response.json();
+      debugLog(`Received ${chatData.length} chats from API`);
       
       // Format chat data
       const formattedChats = chatData.map(chat => ({
@@ -89,6 +99,8 @@ const useWhatsAppApi = ({
         unread: chat.unreadCount > 0,
         messages: [] // Messages will be loaded separately when chat is selected
       }));
+      
+      debugLog(`Formatted ${formattedChats.length} chats`);
       
       // If we have an active chat, make sure to preserve its messages
       if (activeChat && activeChat.id) {
@@ -108,15 +120,14 @@ const useWhatsAppApi = ({
       } else {
         setChats(formattedChats.length > 0 ? formattedChats : []);
       }
-      
-      // We don't need to join all chat sessions here - we'll only join when a chat is selected
     } catch (err) {
       console.error("Error fetching chats:", err);
+      debugLog(`Error in fetchChatSessions: ${err.message}`);
       setError(`Failed to load chats: ${err.message}`);
-      // Don't set fallback chats here, let the component handle it
     } finally {
       setLoading(false);
       fetchingChatsRef.current = false;
+      debugLog("Completed fetchChatSessions");
     }
   }, [token, activeChat, setChats, setError, setIsAuthenticated, setLoading, loading]);
 
