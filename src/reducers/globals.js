@@ -171,7 +171,6 @@ const defState = {
     "unescape",
     "essential apps",
     "xbox gamepass",
-    "spotify",
     "social media",
     "security",
     "utility apps",

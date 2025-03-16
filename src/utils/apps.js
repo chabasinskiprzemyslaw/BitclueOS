@@ -59,12 +59,6 @@ const apps = [
     action: "MSEDGE",
   },
   {
-    name: "Store",
-    icon: "store",
-    type: "app",
-    action: "WNSTORE",
-  },
-  {
     name: "Recycle Bin",
     icon: "bin0",
     type: "app",
@@ -209,12 +203,6 @@ const apps = [
     name: "Security",
     icon: "security",
     type: "app",
-  },
-  {
-    name: "Spotify",
-    icon: "spotify",
-    type: "app",
-    action: "SPOTIFY",
   },
   {
     name: "Sharepoint",

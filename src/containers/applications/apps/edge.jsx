@@ -18,8 +18,6 @@ export const EdgeMenu = () => {
     "https://andrewstech.me": "\nandrewstech",
     "https://blueedge.me/unescape": "Unescape",
     "https://win11.blueedge.me": "Inception",
-    "https://open.spotify.com/embed/user/jhfivkgdtg4s97pwbo1rbvr9v/playlist/6IdR78TOog83PV4XhLDvWN":
-      "Spotify",
     "https://bluelab.blueedge.me": "BlueLab",
     "https://othello.blueedge.me": "Othello",
   };
