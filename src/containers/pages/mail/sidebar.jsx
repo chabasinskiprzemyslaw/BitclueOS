@@ -1,20 +1,25 @@
 "use client"
 
 import { Button } from "../../../components/ui/button"
-import { PenSquare, Inbox, Star, Clock, Send, File, Tag, Trash } from "lucide-react"
+import { PenSquare, Inbox, Star, Clock, Send, File, Tag, Trash, Loader2 } from "lucide-react"
 import { cn } from "../../../lib/utils";
 
-const sidebarItems = [
-  { icon: Inbox, label: "Inbox", count: 14356 },
-  { icon: Star, label: "Starred" },
-  { icon: Clock, label: "Snoozed" },
-  { icon: Send, label: "Sent" },
-  { icon: File, label: "Drafts", count: 38 },
-  { icon: Tag, label: "Categories" },
-  { icon: Trash, label: "Trash" },
-]
+// Map folder names to icons
+const folderIconMap = {
+  "Inbox": Inbox,
+  "Drafts": File,
+  "Sent": Send,
+  "Bin": Trash,
+  // Add more mappings as needed
+  "default": Tag // Default icon for unknown folder types
+};
 
-export function Sidebar({ isCollapsed, onCompose }) {
+export function Sidebar({ isCollapsed, onCompose, onFolderSelect, currentFolder, folders = [], isLoading = false }) {
+  // Get the appropriate icon for a folder
+  const getFolderIcon = (folderName) => {
+    return folderIconMap[folderName] || folderIconMap.default;
+  };
+
   return (
     <div
       className={cn(
@@ -26,13 +31,83 @@ export function Sidebar({ isCollapsed, onCompose }) {
         <PenSquare className="h-4 w-4" />
         {!isCollapsed && <span>Compose</span>}
       </Button>
-      {sidebarItems.map((item, index) => (
-        <Button key={index} variant="ghost" className={cn("justify-start gap-2", isCollapsed && "justify-center")}>
-          <item.icon className="h-4 w-4" />
-          {!isCollapsed && <span className="flex-1 text-left">{item.label}</span>}
-          {!isCollapsed && item.count && <span className="text-xs text-muted-foreground">{item.count}</span>}
-        </Button>
-      ))}
+      
+      {isLoading ? (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          {!isCollapsed && <span className="ml-2 text-sm text-muted-foreground">Loading folders...</span>}
+        </div>
+      ) : (
+        <>
+          {folders.map((folder) => {
+            const FolderIcon = getFolderIcon(folder.name);
+            return (
+              <Button 
+                key={folder.id} 
+                variant="ghost" 
+                className={cn(
+                  "justify-start gap-2", 
+                  isCollapsed && "justify-center",
+                  currentFolder === folder.name && "bg-secondary"
+                )}
+                onClick={() => onFolderSelect(folder.name, folder.id)}
+              >
+                <FolderIcon className="h-4 w-4" />
+                {!isCollapsed && (
+                  <>
+                    <span className="flex-1 text-left">{folder.name}</span>
+                    {folder.unreadCount > 0 && (
+                      <span className="text-xs font-medium bg-blue-500 text-white px-1.5 py-0.5 rounded-full">
+                        {folder.unreadCount}
+                      </span>
+                    )}
+                  </>
+                )}
+              </Button>
+            );
+          })}
+          
+          {/* Additional standard items that might not be in the folders list */}
+          <Button 
+            variant="ghost" 
+            className={cn(
+              "justify-start gap-2", 
+              isCollapsed && "justify-center",
+              currentFolder === "Starred" && "bg-secondary"
+            )}
+            onClick={() => onFolderSelect("Starred")}
+          >
+            <Star className="h-4 w-4" />
+            {!isCollapsed && <span className="flex-1 text-left">Starred</span>}
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            className={cn(
+              "justify-start gap-2", 
+              isCollapsed && "justify-center",
+              currentFolder === "Snoozed" && "bg-secondary"
+            )}
+            onClick={() => onFolderSelect("Snoozed")}
+          >
+            <Clock className="h-4 w-4" />
+            {!isCollapsed && <span className="flex-1 text-left">Snoozed</span>}
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            className={cn(
+              "justify-start gap-2", 
+              isCollapsed && "justify-center",
+              currentFolder === "Categories" && "bg-secondary"
+            )}
+            onClick={() => onFolderSelect("Categories")}
+          >
+            <Tag className="h-4 w-4" />
+            {!isCollapsed && <span className="flex-1 text-left">Categories</span>}
+          </Button>
+        </>
+      )}
     </div>
   )
 }

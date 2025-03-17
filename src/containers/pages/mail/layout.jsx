@@ -9,6 +9,24 @@ import { EmailList } from "./email-list"
 import { EmailView } from "./email-view"
 import { ComposeEmail } from "./compose-email"
 
+// Debug mode flag - set to true to enable debug logging
+const EMAIL_DEBUG_MODE = true;
+
+/**
+ * Helper function for email-specific debug logging
+ * @param {string} message - The message to log
+ * @param {any} data - Optional data to log
+ */
+const emailDebugLog = (message, data) => {
+  if (EMAIL_DEBUG_MODE) {
+    if (data) {
+      console.log(`[Email Debug] ${message}`, data);
+    } else {
+      console.log(`[Email Debug] ${message}`);
+    }
+  }
+};
+
 // Login Screen Component
 const LoginScreen = ({ onLogin }) => {
   const [emailAddress, setEmailAddress] = useState("");
@@ -20,6 +38,7 @@ const LoginScreen = ({ onLogin }) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    emailDebugLog("Login attempt", { emailAddress });
 
     try {
       // Get the auth token from localStorage (set by the game system)
@@ -29,6 +48,7 @@ const LoginScreen = ({ onLogin }) => {
         throw new Error("Authentication token not found. Please restart the game.");
       }
 
+      emailDebugLog("Making login request");
       const response = await fetch("https://localhost:5001/emails/accounts/login", {
         method: "POST",
         headers: {
@@ -39,10 +59,12 @@ const LoginScreen = ({ onLogin }) => {
       });
 
       if (!response.ok) {
+        emailDebugLog("Login failed", { status: response.status });
         throw new Error("Login failed. Please check your credentials.");
       }
 
       const data = await response.json();
+      emailDebugLog("Login successful", { accountId: data.emailAccountId });
       
       // Store the email account ID
       localStorage.setItem("email_account_id", data.emailAccountId);
@@ -50,6 +72,7 @@ const LoginScreen = ({ onLogin }) => {
       // Call the onLogin callback with the account info
       onLogin(data.emailAccountId, emailAddress);
     } catch (error) {
+      emailDebugLog("Login error", { error: error.message });
       setError(error.message);
     } finally {
       setIsLoading(false);
@@ -157,6 +180,7 @@ const makeAuthenticatedRequest = async (url, options = {}) => {
   const token = localStorage.getItem("auth_token");
   
   if (!token) {
+    emailDebugLog("Auth token not found in makeAuthenticatedRequest");
     throw new Error("Authentication token not found");
   }
   
@@ -164,6 +188,8 @@ const makeAuthenticatedRequest = async (url, options = {}) => {
     ...options.headers,
     "Authorization": `Bearer ${token}`
   };
+  
+  emailDebugLog(`Making authenticated request to ${url}`, { method: options.method || 'GET' });
   
   return fetch(url, {
     ...options,
@@ -179,31 +205,146 @@ export default function Layout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [emailAccountId, setEmailAccountId] = useState(null);
   const [userEmail, setUserEmail] = useState("");
+  const [emails, setEmails] = useState([]);
+  const [isLoadingEmails, setIsLoadingEmails] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [currentFolder, setCurrentFolder] = useState("Inbox");
+  const [accountProfile, setAccountProfile] = useState(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   // Check if user is already authenticated on component mount
   useEffect(() => {
+    emailDebugLog("Layout component mounted, checking authentication");
     const token = localStorage.getItem("auth_token");
     const storedAccountId = localStorage.getItem("email_account_id");
     
     if (token && storedAccountId) {
+      emailDebugLog("Found existing authentication", { accountId: storedAccountId });
       setIsAuthenticated(true);
       setEmailAccountId(storedAccountId);
       setUserEmail(storedAccountId.includes('@') ? storedAccountId : '');
+      
+      // Fetch account profile
+      fetchAccountProfile(storedAccountId);
+      
+      // Fetch emails if we have an account ID
+      fetchEmails(storedAccountId, null, "Inbox");
+    } else {
+      emailDebugLog("No existing authentication found");
     }
   }, []);
 
+  // Fetch account profile from the backend
+  const fetchAccountProfile = async (accountId) => {
+    if (!accountId) {
+      emailDebugLog("fetchAccountProfile called without accountId");
+      return;
+    }
+    
+    emailDebugLog("Fetching account profile", { accountId });
+    setIsLoadingProfile(true);
+    
+    try {
+      const url = `https://localhost:5001/emails/accounts/${accountId}/profile`;
+      emailDebugLog("Fetching profile with URL", { url });
+      
+      const response = await makeAuthenticatedRequest(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        emailDebugLog("Failed to fetch profile", { status: response.status });
+        throw new Error(`Failed to fetch profile: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      emailDebugLog("Profile fetched successfully", { profile: data });
+      
+      setAccountProfile(data);
+      
+      // Update email address if it's available in the profile
+      if (data.emailAddress) {
+        setUserEmail(data.emailAddress);
+      }
+      
+    } catch (error) {
+      emailDebugLog("Error fetching profile", { error: error.message });
+      console.error("Error fetching profile:", error);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  // Fetch emails from the backend
+  const fetchEmails = async (accountId, folderId = null, folderName = "Inbox") => {
+    if (!accountId) {
+      emailDebugLog("fetchEmails called without accountId");
+      return;
+    }
+    
+    emailDebugLog("Fetching emails", { accountId, folderId, folderName });
+    setIsLoadingEmails(true);
+    setEmailError("");
+    setCurrentFolder(folderName);
+    
+    try {
+      const url = `https://localhost:5001/emails/${accountId}/messages/folder/${folderName}`;
+      emailDebugLog("Fetching emails with URL", { url });
+      
+      const response = await makeAuthenticatedRequest(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        emailDebugLog("Failed to fetch emails", { status: response.status });
+        throw new Error(`Failed to fetch emails: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      emailDebugLog("Emails fetched successfully", { count: data.length });
+      setEmails(data);
+    } catch (error) {
+      emailDebugLog("Error fetching emails", { error: error.message });
+      console.error("Error fetching emails:", error);
+      setEmailError("Failed to load emails. Please try again later.");
+    } finally {
+      setIsLoadingEmails(false);
+    }
+  };
+
   const handleLogin = (accountId, email) => {
+    emailDebugLog("User logged in", { accountId, email });
     setIsAuthenticated(true);
     setEmailAccountId(accountId);
     setUserEmail(email);
+    
+    // Fetch account profile after successful login
+    fetchAccountProfile(accountId);
+    
+    // Fetch emails after successful login
+    fetchEmails(accountId, null, "Inbox");
   };
 
   const handleLogout = () => {
+    emailDebugLog("User logging out", { accountId: emailAccountId });
     // Only remove email_account_id, not auth_token since that's for the game system
     localStorage.removeItem("email_account_id");
     setIsAuthenticated(false);
     setEmailAccountId(null);
     setUserEmail("");
+    setEmails([]);
+    setAccountProfile(null);
+  };
+
+  const handleFolderChange = (folderName, folderId = null) => {
+    emailDebugLog("Folder changed", { folderName, folderId });
+    fetchEmails(emailAccountId, folderId, folderName);
   };
 
   // If not authenticated, show login screen
@@ -248,7 +389,14 @@ export default function Layout() {
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar isCollapsed={isCollapsed} onCompose={() => setIsComposing(true)} />
+        <Sidebar 
+          isCollapsed={isCollapsed} 
+          onCompose={() => setIsComposing(true)} 
+          onFolderSelect={handleFolderChange}
+          currentFolder={currentFolder}
+          folders={accountProfile?.folders || []}
+          isLoading={isLoadingProfile}
+        />
         {selectedEmail ? (
           <EmailView 
             email={selectedEmail} 
@@ -263,6 +411,10 @@ export default function Layout() {
             onEmailSelect={setSelectedEmail} 
             emailAccountId={emailAccountId}
             makeAuthenticatedRequest={makeAuthenticatedRequest}
+            emails={emails}
+            isLoading={isLoadingEmails}
+            error={emailError}
+            currentFolder={currentFolder}
           />
         )}
       </div>
@@ -271,6 +423,7 @@ export default function Layout() {
           onClose={() => setIsComposing(false)} 
           emailAccountId={emailAccountId}
           makeAuthenticatedRequest={makeAuthenticatedRequest}
+          onEmailSent={() => fetchEmails(emailAccountId, null, currentFolder)}
         />
       )}
     </div>
