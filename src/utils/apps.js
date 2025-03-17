@@ -129,7 +129,7 @@ const apps = [
     icon: "mail",
     type: "app",
     action: "EXTERNAL",
-    payload: "mailto:blueedgetechno@gmail.com",
+    payload: "mailto:chabasinski.przemyslaw@gmail.com",
   },
   {
     name: "Movies",
