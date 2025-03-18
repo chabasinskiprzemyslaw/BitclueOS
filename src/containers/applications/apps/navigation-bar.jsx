@@ -1,25 +1,60 @@
 "use client"
 
 import { ArrowLeft, ArrowRight, RotateCcw, Star } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import browserReducer, { initialState } from "../../../reducers/browser";
 import { useReducer } from 'react';
 import React from "react";
 
-export const NavigationBar = ({ onUrlChange }) => {
+export const NavigationBar = ({ onUrlChange, initialUrl = "" }) => {
   const [state, dispatch] = useReducer(
         browserReducer,
         initialState
       );
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(initialUrl);
+  const initialUrlRef = useRef(initialUrl);
+  const isInitialRender = useRef(true);
 
-  const activeTab = state.tabs.find((tab) => tab.isActive)
+  const activeTab = state.tabs.find((tab) => tab.isActive);
 
+  // Update URL when active tab changes
   useEffect(() => {
-    if (activeTab) {
-      setUrl(activeTab.url)
+    if (activeTab && activeTab.url && !isInitialRender.current) {
+      setUrl(activeTab.url);
     }
-  }, [activeTab])
+  }, [activeTab]);
+
+  // Handle initialUrl updates
+  useEffect(() => {
+    // Skip if initialUrl hasn't changed
+    if (initialUrl === initialUrlRef.current && !isInitialRender.current) {
+      return;
+    }
+    
+    initialUrlRef.current = initialUrl;
+    
+    if (initialUrl) {
+      setUrl(initialUrl);
+      
+      // Only dispatch if we have an active tab and this isn't the initial render
+      if (activeTab && !isInitialRender.current) {
+        dispatch({
+          type: "UPDATE_TAB",
+          tab: {
+            id: activeTab.id,
+            url: initialUrl,
+            title: initialUrl,
+            content: `Content for ${initialUrl}`,
+          },
+        });
+      }
+    }
+    
+    // Clear the initial render flag after first render
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+    }
+  }, [initialUrl, activeTab]);
 
   const handleUrlChange = (e) => {
     setUrl(e.target.value);
@@ -32,16 +67,19 @@ export const NavigationBar = ({ onUrlChange }) => {
   };
 
   const handleUrlSubmit = (e) => {
-    e.preventDefault()
-    dispatch({
-      type: "UPDATE_TAB",
-      tab: {
-        id: activeTab.id,
-        url: url,
-        title: url,
-        content: `Content for ${url}`,
-      },
-    })
+    e.preventDefault();
+    if (activeTab) {
+      dispatch({
+        type: "UPDATE_TAB",
+        tab: {
+          id: activeTab.id,
+          url: url,
+          title: url,
+          content: `Content for ${url}`,
+        },
+      });
+    }
+    onUrlChange(url);
   }
 
   return (

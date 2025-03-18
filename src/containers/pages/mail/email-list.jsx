@@ -2,7 +2,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs"
 import { cn } from "../../../lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, Paperclip } from "lucide-react";
 
 export function EmailList({ 
   activeTab, 
@@ -14,7 +14,14 @@ export function EmailList({
   currentFolder
 }) {
   // Filter emails by category if we're using tabs
-  const filteredEmails = activeTab ? emails.filter(email => email.category === activeTab) : emails;
+  const filteredEmails = emails;
+
+  // Handle email selection
+  const handleEmailSelect = (email) => {
+    if (onEmailSelect && email?.id) {
+      onEmailSelect(email);
+    }
+  };
 
   // Render loading state
   if (isLoading) {
@@ -92,7 +99,7 @@ export function EmailList({
         {filteredEmails.map((email) => (
           <div
             key={email.id}
-            onClick={() => onEmailSelect(email)}
+            onClick={() => handleEmailSelect(email)}
             className={cn(
               "flex items-center gap-4 px-4 py-2 hover:bg-secondary/50 cursor-pointer",
               !email.isRead && "font-medium",
@@ -102,6 +109,9 @@ export function EmailList({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="truncate">{email.senderName}</span>
+                {email.attachments && email.attachments.length > 0 && (
+                  <Paperclip className="h-3 w-3 text-muted-foreground" />
+                )}
                 <span className="text-sm text-muted-foreground ml-auto">
                   {formatDate(email.sentAt)}
                 </span>

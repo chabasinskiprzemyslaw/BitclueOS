@@ -86,6 +86,9 @@ export const LockScreen = (props) => {
   const [authError, setAuthError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [scenarios, setScenarios] = useState([]);
+  const [selectedScenario, setSelectedScenario] = useState("");
+  const [loadingScenarios, setLoadingScenarios] = useState(false);
   const dispatch = useDispatch();
 
   const userName = useSelector((state) => state.setting.person.name);
@@ -95,6 +98,46 @@ export const LockScreen = (props) => {
     // Initialize Keycloak
     initKeycloak();
   }, []);
+
+  // Fetch scenarios when the login form is shown
+  useEffect(() => {
+    if (showLoginForm) {
+      fetchScenarios();
+    }
+  }, [showLoginForm]);
+
+  // Fetch scenarios from the API
+  const fetchScenarios = async () => {
+    try {
+      setLoadingScenarios(true);
+      // Using HTTPS for security
+      const response = await fetch('https://localhost:5001/story-engine/scenarios', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // For development environments that might use self-signed certificates
+        // In production, proper certificates should be used
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setScenarios(data);
+      
+      // Set the first scenario as the default if available
+      if (data.length > 0) {
+        setSelectedScenario(data[0].id);
+      }
+    } catch (error) {
+      console.error("Failed to fetch scenarios:", error);
+      setAuthError("Failed to load scenarios. Please try again later.");
+    } finally {
+      setLoadingScenarios(false);
+    }
+  };
 
   // Initialize Keycloak
   const initKeycloak = async () => {
@@ -190,7 +233,14 @@ export const LockScreen = (props) => {
       setAuthError("Password is required");
       return;
     }
-    
+
+    if (!selectedScenario) {
+      console.log("No scenario selected");
+      setAuthError("Please select a scenario");
+      return;
+    }
+
+    localStorage.setItem("selected_scenario", selectedScenario);
     setIsLoading(true);
     setAuthError(null);
     
@@ -255,10 +305,12 @@ export const LockScreen = (props) => {
     } catch (error) {
       setAuthError("Authentication failed. Please check your connection and try again.");
       console.error("Login error:", error);
+      localStorage.removeItem("selected_scenario");
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -356,6 +408,29 @@ export const LockScreen = (props) => {
                     placeholder="Password"
                     className="px-3 py-2 bg-white/10 border border-white/30 rounded text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 w-full"
                   />
+                </div>
+                
+                <div>
+                  {loadingScenarios ? (
+                    <div className="px-3 py-2 bg-white/10 border border-white/30 rounded text-white flex items-center justify-center">
+                      <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                      <span className="text-white/50">Loading scenarios...</span>
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedScenario}
+                      onChange={(e) => setSelectedScenario(e.target.value)}
+                      className="px-3 py-2 bg-white/10 border border-white/30 rounded text-white focus:outline-none focus:ring-2 focus:ring-white/50 w-full appearance-none"
+                      style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")", backgroundPosition: "right 0.5rem center", backgroundRepeat: "no-repeat", backgroundSize: "1.5em 1.5em", paddingRight: "2.5rem" }}
+                    >
+                      <option value="" disabled>Select Scenario</option>
+                      {scenarios.map((scenario) => (
+                        <option key={scenario.id} value={scenario.id} className="bg-gray-800 text-white">
+                          {scenario.title}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 
                 <button 

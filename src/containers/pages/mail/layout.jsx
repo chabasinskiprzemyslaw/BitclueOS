@@ -43,7 +43,9 @@ const LoginScreen = ({ onLogin }) => {
     try {
       // Get the auth token from localStorage (set by the game system)
       const token = localStorage.getItem("auth_token");
-      
+      const userInfo = JSON.parse(localStorage.getItem("user_info"));
+      const selectedScenario = localStorage.getItem("selected_scenario");
+
       if (!token) {
         throw new Error("Authentication token not found. Please restart the game.");
       }
@@ -55,7 +57,7 @@ const LoginScreen = ({ onLogin }) => {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ EmailAddress: emailAddress, Password: password }),
+        body: JSON.stringify({ EmailAddress: emailAddress, Password: password, UserIdentityId: userInfo.id, ScenarioId: selectedScenario }),
       });
 
       if (!response.ok) {
@@ -289,16 +291,20 @@ export default function Layout() {
     setIsLoadingEmails(true);
     setEmailError("");
     setCurrentFolder(folderName);
+
+    const userInfo = JSON.parse(localStorage.getItem("user_info"));
+    const selectedScenario = localStorage.getItem("selected_scenario");
     
     try {
       const url = `https://localhost:5001/emails/${accountId}/messages/folder/${folderName}`;
       emailDebugLog("Fetching emails with URL", { url });
       
       const response = await makeAuthenticatedRequest(url, {
-        method: "GET",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ UserIdentityId: userInfo.id, ScenarioId: selectedScenario }),
       });
 
       if (!response.ok) {
@@ -345,6 +351,11 @@ export default function Layout() {
   const handleFolderChange = (folderName, folderId = null) => {
     emailDebugLog("Folder changed", { folderName, folderId });
     fetchEmails(emailAccountId, folderId, folderName);
+  };
+
+  const handleEmailSelect = (email) => {
+    emailDebugLog("Email selected", { emailId: email.id });
+    setSelectedEmail(email);
   };
 
   // If not authenticated, show login screen
@@ -400,15 +411,17 @@ export default function Layout() {
         {selectedEmail ? (
           <EmailView 
             email={selectedEmail} 
-            onClose={() => setSelectedEmail(null)} 
-            emailAccountId={emailAccountId} 
-            makeAuthenticatedRequest={makeAuthenticatedRequest}
+            onClose={() => {
+              setSelectedEmail(null);
+              // Refresh emails list to update read status
+              fetchEmails(emailAccountId, null, currentFolder);
+            }} 
           />
         ) : (
           <EmailList 
             activeTab={activeTab} 
             setActiveTab={setActiveTab} 
-            onEmailSelect={setSelectedEmail} 
+            onEmailSelect={handleEmailSelect} 
             emailAccountId={emailAccountId}
             makeAuthenticatedRequest={makeAuthenticatedRequest}
             emails={emails}
