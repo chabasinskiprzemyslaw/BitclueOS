@@ -220,13 +220,6 @@ const apps = [
     type: "app",
   },
   {
-    name: "Twitter",
-    icon: "twitter",
-    type: "app",
-    action: "EXTERNAL",
-    payload: "https://twitter.com/blueedgetechno",
-  },
-  {
     name: "Teams",
     icon: "teams",
     type: "app",
@@ -279,6 +272,12 @@ const apps = [
     type: "app",
     action: "DISCORD",
   },
+  {
+    name: "Social Media",
+    icon: "socialmedia",
+    type: "app",
+    action: "SOCIALMEDIA",
+  }
 ];
 
 for (let i = 0; i < installed.length; i++) {
