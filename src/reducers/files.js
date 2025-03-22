@@ -6,6 +6,12 @@ const defState = {
   hist: [],
   hid: 0,
   view: 1,
+  fileView: {
+    show: false,
+    type: null,
+    url: null,
+    name: null
+  }
 };
 
 defState.hist.push(defState.cdir);
@@ -36,6 +42,20 @@ const fileReducer = (state = defState, action) => {
     tmp.hid++;
     if (tmp.hid > tmp.hist.length - 1) tmp.hid = tmp.hist.length - 1;
     navHist = true;
+  } else if (action.type === "OPENFILEVIEW") {
+    tmp.fileView = {
+      show: true,
+      type: action.payload.type,
+      url: action.payload.url,
+      name: action.payload.name
+    };
+  } else if (action.type === "CLOSEFILEVIEW") {
+    tmp.fileView = {
+      show: false,
+      type: null,
+      url: null,
+      name: null
+    };
   }
 
   if (!navHist && tmp.cdir != tmp.hist[tmp.hid]) {

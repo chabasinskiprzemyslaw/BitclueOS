@@ -123,7 +123,7 @@ export const delApp = (act, menu) => {
       var app = Object.keys(apps).filter((x) => apps[x].action == data.type);
       if (app) {
         app = apps[app];
-        if (app.pwa == true || app.pwa == False /*what is that for ?*/) {
+        if (app.pwa == true || app.pwa == false /*what is that for ?*/) {
           store.dispatch({ type: app.action, payload: "close" });
           store.dispatch({ type: "DELAPP", payload: app.icon });
 
@@ -259,6 +259,16 @@ export const handleFileOpen = (id) => {
   if (item != null) {
     if (item.type == "folder") {
       store.dispatch({ type: "FILEDIR", payload: item.id });
+    } else if (item.type === "image" || item.type === "video") {
+      store.dispatch({ 
+        type: "OPENFILEVIEW", 
+        payload: {
+          id: item.id,
+          type: item.type,
+          url: item.info.url,
+          name: item.name
+        } 
+      });
     }
   }
 };

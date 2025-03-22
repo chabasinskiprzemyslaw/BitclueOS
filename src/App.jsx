@@ -15,6 +15,7 @@ import {
 } from "./components/start";
 import Taskbar from "./components/taskbar";
 import { Background, BootScreen, LockScreen } from "./containers/background";
+import { MediaViewer } from "./components/MediaViewer";
 
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
@@ -165,6 +166,7 @@ function App() {
           </div>
           <Taskbar />
           <ActMenu />
+          <MediaViewer />
         </div>
       </ErrorBoundary>
     </div>

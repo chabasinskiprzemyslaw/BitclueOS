@@ -149,6 +149,48 @@
                     "data": {
                       "Did you really expected that": {}
                     }
+                  },
+                  "Investigation Photos": {
+                    "type": "folder",
+                    "name": "Investigation Photos",
+                    "data": {
+                      "Crime Scene.jpg": {
+                        "type": "image",
+                        "name": "Crime Scene.jpg",
+                        "info": {
+                          "icon": "image",
+                          "url": "https://images.unsplash.com/photo-1589903308904-1010c2294adc?q=80&w=1000&auto=format&fit=crop",
+                          "size": "1.2 MB",
+                          "dimensions": "1920x1080",
+                          "dateCreated": "2023-05-15",
+                          "dateModified": "2023-05-15"
+                        }
+                      },
+                      "Suspect 1.jpg": {
+                        "type": "image",
+                        "name": "Suspect 1.jpg",
+                        "info": {
+                          "icon": "image",
+                          "url": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1000&auto=format&fit=crop",
+                          "size": "0.8 MB",
+                          "dimensions": "1280x720",
+                          "dateCreated": "2023-05-16",
+                          "dateModified": "2023-05-16"
+                        }
+                      },
+                      "Evidence.jpg": {
+                        "type": "image",
+                        "name": "Evidence.jpg",
+                        "info": {
+                          "icon": "image",
+                          "url": "https://images.unsplash.com/photo-1579451704469-3d5d88556653?q=80&w=1000&auto=format&fit=crop",
+                          "size": "1.5 MB",
+                          "dimensions": "2048x1536",
+                          "dateCreated": "2023-05-17",
+                          "dateModified": "2023-05-17"
+                        }
+                      }
+                    }
                   }
                 }
               },
@@ -156,6 +198,40 @@
                 "info": {
                   "spid": "%videos%",
                   "icon": "vid"
+                },
+                "data": {
+                  "Investigation Footage": {
+                    "type": "folder",
+                    "name": "Investigation Footage",
+                    "data": {
+                      "Interview.mp4": {
+                        "type": "video",
+                        "name": "Interview.mp4",
+                        "info": {
+                          "icon": "video",
+                          "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                          "size": "5.6 MB",
+                          "duration": "9:56",
+                          "resolution": "720p",
+                          "dateCreated": "2023-05-18",
+                          "dateModified": "2023-05-18"
+                        }
+                      },
+                      "Surveillance.mp4": {
+                        "type": "video",
+                        "name": "Surveillance.mp4",
+                        "info": {
+                          "icon": "video",
+                          "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                          "size": "8.2 MB",
+                          "duration": "10:53",
+                          "resolution": "1080p",
+                          "dateCreated": "2023-05-19",
+                          "dateModified": "2023-05-19"
+                        }
+                      }
+                    }
+                  }
                 }
               },
               "OneDrive": {

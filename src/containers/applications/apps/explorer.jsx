@@ -292,6 +292,19 @@ const ContentArea = ({ searchtxt }) => {
     }
   };
 
+  // Helper to get appropriate icon based on file type
+  const getFileIcon = (item) => {
+    if (item.type === "folder") {
+      return `icon/win/${item.info.icon || "folder"}`;
+    } else if (item.type === "image") {
+      return `icon/win/image`;
+    } else if (item.type === "video") {
+      return `icon/win/video`;
+    } else {
+      return `icon/win/${item.info.icon || "file"}`;
+    }
+  };
+
   return (
     <div
       className="contentarea"
@@ -312,7 +325,7 @@ const ContentArea = ({ searchtxt }) => {
                   onClick={handleClick}
                   onDoubleClick={handleDouble}
                 >
-                  <Image src={`icon/win/${item.info.icon}`} />
+                  <Image src={getFileIcon(item)} />
                   <span>{item.name}</span>
                 </div>
               )
