@@ -1,13 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Menu, Search, Settings, HelpCircle, Grid, Mail, Lock } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Menu, Search, Settings, HelpCircle, Grid, Mail, Lock, Bell, BellOff, Bug } from "lucide-react"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
 import { Sidebar } from "./sidebar"
 import { EmailList } from "./email-list"
 import { EmailView } from "./email-view"
 import { ComposeEmail } from "./compose-email"
+import { EmailDebugTools } from "./debug-tools"
+// Import SignalR
+import * as signalR from "@microsoft/signalr"
+// Import our custom SignalR hook
+import { useEmailSignalR, CONNECTION_STATUS } from "./useEmailSignalR"
 
 // Debug mode flag - set to true to enable debug logging
 const EMAIL_DEBUG_MODE = true;
@@ -213,6 +218,113 @@ export default function Layout() {
   const [currentFolder, setCurrentFolder] = useState("Inbox");
   const [accountProfile, setAccountProfile] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState(CONNECTION_STATUS.DISCONNECTED);
+  const [realTimeEnabled, setRealTimeEnabled] = useState(true);
+  // Track if we've received a notification recently for visual feedback
+  const [newEmailNotification, setNewEmailNotification] = useState(false);
+  const notificationTimeoutRef = useRef(null);
+  const [showDebugTools, setShowDebugTools] = useState(false);
+  const [isDevMode, setIsDevMode] = useState(false);
+
+  // Initialize SignalR connection using our custom hook
+  const hubConnectionRef = useEmailSignalR({
+    isAuthenticated,
+    token: localStorage.getItem("auth_token"),
+    emailAccountId,
+    setConnectionStatus,
+    onNewEmail: (email) => {
+      if (!realTimeEnabled) return;
+      
+      emailDebugLog("Received new email notification", email);
+      
+      // Check if this email belongs to the current folder (usually Inbox for new emails)
+      if (email.folderName && email.folderName.toLowerCase() === currentFolder.toLowerCase()) {
+        // Add the new email to the emails list without refetching
+        setEmails(prevEmails => {
+          // Check if email already exists to prevent duplicates
+          const emailExists = prevEmails.some(existingEmail => existingEmail.id === email.id);
+          if (emailExists) {
+            return prevEmails;
+          }
+          
+          // Add the new email to the top of the list
+          return [email, ...prevEmails];
+        });
+      }
+      
+      // Show notification indicator
+      setNewEmailNotification(true);
+      
+      // Clear any existing timeout
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+      
+      // Hide notification indicator after 3 seconds
+      notificationTimeoutRef.current = setTimeout(() => {
+        setNewEmailNotification(false);
+      }, 3000);
+    }
+  });
+
+  // Register global callback for debug tools
+  useEffect(() => {
+    // Only register in authenticated state
+    if (isAuthenticated) {
+      // Create a global callback function that debug tools can access
+      window.emailNotificationCallback = (email) => {
+        if (hubConnectionRef.current) {
+          // Simulate a real-time email notification
+          emailDebugLog("Simulating email notification via debug tools", email);
+          
+          // Call our onNewEmail handler directly
+          if (realTimeEnabled) {
+            // Check if this email belongs to the current folder (usually Inbox for new emails)
+            if (email.folderName && email.folderName.toLowerCase() === currentFolder.toLowerCase()) {
+              // Add the new email to the emails list without refetching
+              setEmails(prevEmails => {
+                // Check if email already exists to prevent duplicates
+                const emailExists = prevEmails.some(existingEmail => existingEmail.id === email.id);
+                if (emailExists) {
+                  return prevEmails;
+                }
+                
+                // Add the new email to the top of the list
+                return [email, ...prevEmails];
+              });
+            }
+            
+            // Show notification indicator
+            setNewEmailNotification(true);
+            
+            // Clear any existing timeout
+            if (notificationTimeoutRef.current) {
+              clearTimeout(notificationTimeoutRef.current);
+            }
+            
+            // Hide notification indicator after 3 seconds
+            notificationTimeoutRef.current = setTimeout(() => {
+              setNewEmailNotification(false);
+            }, 3000);
+          }
+        }
+      };
+    }
+    
+    // Cleanup the global callback on unmount or deauthentication
+    return () => {
+      window.emailNotificationCallback = null;
+    };
+  }, [isAuthenticated, realTimeEnabled, currentFolder]);
+
+  // Check if we're in development mode
+  useEffect(() => {
+    // Check if we're in development mode
+    const isDev = process.env.NODE_ENV === 'development' || 
+                 window.location.hostname === 'localhost' ||
+                 window.location.hostname === '127.0.0.1';
+    setIsDevMode(isDev);
+  }, []);
 
   // Check if user is already authenticated on component mount
   useEffect(() => {
@@ -358,6 +470,21 @@ export default function Layout() {
     setSelectedEmail(email);
   };
 
+  // Clear notification timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Toggle real-time notifications
+  const toggleRealTime = () => {
+    setRealTimeEnabled(prev => !prev);
+    emailDebugLog(`Real-time notifications ${!realTimeEnabled ? 'enabled' : 'disabled'}`);
+  };
+
   // If not authenticated, show login screen
   if (!isAuthenticated) {
     return <LoginScreen onLogin={handleLogin} />;
@@ -382,6 +509,31 @@ export default function Layout() {
           </div>
         </div>
         <div className="flex items-center gap-2 ml-4">
+          {/* Real-time toggle button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleRealTime} 
+            title={realTimeEnabled ? "Disable real-time notifications" : "Enable real-time notifications"}
+            className={newEmailNotification ? "animate-pulse" : ""}
+          >
+            {realTimeEnabled ? (
+              <Bell className={`h-5 w-5 ${newEmailNotification ? "text-green-500" : ""}`} />
+            ) : (
+              <BellOff className="h-5 w-5" />
+            )}
+          </Button>
+          {/* Debug tools button (only in dev mode) */}
+          {isDevMode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowDebugTools(!showDebugTools)}
+              title="Debug Tools"
+            >
+              <Bug className={`h-5 w-5 ${showDebugTools ? "text-yellow-500" : ""}`} />
+            </Button>
+          )}
           <Button variant="ghost" size="icon">
             <HelpCircle className="h-5 w-5" />
           </Button>
@@ -393,12 +545,28 @@ export default function Layout() {
           </Button>
           <div className="ml-2 flex items-center">
             <span className="text-sm mr-2">{userEmail}</span>
+            {/* Connection status indicator */}
+            {connectionStatus === CONNECTION_STATUS.CONNECTED && realTimeEnabled && (
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2" title="Connected for real-time notifications"></span>
+            )}
+            {connectionStatus === CONNECTION_STATUS.RECONNECTING && realTimeEnabled && (
+              <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse" title="Reconnecting..."></span>
+            )}
+            {connectionStatus === CONNECTION_STATUS.ERROR && realTimeEnabled && (
+              <span className="w-2 h-2 bg-red-500 rounded-full mr-2" title="Connection error"></span>
+            )}
             <Button variant="outline" size="sm" onClick={handleLogout}>
               Sign out
             </Button>
           </div>
         </div>
       </header>
+      {/* Display connection status message if there's an issue */}
+      {realTimeEnabled && (connectionStatus === CONNECTION_STATUS.RECONNECTING || connectionStatus === CONNECTION_STATUS.ERROR) && (
+        <div className={`px-4 py-1 text-xs text-center ${connectionStatus === CONNECTION_STATUS.ERROR ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+          {connectionStatus === CONNECTION_STATUS.RECONNECTING ? 'Reconnecting to email server...' : 'Connection issue with email server. Some features may be unavailable.'}
+        </div>
+      )}
       <div className="flex flex-1 overflow-hidden">
         <Sidebar 
           isCollapsed={isCollapsed} 
@@ -428,6 +596,7 @@ export default function Layout() {
             isLoading={isLoadingEmails}
             error={emailError}
             currentFolder={currentFolder}
+            newEmailNotification={newEmailNotification}
           />
         )}
       </div>
@@ -437,6 +606,15 @@ export default function Layout() {
           emailAccountId={emailAccountId}
           makeAuthenticatedRequest={makeAuthenticatedRequest}
           onEmailSent={() => fetchEmails(emailAccountId, null, currentFolder)}
+        />
+      )}
+
+      {/* Debug tools */}
+      {showDebugTools && isDevMode && (
+        <EmailDebugTools 
+          emailAccountId={emailAccountId}
+          hubConnection={hubConnectionRef}
+          onClose={() => setShowDebugTools(false)}
         />
       )}
     </div>
