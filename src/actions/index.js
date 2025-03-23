@@ -258,7 +258,14 @@ export const handleFileOpen = (id) => {
   const item = store.getState().files.data.getId(id);
   if (item != null) {
     if (item.type == "folder") {
-      store.dispatch({ type: "FILEDIR", payload: item.id });
+      console.log("FILEDIR", item);
+      store.dispatch({ type: "FILEDIR", 
+        payload: {
+        id: item.id,
+        type: item.type,
+        triggerBackend: item.info.triggerBackend,
+        triggerData: item.info.triggerData
+      }  });
     } else if (item.type === "image" || item.type === "video") {
       store.dispatch({ 
         type: "OPENFILEVIEW", 

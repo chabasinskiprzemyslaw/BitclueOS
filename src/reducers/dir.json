@@ -15,11 +15,23 @@
           "config": {
             "type": "folder",
             "name": "config"
+          },
+          "important_report.pdf": {
+            "type": "folder",
+            "name": "important_report",
+            "info": {
+              "triggerBackend": true,
+              "triggerData": {
+                "reportId": "REP-2023-001",
+                "confidential": true,
+                "category": "financial"
+              }
+            }
           }
         }
       },
       "Macrosoft": {},
-      "Program Files": {
+      "Programs": {
         "data": {
           "7-Zip": {},
           "Adobe": {},
@@ -109,7 +121,23 @@
                   "OneNote notebooks": {},
                   "OnScreen Control": {},
                   "Outlook Files": {},
-                  "Visual Studio": {}
+                  "Visual Studio": {},
+                  "secure_document.docx": {
+                    "type": "file",
+                    "name": "secure_document.docx",
+                    "info": {
+                      "icon": "file",
+                      "size": "1.7 MB",
+                      "dateCreated": "2023-08-15",
+                      "dateModified": "2023-09-02",
+                      "triggerBackend": true,
+                      "triggerData": {
+                        "documentId": "DOC-2023-042",
+                        "accessLevel": "restricted",
+                        "department": "legal"
+                      }
+                    }
+                  }
                 }
               },
               "Downloads": {

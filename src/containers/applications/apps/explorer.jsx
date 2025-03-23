@@ -4,6 +4,37 @@ import { Icon, Image, ToolBar } from "../../../utils/general";
 import { dispatchAction, handleFileOpen } from "../../../actions";
 import "./assets/fileexpo.scss";
 
+// Debug logger utility with toggle flag
+const debugLogger = (componentName, action, data) => {
+  // Set to true to enable logging, false to disable
+  const enableLogging = false;
+  
+  if (enableLogging) {
+    console.log(`[${componentName}] ${action}`, data || '');
+  }
+};
+
+// Enhanced handleFileOpen helper to ensure proper data is passed
+const enhancedHandleFileOpen = (fileId, fileData = {}) => {
+  debugLogger('Explorer', 'enhancedHandleFileOpen', { fileId, ...fileData });
+  
+  // Check if this is a file that should trigger a backend action
+  if (fileData.trigger === 'true') {
+    try {
+      const triggerData = fileData.triggerData ? JSON.parse(fileData.triggerData) : {};
+      debugLogger('Explorer', 'triggerBackend', { 
+        fileId, 
+        fileName: fileData.name,
+        triggerData 
+      });
+    } catch (error) {
+      debugLogger('Explorer', 'triggerBackend ERROR', error);
+    }
+  }
+  
+  handleFileOpen(fileId);
+};
+
 const NavTitle = (props) => {
   var src = props.icon || "folder";
 
@@ -27,6 +58,8 @@ const NavTitle = (props) => {
 const FolderDrop = ({ dir }) => {
   const files = useSelector((state) => state.files);
   const folder = files.data.getId(dir);
+  
+  debugLogger('FolderDrop', 'render', dir);
 
   return (
     <>
@@ -55,7 +88,13 @@ const Dropdown = (props) => {
     if (props.spid) return special[props.spid];
     else return props.dir;
   });
-  const toggle = () => setOpen(!open);
+  
+  const toggle = () => {
+    debugLogger('Dropdown', 'toggle', props.title);
+    setOpen(!open);
+  };
+
+  debugLogger('Dropdown', 'render', props.title);
 
   return (
     <div className="dropdownmenu">
@@ -101,11 +140,19 @@ export const Explorer = () => {
   const [searchtxt, setShText] = useState("");
   const dispatch = useDispatch();
 
-  const handleChange = (e) => setPath(e.target.value);
-  const handleSearchChange = (e) => setShText(e.target.value);
+  const handleChange = (e) => {
+    setPath(e.target.value);
+    debugLogger('Explorer', 'handleChange', e.target.value);
+  };
+  
+  const handleSearchChange = (e) => {
+    setShText(e.target.value);
+    debugLogger('Explorer', 'handleSearchChange', e.target.value);
+  };
 
   const handleEnter = (e) => {
     if (e.key === "Enter") {
+      debugLogger('Explorer', 'handleEnter', cpath);
       dispatch({ type: "FILEPATH", payload: cpath });
     }
   };
@@ -162,6 +209,7 @@ export const Explorer = () => {
   };
 
   useEffect(() => {
+    debugLogger('Explorer', 'useEffect: path changed', files.cpath);
     setPath(files.cpath);
     setShText("");
   }, [files.cpath]);
@@ -274,20 +322,32 @@ const ContentArea = ({ searchtxt }) => {
 
   const handleClick = (e) => {
     e.stopPropagation();
+    debugLogger('ContentArea', 'handleClick', e.target.dataset.id);
     setSelect(e.target.dataset.id);
   };
 
   const handleDouble = (e) => {
     e.stopPropagation();
-    handleFileOpen(e.target.dataset.id);
+    const dataset = e.target.dataset;
+    debugLogger('ContentArea', 'handleDouble', dataset);
+    
+    // Pass all available data from dataset
+    enhancedHandleFileOpen(dataset.id, {
+      name: dataset.name,
+      type: dataset.type,
+      trigger: dataset.trigger,
+      triggerData: dataset.triggerData
+    });
   };
 
   const emptyClick = (e) => {
+    debugLogger('ContentArea', 'emptyClick');
     setSelect(null);
   };
 
   const handleKey = (e) => {
     if (e.key == "Backspace") {
+      debugLogger('ContentArea', 'handleKey', 'Backspace');
       dispatch({ type: "FILEPREV" });
     }
   };
@@ -322,6 +382,10 @@ const ContentArea = ({ searchtxt }) => {
                   className="conticon hvtheme flex flex-col items-center prtclk"
                   data-id={item.id}
                   data-focus={selected == item.id}
+                  data-type={item.type}
+                  data-name={item.name}
+                  data-trigger={item.info && item.info.triggerBackend ? "true" : "false"}
+                  data-trigger-data={item.info && item.info.triggerData ? JSON.stringify(item.info.triggerData) : ""}
                   onClick={handleClick}
                   onDoubleClick={handleDouble}
                 >
@@ -343,6 +407,8 @@ const ContentArea = ({ searchtxt }) => {
 const NavPane = ({}) => {
   const files = useSelector((state) => state.files);
   const special = useSelector((state) => state.files.data.special);
+
+  debugLogger('NavPane', 'render');
 
   return (
     <div className="navpane win11Scroll">
@@ -383,6 +449,8 @@ const NavPane = ({}) => {
 };
 
 const Ribbon = ({}) => {
+  debugLogger('Ribbon', 'render');
+  
   return (
     <div className="msribbon flex">
       <div className="ribsec">
