@@ -166,6 +166,7 @@ const appReducer = (state = defState, action) => {
         return tmpState;
       }
     }
+    
   }
 
   return state;
