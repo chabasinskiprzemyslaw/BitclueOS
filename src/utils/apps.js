@@ -277,6 +277,12 @@ const apps = [
     icon: "socialmedia",
     type: "app",
     action: "SOCIALMEDIA",
+  },
+  {
+    name: "Windows Defender",
+    icon: "defender",
+    type: "app",
+    action: "ANTIVIRUS",
   }
 ];
 

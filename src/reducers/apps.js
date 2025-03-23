@@ -71,6 +71,17 @@ const appReducer = (state = defState, action) => {
     obj.z = tmpState.hz;
     tmpState["terminal"] = obj;
     return tmpState;
+  } else if (action.type == "ANTIVIRUS") {
+    var obj = { ...tmpState["defender"] };
+
+    obj.size = "full";
+    obj.hide = false;
+    obj.max = true;
+    tmpState.hz += 1;
+    obj.z = tmpState.hz;
+
+    tmpState["defender"] = obj;
+    return tmpState;
   } else if (action.type == "ADDAPP") {
     tmpState[action.payload.icon] = action.payload;
     tmpState[action.payload.icon].size = "full";

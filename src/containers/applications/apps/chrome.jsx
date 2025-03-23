@@ -177,12 +177,12 @@ export const Chrome = () => {
       className="chrome floatTab dpShad dark"
       data-size={wnapp.size}
       data-max={wnapp.max}
+      id={wnapp.icon + "App"}
       style={{
         ...(wnapp.size == "cstm" ? wnapp.dim : null),
         zIndex: wnapp.z,
       }}
       data-hide={wnapp.hide}
-      id={wnapp.icon + "App"}
     >
       <ToolBar
         app={wnapp.action}

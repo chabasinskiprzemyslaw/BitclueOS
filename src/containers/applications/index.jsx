@@ -19,6 +19,7 @@ export * from "./apps/whiteboard";
 export * from "./apps/chrome";
 export * from "./apps/whatsapp";
 export * from "./apps/socialmedia";
+export * from "./apps/antivirus";
 
 export const ScreenPreview = () => {
   const tasks = useSelector((state) => state.taskbar);
