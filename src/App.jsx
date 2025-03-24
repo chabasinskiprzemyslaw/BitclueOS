@@ -16,6 +16,7 @@ import {
 import Taskbar from "./components/taskbar";
 import { Background, BootScreen, LockScreen } from "./containers/background";
 import { MediaViewer } from "./components/MediaViewer";
+import ObjectivesBubble from "./components/objectives/ObjectivesBubble";
 
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
@@ -163,6 +164,7 @@ function App() {
             <SidePane />
             <WidPane />
             <CalnWid />
+            <ObjectivesBubble />
           </div>
           <Taskbar />
           <ActMenu />

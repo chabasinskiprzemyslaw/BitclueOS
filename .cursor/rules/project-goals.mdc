@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Project goal
+
+- This project is a digital investigation game
+- We are mimic windows-like operating system with well known application
+- Follow the best programming practices
+- Follow the best security practices
+- Keep in mind that we don't build real applications. We want to imitate real working one. 
