@@ -1,19 +1,51 @@
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState, useEffect } from 'react';
 import { Icon } from '../../utils/general';
+import { getCurrentStepObjectives } from '../../services/storyEngineService';
 import './objectives.scss';
 
 const ObjectivesBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showHint, setShowHint] = useState(null);
-  const [objectives, setObjectives] = useState([
-    { id: 1, text: "Find the hidden message in the email", completed: false, hint: "Check the email attachments carefully" },
-    { id: 2, text: "Decode the encrypted file", completed: false, hint: "Look for patterns in the file content" },
-    { id: 3, text: "Identify the suspicious user", completed: false, hint: "Check the user's recent activity" },
-    { id: 4, text: "Locate the secret folder", completed: false, hint: "Search in system directories" },
-  ]);
+  const [objectives, setObjectives] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const toggleObjective = (id) => {
+  const scenarioId = localStorage.getItem('selected_scenario');
+  const userInfo = JSON.parse(localStorage.getItem('user_info'));
+
+  const userIdentityId = userInfo?.id;
+
+  useEffect(() => {
+    const fetchObjectives = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getCurrentStepObjectives(scenarioId, userIdentityId);
+        
+        // Transform API data to match component state
+        const transformedObjectives = data.map(obj => ({
+          id: obj.id,
+          text: obj.description,
+          completed: obj.isCompleted,
+          hint: obj.hint,
+          completedOn: obj.completedOn,
+          stepIndex: obj.stepIndex
+        }));
+        
+        setObjectives(transformedObjectives);
+      } catch (err) {
+        setError(err.message);
+        console.error('Failed to fetch objectives:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchObjectives();
+  }, [scenarioId, userIdentityId]);
+
+  const toggleObjective = async (id) => {
+    // TODO: Implement API call to update objective completion status
     setObjectives(objectives.map(obj => 
       obj.id === id ? { ...obj, completed: !obj.completed } : obj
     ));
@@ -35,33 +67,46 @@ const ObjectivesBubble = () => {
       {isOpen && (
         <div className="objectives-panel">
           <h3>Investigation Objectives</h3>
-          <div className="objectives-list">
-            {objectives.map(objective => (
-              <div key={objective.id} className="objective-item">
-                <div className="objective-content">
-                  <input
-                    type="checkbox"
-                    checked={objective.completed}
-                    onChange={() => toggleObjective(objective.id)}
-                  />
-                  <span className={objective.completed ? 'completed' : ''}>
-                    {objective.text}
-                  </span>
-                </div>
-                <button 
-                  className="hint-button"
-                  onClick={() => toggleHint(objective.id)}
-                >
-                  <Icon src="hint" width={16} />
-                </button>
-                {showHint === objective.id && (
-                  <div className="hint-content">
-                    {objective.hint}
+          {isLoading ? (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Loading objectives...</p>
+            </div>
+          ) : error ? (
+            <div className="error-state">
+              <p>{error}</p>
+            </div>
+          ) : (
+            <div className="objectives-list">
+              {objectives.map(objective => (
+                <div key={objective.id} className="objective-item">
+                  <div className="objective-content">
+                    <input
+                      type="checkbox"
+                      checked={objective.completed}
+                      onChange={() => toggleObjective(objective.id)}
+                    />
+                    <span className={objective.completed ? 'completed' : ''}>
+                      {objective.text}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  {objective.hint && (
+                    <button 
+                      className="hint-button"
+                      onClick={() => toggleHint(objective.id)}
+                    >
+                      <Icon src="hint" width={16} />
+                    </button>
+                  )}
+                  {showHint === objective.id && objective.hint && (
+                    <div className="hint-content">
+                      {objective.hint}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

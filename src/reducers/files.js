@@ -4,7 +4,7 @@ import fdata from "./dir.json";
 // Debug logger utility with toggle flag
 const debugLogger = (action, state, payload) => {
   // Set to true to enable logging, false to disable
-  const enableLogging = true;
+  const enableLogging = false;
   
   if (enableLogging) {
     console.log(`[FileReducer] ${action}`, payload || '', state ? { cdir: state.cdir, hid: state.hid } : '');
