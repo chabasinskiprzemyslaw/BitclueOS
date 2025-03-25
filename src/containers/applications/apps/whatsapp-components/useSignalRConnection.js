@@ -141,13 +141,10 @@ const useSignalRConnection = ({
             // Format the received message
             const formattedMessage = {
               id: message.id,
-              text: message.content,
-              sent: message.isCurrentUser,
-              time: new Date(message.timestamp || message.sentAt).toLocaleTimeString([], { 
-                hour: "2-digit", 
-                minute: "2-digit" 
-              }),
-              senderName: message.senderDisplayName,
+              content: message.content,
+              isCurrentUser: message.isCurrentUser,
+              sentAt: message.timestamp || message.sentAt,
+              senderDisplayName: message.senderDisplayName,
               // Extract response data if available
               responseData: message.response ? {
                 id: message.response.id,
@@ -155,10 +152,9 @@ const useSignalRConnection = ({
                 nextMessageId: message.response.nextMessageId,
                 options: message.response.options || [],
                 scenarioId: message.response.scenarioId
-              } : null
+              } : null,
+              attachments: message.attachments || []
             };
-
-            debugLog("message:", message);
             
             // Extract options immediately if they exist
             if (message.response && message.response.options && message.response.options.length > 0) {
@@ -213,7 +209,7 @@ const useSignalRConnection = ({
                 updatedChats[chatIndex] = {
                   ...updatedChats[chatIndex],
                   lastMessage: message.content,
-                  timestamp: formattedMessage.time,
+                  timestamp: formattedMessage.sentAt,
                   unread: true
                 };
                 
@@ -283,7 +279,7 @@ const useSignalRConnection = ({
                     // Check if we have a temporary message with the same content
                     const updatedMessages = prevActiveChat.messages.filter(msg => {
                       // Keep all messages that are not temporary or have different content
-                      return !(msg.isTemporary && msg.text === message.content);
+                      return !(msg.isTemporary && msg.content === message.content);
                     });
                     
                     // Add the new message
@@ -293,9 +289,12 @@ const useSignalRConnection = ({
                     const updatedChat = {
                       ...prevActiveChat,
                       messages: newMessages,
-                      lastMessage: formattedMessage.text,
-                      timestamp: formattedMessage.time
+                      lastMessage: formattedMessage.content,
+                      timestamp: formattedMessage.sentAt,
+                      _isSignalRUpdate: true // Add a flag to indicate this is a SignalR update
                     };
+
+                    debugLog("updatedChat:", updatedChat);
                     
                     return updatedChat;
                   });
@@ -307,7 +306,7 @@ const useSignalRConnection = ({
                         return {
                           ...chat,
                           lastMessage: message.content,
-                          timestamp: formattedMessage.time
+                          timestamp: formattedMessage.sentAt
                         };
                       }
                       return chat;
@@ -339,7 +338,7 @@ const useSignalRConnection = ({
                 updatedChats[chatIndex] = {
                   ...updatedChats[chatIndex],
                   lastMessage: message.content,
-                  timestamp: formattedMessage.time,
+                  timestamp: formattedMessage.sentAt,
                   unread: true
                 };
                 

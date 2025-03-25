@@ -1,32 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import {
-  Search,
-  MoreVertical,
-  Mic,
-  Smile,
-  Paperclip,
-  Settings,
-  Users,
-  Star,
-  Check,
-  LogOut,
-  Download,
-  Lock,
-  ArrowRight,
-  RefreshCw,
-} from "lucide-react"
-import { Input } from "../../../components/ui/input"
-import { Button } from "../../../components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "../../../components/ui/avatar"
-import { ScrollArea } from "../../../components/ui/scroll-area"
-import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../../components/ui/dropdown-menu"
 import { useSelector } from "react-redux";
 import { ToolBar } from "../../../utils/general";
-// Import SignalR
-import * as signalR from "@microsoft/signalr";
 
 // Import custom hooks
 import useSignalRConnection from "./whatsapp-components/useSignalRConnection";
@@ -37,21 +13,34 @@ import useNpcTypingSimulation from "./whatsapp-components/useNpcTypingSimulation
 // Import components
 import ChatSidebar from "./whatsapp-components/ChatSidebar";
 import ChatArea from "./whatsapp-components/ChatArea";
-import LoginScreen from "./whatsapp-components/LoginScreen";
-import Message from "./whatsapp-components/Message";
-import TypingIndicator from "./whatsapp-components/TypingIndicator";
 
 // Import constants and utilities
-import { INITIAL_CHATS, STORAGE_KEYS, CONNECTION_STATUS } from "./whatsapp-components/constants";
+import { STORAGE_KEYS, CONNECTION_STATUS } from "./whatsapp-components/constants";
 import { debugLog } from "./whatsapp-components/utils";
 
-// API endpoint for chat sessions
-const API_URL = "https://localhost:5001/chats/sessions";
-const API_MESSAGES_URL = "https://localhost:5001/chats";
-const HUB_URL = "https://localhost:5001/hubs/chat";
+// Add these constants after other constants
+const MAX_FILE_SIZE = 16 * 1024 * 1024; // 16MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
 
-// Create a special heartbeat group ID that won't conflict with real chat IDs
-const HEARTBEAT_GROUP = "heartbeat-ping";
+// Add this function before the WhatsApp component
+const getFileType = (file) => {
+  if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return 'image';
+  } else if (ALLOWED_VIDEO_TYPES.includes(file.type)) {
+    return 'video';
+  }
+  return null;
+};
+
+// Add this function before the WhatsApp component
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 export const WhatsApp = () => {
   const wnapp = useSelector((state) => state.apps.whatsapp);
@@ -73,8 +62,6 @@ export const WhatsApp = () => {
   // Authentication states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState(null);
   const [token, setToken] = useState("");
   const [userId, setUserId] = useState("");
@@ -262,9 +249,31 @@ export const WhatsApp = () => {
   });
 
   // Scroll to bottom of messages
-  const scrollToBottom = () => {
+  const scrollToBottom = (force = false) => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      // If not forcing the scroll, check if user is already near the bottom
+      if (!force) {
+        const scrollArea = document.getElementById('chat-messages-scroll-area');
+        
+        if (scrollArea) {
+          const container = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
+          
+          if (container) {
+            // Check if the user is already near the bottom
+            const isNearBottom = 
+              container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+            
+            // Only smooth scroll if near bottom
+            if (isNearBottom) {
+              messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+              return;
+            }
+          }
+        }
+      }
+      
+      // For new messages from current user or forcing, always scroll
+      messagesEndRef.current.scrollIntoView({ behavior: force ? "auto" : "smooth" });
     }
   };
 
@@ -413,7 +422,35 @@ export const WhatsApp = () => {
 
   // Scroll to bottom of messages when they change
   useEffect(() => {
-    scrollToBottom();
+    // Only auto-scroll when:
+    // 1. It's a user-initiated message (no _isSignalRUpdate flag)
+    // 2. It's the user's own message from SignalR
+    // 3. The user is already near the bottom
+    
+    if (activeChat) {
+      // Check if we're near the bottom before deciding to scroll
+      const isUserNearBottom = messagesEndRef.current && 
+        messagesEndRef.current.getBoundingClientRect().top < window.innerHeight + 100;
+      
+      // Check if this was a SignalR update
+      const isSignalRUpdate = activeChat._isSignalRUpdate;
+      
+      // If it was our own message or we're near the bottom, scroll
+      const shouldScroll = 
+        !isSignalRUpdate || // User-initiated action
+        isUserNearBottom;   // User is already near the bottom
+      
+      if (shouldScroll) {
+        scrollToBottom();
+      }
+      
+      // Clear the SignalR update flag after processing
+      if (isSignalRUpdate) {
+        setTimeout(() => {
+          setActiveChat(prev => ({ ...prev, _isSignalRUpdate: undefined }));
+        }, 100);
+      }
+    }
   }, [activeChat?.messages, typingUsers]);
 
   // Force refresh of messages when active chat changes
@@ -527,7 +564,7 @@ export const WhatsApp = () => {
             // Extract user info from token claims
             const userInfo = {
               id: payload.sub || payload.preferred_username,
-              name: payload.name || payload.preferred_username,
+              name: payload.name || payload.preferred_username || userName,
               email: payload.email
             };
             
@@ -577,7 +614,7 @@ export const WhatsApp = () => {
       // Extract user info from token claims
       const userInfo = {
         id: payload.sub || payload.preferred_username,
-        name: payload.name || payload.preferred_username || username || userName,
+        name: payload.name || payload.preferred_username || userName,
         email: payload.email
       };
       
@@ -656,11 +693,12 @@ export const WhatsApp = () => {
     }
   };
 
-  // Handle sending a message
+  // Modify the handleSendMessage function to handle attachments
   const handleSendMessage = (e) => {
+    console.log('handleSendMessage', e)
+
     e.preventDefault();
     
-    // Make sure we have an active chat
     if (!activeChat || !activeChat.id) {
       console.error("Cannot send message: No active chat");
       return;
@@ -680,9 +718,9 @@ export const WhatsApp = () => {
           // but mark it as "sending" rather than sent
           const newMessage = {
             id: `temp-${Date.now()}`,
-            text: selectedResponse.text,
-            sent: true,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            content: selectedResponse.text,
+            isCurrentUser: true,
+            sentAt: new Date().toISOString(),
             isTemporary: true, // Mark as temporary until confirmed by server
             isSending: true // Mark as currently sending
           };
@@ -702,6 +740,9 @@ export const WhatsApp = () => {
           
           // Clear possible responses
           setPossibleResponses([]);
+          
+          // Force scroll to bottom when user sends a message
+          setTimeout(() => scrollToBottom(true), 50);
           return;
         }
       }
@@ -713,9 +754,9 @@ export const WhatsApp = () => {
       // but mark it as "sending" rather than sent
       const newMessage = {
         id: `temp-${Date.now()}`,
-        text: messageInput,
-        sent: true,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        content: messageInput,
+        isCurrentUser: true,
+        sentAt: new Date().toISOString(),
         isTemporary: true, // Mark as temporary until confirmed by server
         isSending: true // Mark as currently sending
       };
@@ -729,6 +770,9 @@ export const WhatsApp = () => {
       // Send the message to the API
       sendMessageToApi(activeChat.id, messageInput);
       setMessageInput("");
+      
+      // Force scroll to bottom when user sends a message
+      setTimeout(() => scrollToBottom(true), 50);
     }
   };
 
@@ -806,6 +850,8 @@ export const WhatsApp = () => {
               handleSendMessage={handleSendMessage}
               possibleResponses={possibleResponses}
               messagesEndRef={messagesEndRef}
+              setActiveChat={setActiveChat}
+              sendMessageToApi={sendMessageToApi}
             />
           </div>
         </div>

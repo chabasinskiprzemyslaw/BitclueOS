@@ -14,7 +14,7 @@ export const SIGNALR_HUB_URL = "https://localhost:5001/hubs/chat";
 /**
  * Debug mode flag
  */
-export const DEBUG_MODE = false;
+export const DEBUG_MODE = true;
 
 /**
  * Connection status constants

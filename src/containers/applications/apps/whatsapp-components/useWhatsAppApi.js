@@ -179,10 +179,11 @@ const useWhatsAppApi = ({
         // Format messages data
         const formattedMessages = messagesData.map(msg => ({
           id: msg.id,
-          text: msg.content,
-          sent: msg.isCurrentUser,
-          time: formatDateTime(msg.timestamp || msg.sentAt),
-          senderName: msg.senderDisplayName,
+          content: msg.content,
+          isCurrentUser: msg.isCurrentUser,
+          sentAt: msg.timestamp || msg.sentAt,
+          senderDisplayName: msg.senderDisplayName,
+          attachments: msg.attachments || [],
           possibleResponses: msg.possibleResponses || []
         }));
         
@@ -299,7 +300,7 @@ const useWhatsAppApi = ({
           setActiveChat(prevChat => {
             const updatedMessages = prevChat.messages.map(msg => {
               // If this is a sending message with matching content, mark it as failed
-              if (msg.isSending && msg.text === content) {
+              if (msg.isSending && msg.content === content) {
                 return {
                   ...msg,
                   isSending: false,
@@ -332,13 +333,14 @@ const useWhatsAppApi = ({
               // Replace the temporary message with the confirmed one
               const updatedMessages = prevChat.messages.map(msg => {
                 // If this is a sending message with matching content, replace it with the confirmed message
-                if ((msg.isSending || msg.isTemporary) && msg.text === content) {
+                if ((msg.isSending || msg.isTemporary) && msg.content === content) {
                   return {
                     id: responseData.id,
-                    text: responseData.content || content,
-                    sent: true,
-                    time: formatDateTime(responseData.timestamp || responseData.sentAt || new Date()),
-                    senderName: responseData.senderDisplayName,
+                    content: responseData.content || content,
+                    isCurrentUser: true,
+                    sentAt: responseData.timestamp || responseData.sentAt || new Date(),
+                    senderDisplayName: responseData.senderDisplayName,
+                    attachments: responseData.attachments || [],
                     possibleResponses: responseData.possibleResponses || [],
                     isTemporary: false,
                     isSending: false
@@ -359,7 +361,7 @@ const useWhatsAppApi = ({
           if (activeChat && activeChat.id === chatId) {
             setActiveChat(prevChat => {
               const updatedMessages = prevChat.messages.map(msg => {
-                if (msg.isSending && msg.text === content) {
+                if (msg.isSending && msg.content === content) {
                   return {
                     ...msg,
                     isSending: false,
@@ -383,7 +385,7 @@ const useWhatsAppApi = ({
         if (activeChat && activeChat.id === chatId) {
           setActiveChat(prevChat => {
             const updatedMessages = prevChat.messages.map(msg => {
-              if (msg.isSending && msg.text === content) {
+              if (msg.isSending && msg.content === content) {
                 return {
                   ...msg,
                   isSending: false,
@@ -422,7 +424,7 @@ const useWhatsAppApi = ({
         setActiveChat(prevChat => {
           const updatedMessages = prevChat.messages.map(msg => {
             // If this is a sending message with matching content, mark it as failed
-            if (msg.isSending && msg.text === content) {
+            if (msg.isSending && msg.content === content) {
               return {
                 ...msg,
                 isSending: false,
