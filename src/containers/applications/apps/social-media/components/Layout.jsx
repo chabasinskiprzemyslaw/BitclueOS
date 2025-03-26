@@ -1,5 +1,5 @@
 import Sidebar from "./Sidebar"
-import TrendingPanel from "./TrendingPanel"
+
 
 function Layout({ children, activePage, onChangePage, isLoggedIn }) {
   if (!isLoggedIn) {

@@ -42,7 +42,8 @@ function Login({ onLogin }) {
         throw new Error(response.status === 400 ? 'Invalid credentials' : 'Login failed')
       }
 
-      const sessionId = await response.text()
+      const sessionId = await response.json();
+      console.log("--->", sessionId);
       // Store the session ID if needed
       localStorage.setItem('socialMediaSessionId', sessionId)
       

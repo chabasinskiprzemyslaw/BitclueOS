@@ -1,150 +1,129 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell, Heart, Repeat, User, MessageCircle } from "react-feather"
+import { MessageCircle, Send, Check } from "react-feather"
 
-function Notifications() {
-  const [activeTab, setActiveTab] = useState("all")
-  const [notifications, setNotifications] = useState([])
+function Messages() {
+  const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [selectedConversation, setSelectedConversation] = useState(null)
+  const [newMessage, setNewMessage] = useState("")
+  const [userInfoId, setUserInfoId] = useState(null)
 
   useEffect(() => {
-    const loadNotifications = async () => {
+    const socialMediaUserId = localStorage.getItem("socialMediaSessionId")
+    if (socialMediaUserId) {
+      setUserInfoId(socialMediaUserId);
+    }
+  }, [])
+
+  useEffect(() => {
+    const loadMessages = async () => {
       try {
-        // In a real app, we would fetch from the API
-        // const data = await fetchNotifications();
+        const scenarioId = localStorage.getItem("selected_scenario");
+        
+        if (!userInfoId || !scenarioId) {
+          throw new Error("Missing required user or scenario information")
+        }
 
-        // For now, use mock data
-        const mockNotifications = [
-          {
-            id: 1,
-            type: "like",
-            user: {
-              name: "John Doe",
-              handle: "johndoe",
-              avatar: "https://via.placeholder.com/48",
-            },
-            content: "liked your tweet",
-            tweetText: "Just launched my new website! Check it out and let me know what you think.",
-            time: "2h ago",
-          },
-          {
-            id: 2,
-            type: "retweet",
-            user: {
-              name: "Jane Smith",
-              handle: "janesmith",
-              avatar: "https://via.placeholder.com/48",
-            },
-            content: "retweeted your tweet",
-            tweetText: "Working on a new project. Can't wait to share it with everyone!",
-            time: "5h ago",
-          },
-          {
-            id: 3,
-            type: "follow",
-            user: {
-              name: "Tech News",
-              handle: "technews",
-              avatar: "https://via.placeholder.com/48",
-            },
-            content: "followed you",
-            time: "1d ago",
-          },
-          {
-            id: 4,
-            type: "mention",
-            user: {
-              name: "Sarah Johnson",
-              handle: "sarahjohnson",
-              avatar: "https://via.placeholder.com/48",
-            },
-            content: "mentioned you",
-            tweetText: "Hey @currentuser, what do you think about the new AI developments?",
-            time: "2d ago",
-          },
-        ]
+        const response = await fetch(
+          `https://localhost:5001/social-media/users/${userInfoId}/direct-messages?scenarioId=${scenarioId}`
+        )
 
-        setNotifications(mockNotifications)
+        if (!response.ok) {
+          throw new Error("Failed to fetch messages")
+        }
+
+        const data = await response.json()
+        setMessages(data)
         setIsLoading(false)
       } catch (error) {
-        console.error("Error loading notifications:", error)
+        console.error("Error loading messages:", error)
+        setError(error.message)
         setIsLoading(false)
       }
     }
 
-    loadNotifications()
-  }, [])
+    if (userInfoId) {
+      loadMessages()
+    }
+  }, [userInfoId])
 
-  const tabs = [
-    { id: "all", label: "All" },
-    { id: "mentions", label: "Mentions" },
-  ]
+  const handleSendMessage = async (e) => {
+    e.preventDefault()
+    if (!newMessage.trim() || !selectedConversation) return
 
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case "like":
-        return <Heart size={18} className="notification-icon like" />
-      case "retweet":
-        return <Repeat size={18} className="notification-icon retweet" />
-      case "follow":
-        return <User size={18} className="notification-icon follow" />
-      case "mention":
-        return <MessageCircle size={18} className="notification-icon mention" />
-      default:
-        return <Bell size={18} className="notification-icon" />
+    try {
+      // TODO: Implement send message API call
+      setNewMessage("")
+    } catch (error) {
+      console.error("Error sending message:", error)
     }
   }
 
-  const filteredNotifications =
-    activeTab === "all" ? notifications : notifications.filter((notification) => notification.type === "mention")
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  // Group messages by conversation
+  const conversations = messages.reduce((acc, message) => {
+    const otherUserId = message.senderId === userInfoId ? message.receiverId : message.senderId
+    const otherUsername = message.senderId === userInfoId ? message.receiverUsername : message.senderUsername
+    if (!acc[otherUserId]) {
+      acc[otherUserId] = {
+        userId: otherUserId,
+        username: otherUsername,
+        messages: [],
+        lastMessage: message,
+        unreadCount: 0
+      }
+    }
+    if (!message.isRead && message.receiverId === userInfoId) {
+      acc[otherUserId].unreadCount++
+    }
+    acc[otherUserId].messages.push(message)
+    return acc
+  }, {})
 
   return (
-    <div className="notifications-container">
-      <div className="notifications-header">
-        <h2>Notifications</h2>
-
-        <div className="tabs-container">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              className={`tab ${activeTab === tab.id ? "active" : ""}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="notifications-content">
+    <div className="messages-container">
+      <div className="messages-sidebar">
+        <h2>Messages</h2>
         {isLoading ? (
-          <div className="loading">Loading notifications...</div>
-        ) : filteredNotifications.length === 0 ? (
-          <div className="empty-state">
-            <h3>Nothing to see here — yet</h3>
-            <p>When there's new activity, it'll show up here.</p>
-          </div>
+          <div className="loading">Loading messages...</div>
+        ) : error ? (
+          <div className="error">{error}</div>
         ) : (
-          <div className="notifications-list">
-            {filteredNotifications.map((notification) => (
-              <div key={notification.id} className="notification-item">
-                <div className="notification-icon-container">{getNotificationIcon(notification.type)}</div>
-
-                <div className="notification-content">
-                  <div className="notification-avatar">
-                    <img src={notification.user.avatar || "/placeholder.svg"} alt={notification.user.name} />
+          <div className="conversations-list">
+            {Object.values(conversations).map((conversation) => (
+              <div
+                key={conversation.userId}
+                className={`conversation-item ${selectedConversation?.userId === conversation.userId ? "active" : ""}`}
+                onClick={() => setSelectedConversation(conversation)}
+              >
+                <div className="conversation-avatar">
+                  <MessageCircle size={24} />
+                </div>
+                <div className="conversation-info">
+                  <div className="conversation-name">{conversation.username}</div>
+                  <div className="conversation-preview">
+                    {conversation.lastMessage.content.substring(0, 50)}
+                    {conversation.lastMessage.content.length > 50 && "..."}
                   </div>
-
-                  <div className="notification-details">
-                    <div className="notification-header">
-                      <span className="notification-name">{notification.user.name}</span>
-                      <span className="notification-action">{notification.content}</span>
-                    </div>
-
-                    {notification.tweetText && <div className="notification-tweet">{notification.tweetText}</div>}
-
-                    <div className="notification-time">{notification.time}</div>
+                  <div className="conversation-meta">
+                    <span className="conversation-time">
+                      {formatDate(conversation.lastMessage.sentAt)}
+                    </span>
+                    {conversation.unreadCount > 0 && (
+                      <span className="unread-count">{conversation.unreadCount}</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -152,9 +131,56 @@ function Notifications() {
           </div>
         )}
       </div>
+
+      <div className="messages-content">
+        {selectedConversation ? (
+          <>
+            <div className="messages-header">
+              <h3>Conversation with {selectedConversation.username}</h3>
+            </div>
+
+            <div className="messages-list">
+              {selectedConversation.messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`message-item ${message.senderId === userInfoId ? "sent" : "received"}`}
+                >
+                  <div className="message-content">{message.content}</div>
+                  <div className="message-footer">
+                    <span className="message-time">{formatDate(message.sentAt)}</span>
+                    {message.senderId === userInfoId && (
+                      <span className="message-status">
+                        {message.isRead ? <div><Check size={16} /><Check size={16} /></div> : <Check size={16} />}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <form className="message-input" onSubmit={handleSendMessage}>
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+              />
+              <button type="submit">
+                <Send size={20} />
+              </button>
+            </form>
+          </>
+        ) : (
+          <div className="no-conversation">
+            <MessageCircle size={48} />
+            <h3>Select a conversation</h3>
+            <p>Choose a conversation from the list to start messaging</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-export default Notifications
+export default Messages
 
