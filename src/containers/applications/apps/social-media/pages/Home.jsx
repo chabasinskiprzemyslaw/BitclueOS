@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react"
 import Tweet from "../components/Tweet"
+import TweetDetail from "../components/TweetDetail"
 
 function Home() {
   const [tweets, setTweets] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [tweetText, setTweetText] = useState("")
+  const [selectedTweet, setSelectedTweet] = useState(null)
 
   useEffect(() => {
     const loadTweets = async () => {
@@ -28,6 +30,7 @@ function Home() {
         // In a real app, this might be different or configurable
         const authorUserId = userIdentityId
         
+       
         // Construct the URL with query parameters
         const url = `https://localhost:5001/api/social-media/feed?authorUserId=${encodeURIComponent(authorUserId)}&scenarioId=${encodeURIComponent(scenarioId)}&userIdentityId=${encodeURIComponent(userIdentityId)}`
         
@@ -40,6 +43,7 @@ function Home() {
         
         const data = await response.json()
         setTweets(data.items || [])
+        
         setIsLoading(false)
       } catch (error) {
         console.error("Error loading tweets:", error)
@@ -77,6 +81,19 @@ function Home() {
     setTweetText("")
   }
 
+  const handleTweetClick = (tweet) => {
+    setSelectedTweet(tweet);
+  }
+
+  const handleCloseDetail = () => {
+    setSelectedTweet(null);
+  }
+
+  // If a tweet is selected, show the tweet detail view
+  if (selectedTweet) {
+    return <TweetDetail tweet={selectedTweet} onClose={handleCloseDetail} />;
+  }
+
   return (
     <div className="home-container">
       <div className="home-header">
@@ -89,12 +106,14 @@ function Home() {
         </div>
 
         <form onSubmit={handleTweetSubmit} className="compose-form">
+
           <textarea
             placeholder="What's happening?"
             value={tweetText}
             onChange={(e) => setTweetText(e.target.value)}
             maxLength={280}
           />
+
 
           <div className="compose-actions">
             <button type="submit" disabled={!tweetText.trim()}>
@@ -112,7 +131,7 @@ function Home() {
         ) : tweets.length === 0 ? (
           <div className="no-tweets">No tweets found</div>
         ) : (
-          tweets.map((tweet) => <Tweet key={tweet.id} tweet={tweet} />)
+          tweets.map((tweet) => <Tweet key={tweet.id} tweet={tweet} onClick={handleTweetClick} />)
         )}
       </div>
     </div>

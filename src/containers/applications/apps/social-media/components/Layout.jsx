@@ -6,7 +6,6 @@ function Layout({ children, activePage, onChangePage }) {
     <div className="layout">
       <Sidebar activePage={activePage} onChangePage={onChangePage} />
       <main className="main-content">{children}</main>
-      <TrendingPanel />
     </div>
   )
 }
