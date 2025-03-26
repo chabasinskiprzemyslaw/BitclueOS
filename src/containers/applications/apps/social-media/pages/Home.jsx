@@ -6,65 +6,44 @@ import Tweet from "../components/Tweet"
 function Home() {
   const [tweets, setTweets] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [tweetText, setTweetText] = useState("")
 
   useEffect(() => {
     const loadTweets = async () => {
       try {
-        // In a real app, we would fetch from the API
-        // const data = await fetchTweets();
-
-        // For now, use mock data
-        const mockTweets = [
-          {
-            id: 1,
-            user: {
-              name: "John Doe",
-              handle: "johndoe",
-              verified: true,
-              avatar: "https://via.placeholder.com/48",
-            },
-            text: "Just launched my new website! Check it out and let me know what you think.",
-            time: "2h",
-            likes: 42,
-            retweets: 5,
-            replies: 3,
-          },
-          {
-            id: 2,
-            user: {
-              name: "Jane Smith",
-              handle: "janesmith",
-              verified: false,
-              avatar: "https://via.placeholder.com/48",
-            },
-            text: "Working on a new project. Can't wait to share it with everyone!",
-            time: "5h",
-            likes: 18,
-            retweets: 2,
-            replies: 1,
-            image: "https://via.placeholder.com/500x300",
-          },
-          {
-            id: 3,
-            user: {
-              name: "Tech News",
-              handle: "technews",
-              verified: true,
-              avatar: "https://via.placeholder.com/48",
-            },
-            text: "Breaking: New AI model can generate realistic images from text descriptions.",
-            time: "1d",
-            likes: 230,
-            retweets: 78,
-            replies: 25,
-          },
-        ]
-
-        setTweets(mockTweets)
+        setIsLoading(true)
+        setError(null)
+        
+        // Get necessary data from localStorage
+        const scenarioId = localStorage.getItem("selected_scenario")
+        const userInfo = JSON.parse(localStorage.getItem("user_info"))
+        const userIdentityId = userInfo?.id
+        
+        if (!scenarioId || !userIdentityId) {
+          throw new Error("Missing required information (scenario or user identity)")
+        }
+        
+        // In this example, we're using the same userIdentityId as the authorUserId
+        // In a real app, this might be different or configurable
+        const authorUserId = userIdentityId
+        
+        // Construct the URL with query parameters
+        const url = `https://localhost:5001/api/social-media/feed?authorUserId=${encodeURIComponent(authorUserId)}&scenarioId=${encodeURIComponent(scenarioId)}&userIdentityId=${encodeURIComponent(userIdentityId)}`
+        
+        const response = await fetch(url)
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.detail || "Failed to fetch social media feed")
+        }
+        
+        const data = await response.json()
+        setTweets(data.items || [])
         setIsLoading(false)
       } catch (error) {
         console.error("Error loading tweets:", error)
+        setError(error.message)
         setIsLoading(false)
       }
     }
@@ -78,7 +57,7 @@ function Home() {
     if (!tweetText.trim()) return
 
     const newTweet = {
-      id: Date.now(),
+      id: Date.now().toString(),
       user: {
         name: "Current User",
         handle: "currentuser",
@@ -90,6 +69,8 @@ function Home() {
       likes: 0,
       retweets: 0,
       replies: 0,
+      isRetweet: false,
+      isReply: false
     }
 
     setTweets([newTweet, ...tweets])
@@ -126,6 +107,10 @@ function Home() {
       <div className="tweets-container">
         {isLoading ? (
           <div className="loading">Loading tweets...</div>
+        ) : error ? (
+          <div className="error-message">{error}</div>
+        ) : tweets.length === 0 ? (
+          <div className="no-tweets">No tweets found</div>
         ) : (
           tweets.map((tweet) => <Tweet key={tweet.id} tweet={tweet} />)
         )}

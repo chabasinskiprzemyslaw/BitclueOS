@@ -12,10 +12,11 @@ import { ToolBar } from "../../../utils/general";
 export const SocialMedia = () => {
   const wnapp = useSelector((state) => state.apps.socialmedia);
   const [page, setPage] = useState("home");
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleLogin = () => {
     setIsLoggedIn(true);
+    setPage("home");
   };
 
   const handleChangePage = (newPage) => {

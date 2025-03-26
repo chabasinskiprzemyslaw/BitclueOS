@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Twitter } from "react-feather"
 
 function Login({ onLogin }) {
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -15,17 +15,42 @@ function Login({ onLogin }) {
     setIsLoading(true)
 
     try {
-      // In a real app, we would call the API
-      // const response = await loginUser({ email, password });
+      const scenarioId = localStorage.getItem("selected_scenario")
+      const userInfo = JSON.parse(localStorage.getItem("user_info"))
+      const userIdentityId = userInfo?.id
 
-      // For now, just simulate a successful login
-      setTimeout(() => {
-        setIsLoading(false)
-        onLogin()
-      }, 1000)
+      if (!scenarioId || !userIdentityId) {
+        throw new Error("Missing required game information")
+      }
+
+      const loginRequest = {
+        scenarioId,
+        userIdentityId,
+        username,
+        password
+      }
+
+      const response = await fetch('https://localhost:5001/social-media/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginRequest)
+      })
+
+      if (!response.ok) {
+        throw new Error(response.status === 400 ? 'Invalid credentials' : 'Login failed')
+      }
+
+      const sessionId = await response.text()
+      // Store the session ID if needed
+      localStorage.setItem('socialMediaSessionId', sessionId)
+      
+      setIsLoading(false)
+      onLogin()
     } catch (err) {
       setIsLoading(false)
-      setError("Invalid email or password")
+      setError(err.message || "Login failed. Please try again.")
     }
   }
 
@@ -42,8 +67,14 @@ function Login({ onLogin }) {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <label htmlFor="username">Username</label>
+            <input 
+              type="text" 
+              id="username" 
+              value={username} 
+              onChange={(e) => setUsername(e.target.value)} 
+              required 
+            />
           </div>
 
           <div className="form-group">
