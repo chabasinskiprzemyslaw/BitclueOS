@@ -1,6 +1,39 @@
 import { Home, Search, Bell, Mail, User, MoreHorizontal, Twitter } from "react-feather"
+import { useState, useEffect } from "react"
 
-function Sidebar({ activePage, onChangePage }) {
+function Sidebar({ activePage, onChangePage, isLoggedIn }) {
+  const [userDetails, setUserDetails] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const userInfo = JSON.parse(localStorage.getItem("user_info"))
+        const userId = userInfo?.id
+        if (!userId) {
+          setError('User ID not found')
+          setLoading(false)
+          return
+        }
+
+        const response = await fetch(`https://localhost:5001/social-media/users/${userId}`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch user details')
+        }
+
+        const data = await response.json()
+        setUserDetails(data)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserDetails()
+  }, [isLoggedIn])
+
   const isActive = (page) => {
     return activePage === page ? "active" : ""
   }
@@ -36,11 +69,19 @@ function Sidebar({ activePage, onChangePage }) {
       <div className="profile-section">
         <a onClick={() => onChangePage("profile")} className="profile-button">
           <div className="avatar">
-            <User size={24} />
+            {userDetails?.profileImage ? (
+              <img src={userDetails.profileImage} alt={userDetails.username} />
+            ) : (
+              <User size={24} />
+            )}
           </div>
           <div className="profile-info">
-            <span className="profile-name">Username</span>
-            <span className="profile-handle">@username</span>
+            <span className="profile-name">
+              {loading ? 'Loading...' : error ? 'Error' : userDetails?.displayName || userDetails?.username || 'Unknown User'}
+            </span>
+            <span className="profile-handle">
+              {loading ? '' : error ? '' : `@${userDetails?.username || 'username'}`}
+            </span>
           </div>
           <MoreHorizontal size={16} />
         </a>

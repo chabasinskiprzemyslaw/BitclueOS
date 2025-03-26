@@ -61,7 +61,7 @@ export const SocialMedia = () => {
       <div className="socialmediaApp">
         <div className="home-container">
           {isLoggedIn ? (
-            <Layout activePage={page} onChangePage={handleChangePage}>
+            <Layout activePage={page} onChangePage={handleChangePage} isLoggedIn={isLoggedIn}>
               {renderPage()}
             </Layout>
           ) : (
