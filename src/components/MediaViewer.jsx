@@ -472,10 +472,7 @@ export const MediaViewer = () => {
                 {closeViewer()}
                 {dispatch({
                   type: "AUDIOPLAYER",
-                  payload: {
-                    name: fileView.name,
-                    url: fileView.url
-                  }
+                  payload: fileView
                 })}
               </div>
             )}

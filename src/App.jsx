@@ -18,6 +18,8 @@ import { Background, BootScreen, LockScreen } from "./containers/background";
 import { MediaViewer } from "./components/MediaViewer";
 import AudioPlayer from "./components/AudioPlayer";
 import ObjectivesBubble from "./components/objectives/ObjectivesBubble";
+import NotificationCenter from "./components/NotificationCenter";
+import { initNotificationService } from "./utils/notifications";
 
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
@@ -138,6 +140,11 @@ function App() {
     }
   });
 
+  // Initialize notification service when app mounts
+  useEffect(() => {
+    initNotificationService();
+  }, []);
+
   return (
     <div className="App">
       <ErrorBoundary FallbackComponent={ErrorFallback}>
@@ -171,6 +178,7 @@ function App() {
           <ActMenu />
           <MediaViewer />
           <AudioPlayer />
+          <NotificationCenter />
         </div>
       </ErrorBoundary>
     </div>

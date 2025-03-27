@@ -21,8 +21,13 @@ export const AudioPlayer = () => {
 
   useEffect(() => {
     // Load audio file if provided in props
-    if (wnapp?.data && wnapp.data.info.url) {
-      setAudioFile(wnapp.data.info);
+    if (wnapp?.data && wnapp.data.info && wnapp.data.info.url) {
+      setAudioFile({
+        name: wnapp.data.name,
+        url: wnapp.data.info.url
+      });
+    } else if (wnapp?.data && wnapp.data.url) {
+      setAudioFile(wnapp.data);
     }
   }, [wnapp?.data]);
 
@@ -98,71 +103,98 @@ export const AudioPlayer = () => {
       />
       <div className="windowScreen flex flex-col">
         <div className="restWindow flex-grow flex">
-          <div className="audioContainer p-4 w-full">
+          <div className="audio-player-container">
             {audioFile ? (
               <>
-                <div className="audioInfo mb-4 text-center">
-                  <h3 className="text-lg font-semibold">{audioFile.name}</h3>
+                <div className="audio-artwork">
+                  <div className="artwork-circle">
+                    <Icon fafa="faMusic" width={36} />
+                  </div>
                 </div>
-                <div className="audioControls flex flex-col items-center">
-                  <audio
-                    ref={audioRef}
-                    src={audioFile.url}
-                    onTimeUpdate={handleTimeUpdate}
-                    onLoadedMetadata={handleLoadedMetadata}
-                    onEnded={handleStop}
-                  />
-                  
-                  <div className="progressContainer w-full mb-4">
-                    <div className="flex justify-between text-sm mb-1">
+                
+                <div className="audio-info">
+                  <h3 className="audio-title">{audioFile.name}</h3>
+                  <p className="audio-artist">Audio Sample</p>
+                </div>
+                
+                <audio
+                  ref={audioRef}
+                  src={audioFile.url}
+                  onTimeUpdate={handleTimeUpdate}
+                  onLoadedMetadata={handleLoadedMetadata}
+                  onEnded={handleStop}
+                />
+                
+                <div className="audio-controls-wrapper">
+                  <div className="progress-container">
+                    <div className="time-display">
                       <span>{formatTime(currentTime)}</span>
                       <span>{formatTime(duration)}</span>
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max={duration || 0}
-                      value={currentTime}
-                      onChange={handleProgressChange}
-                      className="w-full"
-                    />
+                    <div className="progress-bar-container">
+                      <input
+                        type="range"
+                        min="0"
+                        max={duration || 0}
+                        value={currentTime}
+                        onChange={handleProgressChange}
+                        className="progress-slider"
+                      />
+                      <div 
+                        className="progress-filled"
+                        style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
                   
-                  <div className="controlButtons flex items-center justify-center space-x-4 mb-4">
-                    <button
-                      onClick={handlePlayPause}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-                    >
-                      <Icon fafa={playing ? "faPause" : "faPlay"} />
-                    </button>
-                    <button
-                      onClick={handleStop}
-                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
-                    >
-                      <Icon fafa="faStop" />
-                    </button>
-                  </div>
-                  
-                  <div className="volumeContainer flex items-center space-x-2 w-full max-w-xs">
-                    <Icon
-                      fafa={volume > 0 ? "faVolumeUp" : "faVolumeMute"}
-                      width={16}
-                    />
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={volume}
-                      onChange={handleVolumeChange}
-                      className="w-full"
-                    />
+                  <div className="control-panel">
+                    <div className="control-buttons">
+                      <button
+                        onClick={handleStop}
+                        className="control-button stop-button"
+                        aria-label="Stop"
+                      >
+                        <Icon fafa="faStop" />
+                      </button>
+                      <button
+                        onClick={handlePlayPause}
+                        className="control-button play-button"
+                        aria-label={playing ? "Pause" : "Play"}
+                      >
+                        <Icon fafa={playing ? "faPause" : "faPlay"} />
+                      </button>
+                    </div>
+                    
+                    <div className="volume-control">
+                      <Icon
+                        fafa={volume > 0 ? "faVolumeUp" : "faVolumeMute"}
+                        width={16}
+                        className="volume-icon"
+                      />
+                      <div className="volume-slider-container">
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={volume}
+                          onChange={handleVolumeChange}
+                          className="volume-slider"
+                        />
+                        <div 
+                          className="volume-filled"
+                          style={{ width: `${volume * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="flex justify-center items-center h-full">
-                <p className="text-gray-500">No audio file selected</p>
+              <div className="no-audio-message">
+                <Icon fafa="faMusic" width={48} className="no-audio-icon" />
+                <p>No audio file selected</p>
+                <p className="no-audio-help">Open an audio file from Music folder</p>
               </div>
             )}
           </div>
