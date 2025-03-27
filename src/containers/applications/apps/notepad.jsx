@@ -1,9 +1,30 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ToolBar } from "../../../utils/general";
 
 export const Notepad = () => {
   const wnapp = useSelector((state) => state.apps.notepad);
+  const [fileName, setFileName] = useState("Untitled");
+  const [fileContent, setFileContent] = useState("");
+  const dispatch = useDispatch();
+
+  // Listen for changes to notepad file data
+  useEffect(() => {
+    // Get file data if it was opened from file explorer
+    if (wnapp.payload && typeof wnapp.payload === 'object') {
+      console.log("Notepad file data:", wnapp.payload);
+      
+      // Set the file name if available
+      if (wnapp.payload.name) {
+        setFileName(wnapp.payload.name);
+      }
+      
+      // Set the file content if available
+      if (wnapp.payload.content) {
+        setFileContent(wnapp.payload.content);
+      }
+    }
+  }, [wnapp.payload]);
 
   return (
     <div
@@ -21,7 +42,7 @@ export const Notepad = () => {
         app={wnapp.action}
         icon={wnapp.icon}
         size={wnapp.size}
-        name="Untitled - Notepad"
+        name={`${fileName} - Notepad`}
       />
       <div className="windowScreen flex flex-col" data-dock="true">
         <div className="flex text-xs py-2 topBar">
@@ -31,7 +52,12 @@ export const Notepad = () => {
         </div>
         <div className="restWindow h-full flex-grow">
           <div className="w-full h-full overflow-hidden">
-            <textarea className="noteText win11Scroll" id="textpad" />
+            <textarea 
+              className="noteText win11Scroll" 
+              id="textpad" 
+              value={fileContent}
+              onChange={(e) => setFileContent(e.target.value)}
+            />
           </div>
         </div>
       </div>

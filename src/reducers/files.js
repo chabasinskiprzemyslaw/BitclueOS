@@ -133,6 +133,24 @@ const fileReducer = (state = defState, action) => {
     if (tmp.hid > tmp.hist.length - 1) tmp.hid = tmp.hist.length - 1;
     navHist = true;
     debugLogger('FILENEXT', tmp, { newHid: tmp.hid });
+  } else if (action.type === "NOTEPAD") {
+    // Open the notepad application with the file data
+    console.log("Opening notepad from file explorer", action.payload);
+    
+    // Don't dispatch here - this creates circular dependencies
+    // The dispatch is already handled in handleFileOpen function
+    
+    // If this file should trigger a backend action
+    if (action.payload && action.payload.id) {
+      // Try to get file data from our system
+      let fileData = tmp.data.getId(action.payload.id);
+      
+      if (fileData) {
+        sendToBackend(fileData);
+      }
+    }
+    
+    debugLogger('NOTEPAD', tmp, action.payload);
   } else if (action.type === "OPENFILEVIEW") {
     tmp.fileView = {
       show: true,

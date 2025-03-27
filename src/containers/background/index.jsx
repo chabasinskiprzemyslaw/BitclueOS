@@ -168,10 +168,8 @@ export const LockScreen = (props) => {
         
         // Auto unlock if user is already authenticated
         setUnLock(true);
-        console.log("Unlocked");
         setTimeout(() => {
           dispatch({ type: "WALLUNLOCK" });
-          console.log("Wall unlocked");
         }, 500);
         
         // Set up token refresh
@@ -190,6 +188,17 @@ export const LockScreen = (props) => {
             setUnLock(true);
             setTimeout(() => {
               dispatch({ type: "WALLUNLOCK" });
+              // Enter fullscreen mode
+              if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+                console.log("Entered fullscreen mode");
+              } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+                console.log("Entered fullscreen mode (webkit)");
+              } else if (document.documentElement.msRequestFullscreen) {
+                document.documentElement.msRequestFullscreen();
+                console.log("Entered fullscreen mode (ms)");
+              }
             }, 500);
           } else {
             // Token expired, clear it

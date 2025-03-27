@@ -62,6 +62,7 @@ const ObjectivesBubble = () => {
         onClick={() => setIsOpen(!isOpen)}
       >
         <Icon src="objectives" width={24} />
+        <Icon src="help-circle" width={16} />
       </div>
       
       {isOpen && (

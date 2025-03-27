@@ -276,10 +276,37 @@ export const handleFileOpen = (id) => {
           name: item.name
         } 
       });
+    } else if (item.type === "notepad") {
+      console.log("NOTEPAD", item);
+      
+      // Use a single dispatch for notepad with file data and "show" flag
+      store.dispatch({
+        type: "NOTEPAD", 
+        payload: {
+          id: item.id,
+          type: item.type,
+          name: item.name,
+          content: item.data && item.data.content,
+          triggerBackend: item.info && item.info.triggerBackend,
+          triggerData: item.info && item.info.triggerData,
+          action: "show" // Flag to indicate we want to show the app
+        }
+      });
     }
   }
 };
 
 export const flightMode = () => {
   store.dispatch({ type: "TOGGAIRPLNMD", payload: "" });
+};
+
+export const launchNotepad = () => {
+  console.log("Launching Notepad application");
+  store.dispatch({ 
+    type: "NOTEPAD", 
+    payload: {
+      action: "show",
+      name: "Untitled"
+    }
+  });
 };

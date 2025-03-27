@@ -93,6 +93,38 @@ const appReducer = (state = defState, action) => {
   } else if (action.type == "DELAPP") {
     delete tmpState[action.payload];
     return tmpState;
+  } else if (action.type == "NOTEPAD") {
+    var obj = { ...tmpState["notepad"] };
+
+    console.log("===========NOTEPAD=================", action.payload);
+    
+    // Handle our new payload format
+    if (typeof action.payload === 'object') {
+      // Store the file data in the app state
+      obj.payload = action.payload;
+      
+      // If action is "show", make the app visible
+      if (action.payload.action === "show") {
+        obj.hide = false;
+        obj.max = true;
+        tmpState.hz += 1;
+        obj.z = tmpState.hz;
+      }
+    } else if (action.payload === "togg" || action.payload === "full") {
+      // Legacy support for older code that might still use string payloads
+      obj.hide = false;
+      obj.max = true;
+      tmpState.hz += 1;
+      obj.z = tmpState.hz;
+    } else if (action.payload === "close") {
+      obj.hide = true;
+      obj.max = null;
+      obj.z = -1;
+      tmpState.hz -= 1;
+    }
+    
+    tmpState["notepad"] = obj;
+    return tmpState;
   } else {
     var keys = Object.keys(state);
     for (var i = 0; i < keys.length; i++) {
