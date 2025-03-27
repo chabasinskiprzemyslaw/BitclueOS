@@ -16,6 +16,7 @@ import {
 import Taskbar from "./components/taskbar";
 import { Background, BootScreen, LockScreen } from "./containers/background";
 import { MediaViewer } from "./components/MediaViewer";
+import AudioPlayer from "./components/AudioPlayer";
 import ObjectivesBubble from "./components/objectives/ObjectivesBubble";
 
 import { loadSettings } from "./actions";
@@ -169,6 +170,7 @@ function App() {
           <Taskbar />
           <ActMenu />
           <MediaViewer />
+          <AudioPlayer />
         </div>
       </ErrorBoundary>
     </div>

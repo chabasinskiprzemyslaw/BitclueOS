@@ -53,12 +53,6 @@ const apps = [
     action: "WHATSAPP",
   },
   {
-    name: "Browser",
-    icon: "edge",
-    type: "app",
-    action: "MSEDGE",
-  },
-  {
     name: "Recycle Bin",
     icon: "bin0",
     type: "app",
@@ -284,6 +278,12 @@ const apps = [
     icon: "defender",
     type: "app",
     action: "ANTIVIRUS",
+  },
+  {
+    name: "Audio Player",
+    icon: "mediaplay",
+    type: "app",
+    action: "AUDIOPLAYER",
   }
 ];
 

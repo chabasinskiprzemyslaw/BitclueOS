@@ -293,6 +293,13 @@ export const handleFileOpen = (id) => {
         }
       });
     }
+    else if (item.type === "audio") {
+      console.log("AUDIO", item);
+      store.dispatch({
+        type: "AUDIOPLAYER",
+        payload: item
+      });
+    }
   }
 };
 

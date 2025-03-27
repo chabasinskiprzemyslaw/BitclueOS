@@ -466,6 +466,19 @@ export const MediaViewer = () => {
                 className="media-viewer-video"
               />
             )}
+            {fileView.type === "audio" && (
+              <div className="media-viewer-audio-message">
+                <p>Opening in Audio Player...</p>
+                {closeViewer()}
+                {dispatch({
+                  type: "AUDIOPLAYER",
+                  payload: {
+                    name: fileView.name,
+                    url: fileView.url
+                  }
+                })}
+              </div>
+            )}
           </div>
           
           {showInfo && fileData && fileData.info && (

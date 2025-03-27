@@ -4,10 +4,10 @@ import fdata from "./dir.json";
 // Debug logger utility with toggle flag
 const debugLogger = (action, state, payload) => {
   // Set to true to enable logging, false to disable
-  const enableLogging = false;
+  const enableLogging = true;
   
   if (enableLogging) {
-    console.log(`[FileReducer] ${action}`, payload || '', state ? { cdir: state.cdir, hid: state.hid } : '');
+    console.log(`[FileReducer][reducers/files.js] ${action}`, payload || '', state ? { cdir: state.cdir, hid: state.hid } : '');
   }
 };
 
@@ -88,7 +88,7 @@ const fileReducer = (state = defState, action) => {
 
   if (action.type === "FILEDIR") {
     if (action.payload.id) {
-      console.log("FILEDIR has id", action.payload);
+
       tmp.cdir = action.payload.id;
 
       if (action.payload.triggerBackend) {
