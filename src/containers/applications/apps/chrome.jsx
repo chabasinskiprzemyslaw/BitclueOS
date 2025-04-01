@@ -1,14 +1,19 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useReducer, useCallback } from "react";
-import { MoreVertical, Bookmark } from "lucide-react";
+import { MoreVertical, Bookmark, Clock, X } from "lucide-react";
 import { useSelector } from "react-redux";
 import browserReducer, { initialState } from "../../../reducers/browser";
 import { DropdownMenu } from "./dropdown-menu";
 import { NavigationBar } from "./navigation-bar";
 import { TabBar } from "./tab-bar";
 import { ToolBar } from "../../../utils/general";
-import internalDNS, { getSelectedScenario } from "../../pages/internalDNS";
+import internalDNS, { 
+  getSelectedScenario, 
+  getBrowserHistory, 
+  saveBrowserHistory,
+  initializeHistoryWithSamples 
+} from "../../pages/internalDNS";
 
 // Custom styles for hiding scrollbars but keeping functionality
 const scrollbarStyles = `
@@ -101,6 +106,84 @@ const BookmarksBar = React.memo(({ onNavigate, recentHistory = [] }) => {
 // Add displayName for React.memo component
 BookmarksBar.displayName = "BookmarksBar";
 
+// History Panel component
+const HistoryPanel = React.memo(({ isOpen, onClose, onNavigate }) => {
+  const [historyItems, setHistoryItems] = useState([]);
+  
+  useEffect(() => {
+    if (isOpen) {
+      // Load history when panel opens
+      const history = getBrowserHistory();
+      setHistoryItems(history);
+      
+      // If history is empty, initialize with samples
+      if (history.length === 0) {
+        const samples = initializeHistoryWithSamples();
+        setHistoryItems(samples);
+      }
+    }
+  }, [isOpen]);
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div className="absolute top-0 right-0 w-96 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 z-10 shadow-lg overflow-auto">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center">
+          <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-2" />
+          <h2 className="text-lg font-semibold">History</h2>
+        </div>
+        <button 
+          onClick={onClose}
+          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
+        >
+          <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+        </button>
+      </div>
+      
+      <div className="p-4">
+        {historyItems.length === 0 ? (
+          <div className="text-center py-8">
+            <Clock className="h-10 w-10 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No browsing history yet</p>
+            <button 
+              onClick={() => {
+                const samples = initializeHistoryWithSamples();
+                setHistoryItems(samples);
+              }}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Load example history
+            </button>
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+            {historyItems.map((item, index) => (
+              <li 
+                key={index} 
+                className="py-2"
+              >
+                <button
+                  onClick={() => {
+                    onNavigate(item.url);
+                    onClose();
+                  }}
+                  className="w-full text-left hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded"
+                >
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{item.displayDate}</p>
+                  <p className="text-gray-800 dark:text-gray-200">{item.url}</p>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+});
+
+HistoryPanel.displayName = "HistoryPanel";
+
 export const Chrome = () => {
   const [state, dispatch] = useReducer(browserReducer, initialState);
   const wnapp = useSelector((state) => state.apps.chrome);
@@ -110,6 +193,7 @@ export const Chrome = () => {
   const [currentUrl, setCurrentUrl] = useState("");
   const { history, addToHistory } = useHistory();
   const loadingTimeoutRef = useRef(null);
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
 
   // Inject custom styles on mount
   useEffect(() => {
@@ -120,6 +204,12 @@ export const Chrome = () => {
     return () => {
       document.head.removeChild(styleEl);
     };
+  }, []);
+
+  // Initialize history with sample entries
+  useEffect(() => {
+    // Initialize history with sample entries from internalDNS
+    initializeHistoryWithSamples();
   }, []);
 
   // Handle outside clicks for menu
@@ -148,7 +238,7 @@ export const Chrome = () => {
     };
   }, []);
 
-  // Memoize the URL change handler to prevent unnecessary re-renders
+  // Updated URL change handler to save to browser history
   const handleUrlChange = useCallback((url) => {
     if (url === currentUrl && !loading) return;
     
@@ -163,6 +253,9 @@ export const Chrome = () => {
     // Add to history
     addToHistory(url);
     
+    // Save to browser history
+    saveBrowserHistory(url);
+    
     // Use a ref to store the timeout
     loadingTimeoutRef.current = setTimeout(() => {
       setLoading(false);
@@ -172,9 +265,14 @@ export const Chrome = () => {
     }, 2000);
   }, [currentUrl, loading, addToHistory]);
 
+  // Toggle history panel
+  const toggleHistoryPanel = useCallback(() => {
+    setIsHistoryPanelOpen(prev => !prev);
+  }, []);
+
   return (
     <div
-      className="chrome floatTab dpShad dark"
+      className="chrome floatTab dpShad dark relative"
       data-size={wnapp.size}
       data-max={wnapp.max}
       id={wnapp.icon + "App"}
@@ -191,7 +289,11 @@ export const Chrome = () => {
         name="Chrome"
       />
       <TabBar />
-      <NavigationBar onUrlChange={handleUrlChange} initialUrl={currentUrl} />
+      <NavigationBar 
+        onUrlChange={handleUrlChange} 
+        initialUrl={currentUrl} 
+        onHistoryClick={toggleHistoryPanel}
+      />
       <BookmarksBar onNavigate={handleUrlChange} recentHistory={history} />
       <div className="flex-1 bg-white dark:bg-[#202124] text-black dark:text-white p-4 overflow-auto">
         {loading ? (
@@ -211,8 +313,14 @@ export const Chrome = () => {
         >
           <MoreVertical className="h-4 w-4 text-gray-300" />
         </button>
-        {state.isMenuOpen && <DropdownMenu />}
+        {state.isMenuOpen && <DropdownMenu onHistoryClick={toggleHistoryPanel} />}
       </div>
+      
+      <HistoryPanel 
+        isOpen={isHistoryPanelOpen} 
+        onClose={() => setIsHistoryPanelOpen(false)} 
+        onNavigate={handleUrlChange}
+      />
     </div>
   );
 };

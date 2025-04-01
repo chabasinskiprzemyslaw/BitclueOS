@@ -17,7 +17,7 @@ import {
 import browserReducer, { initialState } from "../../../reducers/browser";
 import { useReducer } from 'react';
 
-export function DropdownMenu() {
+export function DropdownMenu({ onHistoryClick }) {
   const [state, dispatch] = useReducer(
       browserReducer,
       initialState
@@ -44,7 +44,10 @@ export function DropdownMenu() {
       </div>
       <div className="border-t border-gray-700" />
       <div className="p-2">
-        <button className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-700 rounded-lg">
+        <button 
+          onClick={onHistoryClick}
+          className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-700 rounded-lg"
+        >
           <History className="h-4 w-4" />
           <span>History</span>
         </button>

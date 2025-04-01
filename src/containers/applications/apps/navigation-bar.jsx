@@ -1,12 +1,12 @@
 "use client"
 
-import { ArrowLeft, ArrowRight, RotateCcw, Star } from "lucide-react"
+import { ArrowLeft, ArrowRight, RotateCcw, Star, Clock } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import browserReducer, { initialState } from "../../../reducers/browser";
 import { useReducer } from 'react';
 import React from "react";
 
-export const NavigationBar = ({ onUrlChange, initialUrl = "" }) => {
+export const NavigationBar = ({ onUrlChange, initialUrl = "", onHistoryClick }) => {
   const [state, dispatch] = useReducer(
         browserReducer,
         initialState
@@ -107,6 +107,12 @@ export const NavigationBar = ({ onUrlChange, initialUrl = "" }) => {
           />
         </div>
       </form>
+      <button 
+        className="p-1 hover:bg-gray-700 rounded-full"
+        onClick={onHistoryClick}
+      >
+        <Clock className="h-4 w-4" />
+      </button>
       <button className="p-1 hover:bg-gray-700 rounded-full">
         <Star className="h-4 w-4" />
       </button>
