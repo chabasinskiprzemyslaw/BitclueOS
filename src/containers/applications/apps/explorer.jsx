@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Icon, Image, ToolBar } from "../../../utils/general";
 import { dispatchAction, handleFileOpen } from "../../../actions";
@@ -313,18 +313,299 @@ export const Explorer = () => {
   );
 };
 
+// Context Menu Component
+const ContextMenu = ({ x, y, onClose, file, showProperties }) => {
+  const menuRef = useRef(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
+  return (
+    <div 
+      ref={menuRef}
+      className="context-menu" 
+      style={{ 
+        top: `${y}px`, 
+        left: `${x}px`,
+      }}
+    >
+      <div 
+        className="context-menu-item"
+        onClick={() => {
+          showProperties(file);
+          onClose();
+        }}
+      >
+        <Icon className="mr-2" fafa="faInfoCircle" width={14} />
+        <span>Properties</span>
+      </div>
+    </div>
+  );
+};
+
+// API service for file properties
+const FilePropertiesService = {
+  // Get properties for a file or folder
+  getProperties: async (fileId) => {
+    // This will be replaced with an actual API call in the future
+    debugLogger('FilePropertiesService', 'getProperties', fileId);
+    
+    // Simulate backend API call
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Mock response data
+        const mockData = {
+          id: fileId,
+          name: "File or Folder Name", // Will be overridden by actual file name
+          type: "Unknown",
+          location: "This PC > Documents",
+          size: "0 bytes",
+          created: "Unknown",
+          modified: "Unknown",
+          accessed: "Unknown",
+          attributes: []
+        };
+        resolve(mockData);
+      }, 500);
+    });
+  }
+};
+
+// Properties Dialog Component
+const PropertiesDialog = ({ file, onClose }) => {
+  const [fileInfo, setFileInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    // Fetch file properties from backend
+    const fetchFileInfo = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Call the API service
+        const data = await FilePropertiesService.getProperties(file.id);
+        
+        // Combine backend data with file data we already have
+        const combinedData = {
+          ...data,
+          name: file.name,
+          type: file.type === 'folder' ? 'File folder' : (file.info && file.info.type) || 'File',
+          // Use more file info if available
+          size: file.size || data.size,
+          location: file.path || data.location,
+          // Format the dates nicely if they exist
+          created: formatDate(file.created) || data.created,
+          modified: formatDate(file.modified) || data.modified,
+          accessed: formatDate(file.accessed) || data.accessed,
+          // Additional attributes
+          attributes: file.attributes || data.attributes || ['Read-only']
+        };
+        
+        setFileInfo(combinedData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching file properties:', error);
+        setError('Failed to load file properties. Please try again.');
+        setLoading(false);
+      }
+    };
+    
+    fetchFileInfo();
+  }, [file]);
+  
+  // Helper function to format dates
+  const formatDate = (dateString) => {
+    if (!dateString) return null;
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return null;
+      
+      // Format: Today, 10:30 AM or MM/DD/YYYY, 10:30 AM
+      const today = new Date();
+      const isToday = date.getDate() === today.getDate() && 
+                     date.getMonth() === today.getMonth() && 
+                     date.getFullYear() === today.getFullYear();
+      
+      const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+      const timeString = date.toLocaleTimeString('en-US', timeOptions);
+      
+      if (isToday) {
+        return `Today, ${timeString}`;
+      } else {
+        const dateOptions = { month: 'numeric', day: 'numeric', year: 'numeric' };
+        const dateString = date.toLocaleDateString('en-US', dateOptions);
+        return `${dateString}, ${timeString}`;
+      }
+    } catch (e) {
+      console.error('Date formatting error:', e);
+      return dateString;
+    }
+  };
+  
+  return (
+    <div className="properties-overlay">
+      <div className="properties-dialog dpShad">
+        <div className="dialog-header">
+          <span>{file.name} Properties</span>
+          <Icon 
+            fafa="faTimes" 
+            width={14} 
+            style={{ cursor: 'pointer' }} 
+            onClick={onClose}
+          />
+        </div>
+        
+        <div className="dialog-content win11Scroll">
+          {loading ? (
+            <div className="flex justify-center py-4">Loading properties...</div>
+          ) : error ? (
+            <div className="flex justify-center py-4 text-red-500">{error}</div>
+          ) : (
+            <>
+              <div className="flex items-center mb-4">
+                <Image src={`icon/win/${file.type === 'folder' ? 'folder' : 'file'}`} width={32} />
+                <span className="ml-3 font-bold">{fileInfo.name}</span>
+              </div>
+              
+              <div className="properties-tabs">
+                <div className="tab-active">General</div>
+              </div>
+              
+              <table>
+                <tbody>
+                  {Object.entries(fileInfo).map(([key, value], index) => {
+                    // Skip certain keys that we don't want to display
+                    if (['name', 'id', 'attributes'].includes(key)) return null;
+                    
+                    return (
+                      <tr key={index}>
+                        <td>{key}:</td>
+                        <td>{value}</td>
+                      </tr>
+                    );
+                  })}
+                  
+                  {/* Display attributes separately if they exist */}
+                  {fileInfo.attributes && fileInfo.attributes.length > 0 && (
+                    <tr>
+                      <td>attributes:</td>
+                      <td>{fileInfo.attributes.join(', ')}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
+        
+        <div className="dialog-footer">
+          <button 
+            className="okButton"
+            onClick={onClose}
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Content Context Menu Component for empty area
+const ContentContextMenu = ({ x, y, onClose }) => {
+  const menuRef = useRef(null);
+  const dispatch = useDispatch();
+  
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+  
+  const handleViewChange = (view) => {
+    debugLogger('ContentContextMenu', 'handleViewChange', view);
+    dispatch({ type: "FILEVIEW", payload: view });
+    onClose();
+  };
+  
+  const handleRefresh = () => {
+    debugLogger('ContentContextMenu', 'handleRefresh');
+    // In a real app, this would trigger a refresh of the current directory
+    // For now, we'll just close the menu
+    onClose();
+  };
+
+  return (
+    <div 
+      ref={menuRef}
+      className="context-menu" 
+      style={{ 
+        top: `${y}px`, 
+        left: `${x}px`,
+      }}
+    >
+      <div className="context-menu-item" onClick={() => handleViewChange("1")}>
+        <Icon className="mr-2" fafa="faThLarge" width={14} />
+        <span>Large icons</span>
+      </div>
+      <div className="context-menu-item" onClick={() => handleViewChange("5")}>
+        <Icon className="mr-2" fafa="faList" width={14} />
+        <span>Details</span>
+      </div>
+      <div className="context-menu-separator"></div>
+      <div className="context-menu-item" onClick={handleRefresh}>
+        <Icon className="mr-2" fafa="faSyncAlt" width={14} />
+        <span>Refresh</span>
+      </div>
+    </div>
+  );
+};
+
 const ContentArea = ({ searchtxt }) => {
   const files = useSelector((state) => state.files);
   const special = useSelector((state) => state.files.data.special);
   const [selected, setSelect] = useState(null);
   const fdata = files.data.getId(files.cdir);
   const dispatch = useDispatch();
-
-  const handleClick = (e) => {
-    e.stopPropagation();
-    debugLogger('ContentArea', 'handleClick', e.target.dataset.id);
-    setSelect(e.target.dataset.id);
-  };
+  
+  // Add state for context menu
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    file: null
+  });
+  
+  // Add state for content context menu (right-click on empty space)
+  const [contentContextMenu, setContentContextMenu] = useState({
+    visible: false,
+    x: 0,
+    y: 0
+  });
+  
+  // Add state for properties dialog
+  const [showProperties, setShowProperties] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleDouble = (e) => {
     e.stopPropagation();
@@ -339,10 +620,81 @@ const ContentArea = ({ searchtxt }) => {
       triggerData: dataset.triggerData
     });
   };
-
+  
+  // Handle right click to show context menu
+  const handleContextMenu = (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+    debugLogger('ContentArea', 'handleContextMenu', item);
+    setContentContextMenu({
+      visible: false,
+      x: 0,
+      y: 0
+    });
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      file: item
+    });
+  };
+  
+  // Handle right click on empty space
+  const handleContentContextMenu = (e) => {
+    e.preventDefault();
+    debugLogger('ContentArea', 'handleContentContextMenu');
+    // Close file context menu if open
+    setContextMenu({
+      visible: false,
+      x: 0,
+      y: 0,
+      file: null
+    });
+    // Open content context menu
+    setContentContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+  
+  // Close context menu
+  const closeContextMenu = () => {
+    setContextMenu({
+      visible: false,
+      x: 0,
+      y: 0,
+      file: null
+    });
+  };
+  
+  // Close content context menu
+  const closeContentContextMenu = () => {
+    setContentContextMenu({
+      visible: false,
+      x: 0,
+      y: 0
+    });
+  };
+  
+  // Open properties dialog
+  const openProperties = (file) => {
+    debugLogger('ContentArea', 'openProperties', file);
+    setSelectedFile(file);
+    setShowProperties(true);
+  };
+  
+  // Close properties dialog
+  const closeProperties = () => {
+    setShowProperties(false);
+    setSelectedFile(null);
+  };
+  
   const emptyClick = (e) => {
     debugLogger('ContentArea', 'emptyClick');
     setSelect(null);
+    closeContextMenu();
+    closeContentContextMenu();
   };
 
   const handleKey = (e) => {
@@ -369,6 +721,7 @@ const ContentArea = ({ searchtxt }) => {
     <div
       className="contentarea"
       onClick={emptyClick}
+      onContextMenu={handleContentContextMenu}
       onKeyDown={handleKey}
       tabIndex="-1"
     >
@@ -386,8 +739,9 @@ const ContentArea = ({ searchtxt }) => {
                   data-name={item.name}
                   data-trigger={item.info && item.info.triggerBackend ? "true" : "false"}
                   data-trigger-data={item.info && item.info.triggerData ? JSON.stringify(item.info.triggerData) : ""}
-                  onClick={handleClick}
                   onDoubleClick={handleDouble}
+                  onContextMenu={(e) => handleContextMenu(e, item)}
+                  onClick={() => setSelect(item.id)}
                 >
                   <Image src={getFileIcon(item)} />
                   <span>{item.name}</span>
@@ -400,6 +754,34 @@ const ContentArea = ({ searchtxt }) => {
           <span className="text-xs mx-auto">This folder is empty.</span>
         ) : null}
       </div>
+      
+      {/* File Context Menu */}
+      {contextMenu.visible && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          file={contextMenu.file}
+          onClose={closeContextMenu}
+          showProperties={openProperties}
+        />
+      )}
+      
+      {/* Content Context Menu (for empty space) */}
+      {contentContextMenu.visible && (
+        <ContentContextMenu
+          x={contentContextMenu.x}
+          y={contentContextMenu.y}
+          onClose={closeContentContextMenu}
+        />
+      )}
+      
+      {/* Properties Dialog */}
+      {showProperties && selectedFile && (
+        <PropertiesDialog 
+          file={selectedFile}
+          onClose={closeProperties}
+        />
+      )}
     </div>
   );
 };

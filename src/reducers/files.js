@@ -14,6 +14,10 @@ const debugLogger = (action, state, payload) => {
 // Function to send data to backend when triggered files are opened
 const sendToBackend = (fileData) => {
   debugLogger('sendToBackend', null, fileData);
+  const userInfo = JSON.parse(localStorage.getItem('user_info'));
+  const scenarioId = localStorage.getItem('selected_scenario');
+
+  const userIdentityId = userInfo?.id;
   if (!fileData) return;
   
   // Check if the file has the triggerBackend flag directly or in info
@@ -38,11 +42,13 @@ const sendToBackend = (fileData) => {
     debugLogger('BACKEND_TRIGGER', null, { 
       fileId,
       fileName,
-      triggerData
+      triggerData,
+      userIdentityId,
+      scenarioId
     });
     
     // Actual backend request - replace URL with your API endpoint
-    fetch('https://your-api-endpoint.com/file-opened', {
+    fetch('https://localhost:5001/storyengine/fileexplorer/files/trigger-action', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -50,7 +56,9 @@ const sendToBackend = (fileData) => {
       body: JSON.stringify({
         fileId,
         fileName,
-        triggerData
+        triggerData,
+        userIdentityId,
+        scenarioId
       })
     })
     .then(response => response.json())
@@ -172,7 +180,6 @@ const fileReducer = (state = defState, action) => {
           id: action.payload.id,
           name: action.payload.name,
           type: action.payload.type,
-          trigger: action.payload.trigger,
           triggerData: action.payload.triggerData
         };
       }
