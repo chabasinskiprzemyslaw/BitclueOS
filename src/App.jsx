@@ -19,6 +19,8 @@ import { MediaViewer } from "./components/MediaViewer";
 import AudioPlayer from "./components/AudioPlayer";
 import ObjectivesBubble from "./components/objectives/ObjectivesBubble";
 import NotificationCenter from "./components/NotificationCenter";
+import PinnedNotes from "./components/PinnedNotes";
+import PinnedNotesDevTool from "./components/PinnedNotesDevTool";
 import { fetchUnrespondedNotifications } from "./utils/notifications";
 
 import { loadSettings } from "./actions";
@@ -158,6 +160,7 @@ function App() {
           <Background />
           <div className="desktop" data-menu="desk">
             <DesktopApp />
+            <PinnedNotes />
             {Object.keys(Applications).map((key, idx) => {
               var WinApp = Applications[key];
               return <WinApp key={idx} />;
@@ -183,6 +186,9 @@ function App() {
           <MediaViewer />
           <AudioPlayer />
           <NotificationCenter />
+          
+          {/* Dev Tool for Pinned Notes - Remove or comment out in production */}
+          <PinnedNotesDevTool />
         </div>
       </ErrorBoundary>
     </div>

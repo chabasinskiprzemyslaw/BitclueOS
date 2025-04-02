@@ -13,6 +13,7 @@ import useNpcTypingSimulation from "./whatsapp-components/useNpcTypingSimulation
 // Import components
 import ChatSidebar from "./whatsapp-components/ChatSidebar";
 import ChatArea from "./whatsapp-components/ChatArea";
+import LoginScreen from "./whatsapp-components/LoginScreen";
 
 // Import constants and utilities
 import { STORAGE_KEYS, CONNECTION_STATUS } from "./whatsapp-components/constants";
@@ -65,6 +66,11 @@ export const WhatsApp = () => {
   const [authError, setAuthError] = useState(null);
   const [token, setToken] = useState("");
   const [userId, setUserId] = useState("");
+  
+  // WhatsApp-specific login states
+  const [whatsappLoggedIn, setWhatsappLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   
   // Track if messages have been loaded for a chat to prevent repeated requests
   const [loadedMessageChats, setLoadedMessageChats] = useState(new Set());
@@ -588,7 +594,22 @@ export const WhatsApp = () => {
     }
   };
 
-  // Handle login
+  // Handle WhatsApp-specific login
+  const handleWhatsAppLogin = (e) => {
+    e.preventDefault();
+    
+    const correctUsername = "AF_INSIDER";
+    const correctPassword = "AlexTheGreat01!";
+    
+    if (username === correctUsername && password === correctPassword) {
+      setWhatsappLoggedIn(true);
+      localStorage.setItem(STORAGE_KEYS.WHATSAPP_LOGIN, "true");
+    } else {
+      setAuthError("Invalid username or password. Try again.");
+    }
+  };
+
+  // Handle login (original Keycloak auth function)
   const handleLogin = async (e) => {
     e.preventDefault();
     
@@ -639,11 +660,20 @@ export const WhatsApp = () => {
     }
   };
 
+  // Check if user is already logged in to WhatsApp
+  useEffect(() => {
+    const whatsappLoginStatus = localStorage.getItem(STORAGE_KEYS.WHATSAPP_LOGIN);
+    if (whatsappLoginStatus === "true") {
+      setWhatsappLoggedIn(true);
+    }
+  }, []);
+
   // Handle logout
   const handleLogout = () => {
     // Clear authentication data
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER_INFO);
+    localStorage.removeItem(STORAGE_KEYS.WHATSAPP_LOGIN);
     
     // Also clear Keycloak tokens
     localStorage.removeItem("auth_token");
@@ -654,6 +684,7 @@ export const WhatsApp = () => {
     setToken(null);
     setUserId(null);
     setIsAuthenticated(false);
+    setWhatsappLoggedIn(false);
     setChats([]);
     setActiveChat(null);
     
@@ -822,6 +853,16 @@ export const WhatsApp = () => {
             {!keycloakInitialized ? "Waiting for authentication..." : "End-to-end encrypted"}
           </p>
         </div>
+      ) : !whatsappLoggedIn ? (
+        <LoginScreen 
+          username={username}
+          setUsername={setUsername}
+          password={password}
+          setPassword={setPassword}
+          handleLogin={handleWhatsAppLogin}
+          authLoading={authLoading}
+          authError={authError}
+        />
       ) : (
         <div className="flex-1 flex overflow-hidden">
           {/* Chat Sidebar */}
