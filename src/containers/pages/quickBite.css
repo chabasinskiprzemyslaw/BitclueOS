@@ -1,0 +1,295 @@
+:root {
+  --primary: #ff4757;
+  --secondary: #2f3542;
+  --accent: #ffa502;
+  --text: #2f3542;
+  --light-text: #747d8c;
+  --background: #ffffff;
+  --light-bg: #f1f2f6;
+  --border: #dfe4ea;
+}
+
+.quickbite-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--background);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.quickbite-header {
+  background-color: var(--background);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.logo span {
+  color: var(--secondary);
+}
+
+.search-bar {
+  flex: 1;
+  max-width: 500px;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.search-btn {
+  padding: 0.8rem 1.2rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.search-btn:hover {
+  background-color: #ff2e40;
+}
+
+.user-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.location-btn, .cart-btn {
+  padding: 0.8rem 1.2rem;
+  background-color: var(--light-bg);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.location-btn:hover, .cart-btn:hover {
+  background-color: var(--border);
+}
+
+.main-content {
+  padding: 2rem 1rem;
+}
+
+.categories-bar {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+}
+
+.category {
+  padding: 0.8rem 1.5rem;
+  background-color: var(--light-bg);
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+
+.category.active {
+  background-color: var(--primary);
+  color: white;
+}
+
+.restaurants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.restaurant-card {
+  background-color: var(--background);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.restaurant-card:hover {
+  transform: translateY(-5px);
+}
+
+.restaurant-image {
+  height: 180px;
+  background-size: cover;
+  background-position: center;
+}
+
+.restaurant-image.pizza {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80');
+}
+
+.restaurant-image.sushi {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80');
+}
+
+.restaurant-image.burger {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80');
+}
+
+.restaurant-image.dessert {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80');
+}
+
+.restaurant-info {
+  padding: 1.5rem;
+}
+
+.restaurant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.restaurant-header h2 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.rating {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cuisine {
+  color: var(--light-text);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.delivery-info {
+  display: flex;
+  gap: 1rem;
+  color: var(--light-text);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.price-range {
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+.promo-banner {
+  background-color: var(--accent);
+  color: white;
+  padding: 2rem 1rem;
+  margin: 2rem 0;
+  border-radius: 12px;
+}
+
+.promo-content {
+  text-align: center;
+}
+
+.promo-content h3 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.promo-btn {
+  background-color: white;
+  color: var(--accent);
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: transform 0.3s;
+}
+
+.promo-btn:hover {
+  transform: scale(1.05);
+}
+
+.quickbite-footer {
+  background-color: var(--light-bg);
+  padding: 3rem 1rem 1rem;
+  margin-top: 3rem;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.footer-section h4 {
+  color: var(--secondary);
+  margin-bottom: 1rem;
+}
+
+.footer-section a {
+  display: block;
+  color: var(--light-text);
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+  transition: color 0.3s;
+}
+
+.footer-section a:hover {
+  color: var(--primary);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--light-text);
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-bar {
+    max-width: none;
+  }
+
+  .user-actions {
+    justify-content: space-between;
+  }
+
+  .categories-bar {
+    padding: 0.5rem 0;
+  }
+
+  .category {
+    padding: 0.6rem 1.2rem;
+  }
+
+  .restaurants-grid {
+    grid-template-columns: 1fr;
+  }
+} 

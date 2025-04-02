@@ -1,6 +1,11 @@
 import MyPage from "./myPage";
 import GoogleClone from "./googleClone";
 import Layout from "./mail/layout";
+import AudioEditingGuide from "./audioEditingGuide";
+import ExifGuide from "./exifGuide";
+import ExifHidingGuide from "./exifHidingGuide";
+import BuzzHub from "./buzzHub";
+import QuickBite from "./quickBite";
 
 // Helper function to get the selected scenario from localStorage
 export const getSelectedScenario = () => {
@@ -58,7 +63,12 @@ export const initializeHistoryWithSamples = () => {
 const internalDNS = {
   "mypage.com": MyPage,
   "google.com": GoogleClone,
-  "google.com/mail": Layout
+  "google.com/mail": Layout,
+  "audio-guide.com": AudioEditingGuide,
+  "exif-guide.com": ExifGuide,
+  "techxplorer.com/forums/exif-hiding": ExifHidingGuide,
+  "buzzhub.com": BuzzHub,
+  "quickbite.com": QuickBite
 };
 
 export default internalDNS;

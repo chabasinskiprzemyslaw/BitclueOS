@@ -8,9 +8,9 @@
       "spid": "%cdrive%"
     },
     "data": {
-      "ODZYSKANE_DANE": {
+      "RECOVERED_DATA": {
         "type": "folder",
-        "name": "ODZYSKANE_DANE",
+        "name": "RECOVERED_DATA",
         "data": {
           "ALEX_FREEMAN": {
             "type": "folder",
@@ -36,7 +36,7 @@
                   }
                 }
               },
-              "Zdjęcia": {
+              "Photos": {
                 "type": "folder",
                 "name": "Zdjęcia",
                 "data": {
@@ -83,7 +83,7 @@
                   }
                 }
               },
-              "Wideo": {
+              "Videos": {
                 "type": "folder",
                 "name": "Wideo",
                 "data": {
@@ -121,7 +121,7 @@
                   }
                 }
               },
-              "Praca": {
+              "Work": {
                 "type": "folder",
                 "name": "Praca",
                 "data": {
