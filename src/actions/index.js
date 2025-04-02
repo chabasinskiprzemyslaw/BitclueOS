@@ -273,7 +273,9 @@ export const handleFileOpen = (id) => {
           id: item.id,
           type: item.type,
           url: item.info.url,
-          name: item.name
+          name: item.name,
+          triggerBackend: item.info.triggerBackend,
+          triggerData: item.info.triggerData
         } 
       });
     } else if (item.type === "notepad") {

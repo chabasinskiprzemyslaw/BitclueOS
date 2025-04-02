@@ -38,7 +38,7 @@
               },
               "Photos": {
                 "type": "folder",
-                "name": "Zdjęcia",
+                "name": "Photos",
                 "data": {
                   "IMG_20240310_1452.jpg": {
                     "type": "image",
@@ -52,7 +52,7 @@
                       "dateModified": "2023-05-15",
                       "triggerBackend": true,
                       "triggerData": {
-                        "id": "FILE-001",
+                        "id": "FILE001",
                         "action": "open"
                       }
                     }

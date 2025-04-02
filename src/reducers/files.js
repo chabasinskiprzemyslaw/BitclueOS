@@ -36,7 +36,7 @@ const sendToBackend = (fileData) => {
       (fileData.info && fileData.info.triggerData ? fileData.info.triggerData : {});
     
     // Get file ID and name from the appropriate property
-    const fileId = fileData.id || fileData.fileId;
+    const fileId = fileData.triggerData.id;
     const fileName = fileData.name || fileData.fileName;
     
     debugLogger('BACKEND_TRIGGER', null, { 
@@ -110,7 +110,7 @@ const fileReducer = (state = defState, action) => {
         };
 
         // Send the complete file data to the backend
-        debugLogger('triggerBackend before send', state, action);
+        console.log("file trigger 1");
         sendToBackend(fileData);
       }
       
@@ -154,17 +154,21 @@ const fileReducer = (state = defState, action) => {
       let fileData = tmp.data.getId(action.payload.id);
       
       if (fileData) {
+        console.log("file trigger 2");
         sendToBackend(fileData);
       }
     }
     
     debugLogger('NOTEPAD', tmp, action.payload);
   } else if (action.type === "OPENFILEVIEW") {
+    console.log("open file view", action.payload);
     tmp.fileView = {
       show: true,
       type: action.payload.type,
       url: action.payload.url,
-      name: action.payload.name
+      name: action.payload.name,
+      triggerBackend: action.payload.triggerBackend,
+      triggerData: action.payload.triggerData
     };
 
     // Check if this file should trigger a backend action
@@ -185,6 +189,7 @@ const fileReducer = (state = defState, action) => {
       }
       
       // Send the complete file data to the backend
+      console.log("file trigger 3");
       sendToBackend(fileData);
     }
     

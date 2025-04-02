@@ -18,16 +18,6 @@ const trackedPages = {
     name: "EXIF Hiding Guide",
     importance: "high",
     description: "User viewed tutorial about hiding data in EXIF metadata"
-  },
-  "exif-guide.com": {
-    name: "EXIF Guide",
-    importance: "medium",
-    description: "User viewed general EXIF metadata information"
-  },
-  "audio-guide.com": {
-    name: "Audio Editing Guide",
-    importance: "medium",
-    description: "User viewed audio editing tutorial"
   }
 };
 
@@ -60,9 +50,67 @@ export const triggerPageTracking = (url) => {
     // Update tracking data
     localStorage.setItem("page_tracking", JSON.stringify([...existingData, newEntry]));
     
-    // Here you would typically make an API call to your backend
-    // For now, we'll just log it
+    // Log locally
     console.log("Tracked page visit:", newEntry);
+    
+    // Send to backend API
+    triggerBrowserEvent(url, timestamp, trackingInfo);
+  }
+};
+
+// Function to trigger browser event in the backend
+const triggerBrowserEvent = async (browserUrl, timestamp, additionalData) => {
+  try {
+    // Get required data from localStorage
+    const userInfo = JSON.parse(localStorage.getItem('user_info'));
+    const userIdentityId = userInfo?.id;
+    const scenarioId = localStorage.getItem('selected_scenario');
+    const authToken = localStorage.getItem('auth_token');
+    
+    // Validate required data
+    if (!userIdentityId || !scenarioId) {
+      console.error('Missing userIdentityId or scenarioId in localStorage');
+      return;
+    }
+
+    if (!authToken) {
+      console.error('Missing auth_token in localStorage');
+      return;
+    }
+    
+    console.log('Sending browser event to backend');
+    
+    // Prepare request data
+    const triggerData = {
+      timestamp,
+      ...additionalData
+    };
+    
+    // Send request to backend
+    const response = await fetch(`https://localhost:5001/storyengine/browser/trigger-event`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        browserUrl,
+        userIdentityId,
+        scenarioId,
+        triggerData
+      }),
+    });
+    
+    console.log('Response from browser event trigger:', response);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Failed to trigger browser event:', errorData);
+    } else {
+      console.log('Successfully triggered browser event for URL:', browserUrl);
+    }
+  } catch (error) {
+    console.error('Error triggering browser event:', error);
   }
 };
 
