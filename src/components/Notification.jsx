@@ -30,18 +30,74 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
     }, 300);
   };
 
+  const respondToNotification = async (notificationId) => {
+    console.log('respondToNotification', notificationId);
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('user_info'));
+      const userIdentityId = userInfo?.id;
+      const scenarioId = localStorage.getItem('selected_scenario');
+      const authToken = localStorage.getItem('auth_token');
+
+      console.log('getting local storage values');
+      
+      if (!userIdentityId || !scenarioId) {
+        console.error('Missing userIdentityId or scenarioId in localStorage');
+        return;
+      }
+
+      if (!authToken) {
+        console.error('Missing auth_token in localStorage');
+        return;
+      }
+
+      console.log('all local storage values are present');
+
+      console.log('sending request to backend');  
+
+      const response = await fetch(`https://localhost:5001/story-engine/notifications/${notificationId}/respond`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          userIdentityId,
+          scenarioId
+        }),
+      });
+
+      console.log('response from backend', response); 
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to respond to notification:', errorData);
+      } else {
+        console.log('Successfully responded to notification:', notificationId);
+      }
+    } catch (error) {
+      console.error('Error responding to notification:', error);
+    }
+  };
+
   const handleButtonClick = (action) => {
-
     console.log('handleButtonClick', action);
-    // isTriggerBackend is a boolean that is used to determine if the action is a backend trigger
-    //const isTriggerBackend = action.isTriggerBackend;
 
-    if (action.payload.info.isTriggerBackend) {
+    // Safe check for action.payload?.info?.isTriggerBackend
+    if (action && 
+        typeof action === 'object' && 
+        action.payload && 
+        action.payload.info && 
+        action.payload.info.isTriggerBackend) {
+      
       console.log('isTriggerBackend', action.payload.info.isTriggerBackend);
+      
+      // If notificationId exists in action, respond to it
+      if (action.id) {
+        respondToNotification(action.id);
+      }
     }
 
     if (typeof action === 'string') {
-    
       dispatch({ type: action });
     } else if (typeof action === 'object') {
       dispatch(action);
