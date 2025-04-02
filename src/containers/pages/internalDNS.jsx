@@ -6,6 +6,7 @@ import ExifGuide from "./exifGuide";
 import ExifHidingGuide from "./exifHidingGuide";
 import BuzzHub from "./buzzHub";
 import QuickBite from "./quickBite";
+import ExifTool from "./ExifTool";
 
 // Helper function to get the selected scenario from localStorage
 export const getSelectedScenario = () => {
@@ -18,6 +19,11 @@ const trackedPages = {
     name: "EXIF Hiding Guide",
     importance: "high",
     description: "User viewed tutorial about hiding data in EXIF metadata"
+  },
+  "localhost/exiftool": {
+    name: "ExifTool Utility",
+    importance: "high",
+    description: "User accessed the ExifTool utility"
   }
 };
 
@@ -173,7 +179,8 @@ const internalDNS = {
   "exif-guide.com": ExifGuide,
   "techxplorer.com/forums/exif-hiding": ExifHidingGuide,
   "buzzhub.com": BuzzHub,
-  "quickbite.com": QuickBite
+  "quickbite.com": QuickBite,
+  "localhost/exiftool": ExifTool
 };
 
 export default internalDNS;

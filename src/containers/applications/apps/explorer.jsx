@@ -356,169 +356,227 @@ const ContextMenu = ({ x, y, onClose, file, showProperties }) => {
 // API service for file properties
 const FilePropertiesService = {
   // Get properties for a file or folder
-  getProperties: async (fileId) => {
+  getProperties: async (fileId, filePath, fileInfo) => {
     // This will be replaced with an actual API call in the future
     debugLogger('FilePropertiesService', 'getProperties', fileId);
+    
+    // Check if the file already has properties in fileInfo
+    if (fileInfo && fileInfo.properties) {
+      debugLogger('FilePropertiesService', 'using properties from dir.json', fileInfo.properties);
+      return Promise.resolve(fileInfo.properties);
+    }
     
     // Simulate backend API call
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Mock response data
-        const mockData = {
+        // Get location from the file path if available
+        let location = "This PC";
+        if (filePath && Array.isArray(filePath)) {
+          location = "This PC > " + filePath.join(" > ");
+        }
+        
+        // Create default properties
+        const defaultProps = {
           id: fileId,
-          name: "File or Folder Name", // Will be overridden by actual file name
-          type: "Unknown",
-          location: "This PC > Documents",
-          size: "0 bytes",
-          created: "Unknown",
-          modified: "Unknown",
+          name: fileInfo ? fileInfo.name : "File or Folder Name",
+          type: fileInfo ? fileInfo.type || "Unknown" : "Unknown",
+          location: location,
+          size: fileInfo && fileInfo.size ? fileInfo.size : "0 bytes",
+          created: fileInfo && fileInfo.dateCreated ? fileInfo.dateCreated : "Unknown",
+          modified: fileInfo && fileInfo.dateModified ? fileInfo.dateModified : "Unknown",
           accessed: "Unknown",
           attributes: []
         };
-        resolve(mockData);
+        
+        resolve(defaultProps);
       }, 500);
     });
   }
 };
 
-// Properties Dialog Component
-const PropertiesDialog = ({ file, onClose }) => {
-  const [fileInfo, setFileInfo] = useState(null);
+// Helper function to format dates
+const formatDate = (dateString) => {
+  if (!dateString) return null;
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+    
+    // Format: Today, 10:30 AM or MM/DD/YYYY, 10:30 AM
+    const today = new Date();
+    const isToday = date.getDate() === today.getDate() && 
+                   date.getMonth() === today.getMonth() && 
+                   date.getFullYear() === today.getFullYear();
+    
+    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+    const timeString = date.toLocaleTimeString('en-US', timeOptions);
+    
+    if (isToday) {
+      return `Today, ${timeString}`;
+    } else {
+      const dateOptions = { month: 'numeric', day: 'numeric', year: 'numeric' };
+      const dateString = date.toLocaleDateString('en-US', dateOptions);
+      return `${dateString}, ${timeString}`;
+    }
+  } catch (e) {
+    console.error('Date formatting error:', e);
+    return dateString;
+  }
+};
+
+// Add this function to format property values for display
+const formatPropertyValue = (key, value) => {
+  if (value === undefined || value === null) return 'Unknown';
+  
+  // Format dates
+  if (['created', 'modified', 'accessed', 'recoveryDate'].includes(key) && typeof value === 'string') {
+    return formatDate(value) || value;
+  }
+  
+  // Format arrays
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  
+  return value;
+};
+
+// Enhance the PropertiesPanel component
+const PropertiesPanel = ({ file, onClose }) => {
+  const [properties, setProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   useEffect(() => {
-    // Fetch file properties from backend
-    const fetchFileInfo = async () => {
+    const fetchProperties = async () => {
       setLoading(true);
-      setError(null);
-      
       try {
         // Call the API service
-        const data = await FilePropertiesService.getProperties(file.id);
+        const data = await FilePropertiesService.getProperties(file.id, file.path, file.info);
         
         // Combine backend data with file data we already have
         const combinedData = {
           ...data,
-          name: file.name,
-          type: file.type === 'folder' ? 'File folder' : (file.info && file.info.type) || 'File',
-          // Use more file info if available
-          size: file.size || data.size,
+          id: file.id || data.id,
+          name: file.name || data.name,
+          type: file.type || data.type,
           location: file.path || data.location,
           // Format the dates nicely if they exist
-          created: formatDate(file.created) || data.created,
-          modified: formatDate(file.modified) || data.modified,
-          accessed: formatDate(file.accessed) || data.accessed,
+          created: formatDate(data.created) || data.created,
+          modified: formatDate(data.modified) || data.modified,
+          accessed: formatDate(data.accessed) || data.accessed,
           // Additional attributes
           attributes: file.attributes || data.attributes || ['Read-only']
         };
-        
-        setFileInfo(combinedData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching file properties:', error);
-        setError('Failed to load file properties. Please try again.');
+        setProperties(combinedData);
+      } catch (err) {
+        console.error('Error fetching file properties:', err);
+        setError('Failed to load file properties');
+      } finally {
         setLoading(false);
       }
     };
-    
-    fetchFileInfo();
+
+    fetchProperties();
   }, [file]);
+
+  // Custom properties are any properties not in this standard list
+  const standardProps = ['id', 'name', 'type', 'location', 'size', 'created', 'modified', 'accessed', 'attributes'];
   
-  // Helper function to format dates
-  const formatDate = (dateString) => {
-    if (!dateString) return null;
+  const getCustomProperties = (props) => {
+    if (!props) return {};
     
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return null;
-      
-      // Format: Today, 10:30 AM or MM/DD/YYYY, 10:30 AM
-      const today = new Date();
-      const isToday = date.getDate() === today.getDate() && 
-                     date.getMonth() === today.getMonth() && 
-                     date.getFullYear() === today.getFullYear();
-      
-      const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
-      const timeString = date.toLocaleTimeString('en-US', timeOptions);
-      
-      if (isToday) {
-        return `Today, ${timeString}`;
-      } else {
-        const dateOptions = { month: 'numeric', day: 'numeric', year: 'numeric' };
-        const dateString = date.toLocaleDateString('en-US', dateOptions);
-        return `${dateString}, ${timeString}`;
-      }
-    } catch (e) {
-      console.error('Date formatting error:', e);
-      return dateString;
-    }
+    return Object.keys(props)
+      .filter(key => !standardProps.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = props[key];
+        return obj;
+      }, {});
   };
-  
+
   return (
-    <div className="properties-overlay">
-      <div className="properties-dialog dpShad">
-        <div className="dialog-header">
-          <span>{file.name} Properties</span>
-          <Icon 
-            fafa="faTimes" 
-            width={14} 
-            style={{ cursor: 'pointer' }} 
-            onClick={onClose}
-          />
+    <div className="properties-panel">
+      <div className="properties-header">
+        <div className="properties-title">
+          {file.name} Properties
         </div>
-        
-        <div className="dialog-content win11Scroll">
-          {loading ? (
-            <div className="flex justify-center py-4">Loading properties...</div>
-          ) : error ? (
-            <div className="flex justify-center py-4 text-red-500">{error}</div>
-          ) : (
-            <>
-              <div className="flex items-center mb-4">
-                <Image src={`icon/win/${file.type === 'folder' ? 'folder' : 'file'}`} width={32} />
-                <span className="ml-3 font-bold">{fileInfo.name}</span>
+        <div className="properties-close" onClick={onClose}>
+          <Icon fafa="faTimes" width={12} />
+        </div>
+      </div>
+      
+      <div className="properties-content win11Scroll">
+        {loading ? (
+          <div className="properties-loading">Loading properties...</div>
+        ) : error ? (
+          <div className="properties-error">{error}</div>
+        ) : properties ? (
+          <>
+            <div className="properties-section">
+              <h3>General</h3>
+              <div className="properties-row">
+                <div className="properties-label">Name:</div>
+                <div className="properties-value">{properties.name}</div>
               </div>
-              
-              <div className="properties-tabs">
-                <div className="tab-active">General</div>
+              <div className="properties-row">
+                <div className="properties-label">Type:</div>
+                <div className="properties-value">{properties.type}</div>
               </div>
-              
-              <table>
-                <tbody>
-                  {Object.entries(fileInfo).map(([key, value], index) => {
-                    // Skip certain keys that we don't want to display
-                    if (['name', 'id', 'attributes'].includes(key)) return null;
-                    
-                    return (
-                      <tr key={index}>
-                        <td>{key}:</td>
-                        <td>{value}</td>
-                      </tr>
-                    );
-                  })}
-                  
-                  {/* Display attributes separately if they exist */}
-                  {fileInfo.attributes && fileInfo.attributes.length > 0 && (
-                    <tr>
-                      <td>attributes:</td>
-                      <td>{fileInfo.attributes.join(', ')}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </>
-          )}
-        </div>
-        
-        <div className="dialog-footer">
-          <button 
-            className="okButton"
-            onClick={onClose}
-          >
-            OK
-          </button>
-        </div>
+              <div className="properties-row">
+                <div className="properties-label">Location:</div>
+                <div className="properties-value">{properties.location}</div>
+              </div>
+              <div className="properties-row">
+                <div className="properties-label">Size:</div>
+                <div className="properties-value">{properties.size}</div>
+              </div>
+            </div>
+            
+            <div className="properties-section">
+              <h3>Date Information</h3>
+              <div className="properties-row">
+                <div className="properties-label">Created:</div>
+                <div className="properties-value">{properties.created}</div>
+              </div>
+              <div className="properties-row">
+                <div className="properties-label">Modified:</div>
+                <div className="properties-value">{properties.modified}</div>
+              </div>
+              <div className="properties-row">
+                <div className="properties-label">Accessed:</div>
+                <div className="properties-value">{properties.accessed}</div>
+              </div>
+            </div>
+            
+            <div className="properties-section">
+              <h3>Comments</h3>
+              <div className="properties-row">
+                <div className="properties-value">{Array.isArray(properties.attributes) ? properties.attributes.join(', ') : properties.attributes}</div>
+              </div>
+            </div>
+            
+            {/* Display any custom properties */}
+            {Object.keys(getCustomProperties(properties)).length > 0 && (
+              <div className="properties-section">
+                <h3>Additional Information</h3>
+                {Object.entries(getCustomProperties(properties)).map(([key, value]) => (
+                  <div className="properties-row" key={key}>
+                    <div className="properties-label">{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}:</div>
+                    <div className="properties-value">{formatPropertyValue(key, value)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="properties-not-found">No properties found</div>
+        )}
+      </div>
+      
+      <div className="properties-footer">
+        <button className="properties-button" onClick={onClose}>
+          OK
+        </button>
       </div>
     </div>
   );
@@ -777,7 +835,7 @@ const ContentArea = ({ searchtxt }) => {
       
       {/* Properties Dialog */}
       {showProperties && selectedFile && (
-        <PropertiesDialog 
+        <PropertiesPanel 
           file={selectedFile}
           onClose={closeProperties}
         />

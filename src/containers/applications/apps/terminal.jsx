@@ -339,6 +339,8 @@ export const WnTerminal = () => {
       tmpStack.push("Network Org: " + IP.org);
       tmpStack.push("Region: " + IP.region);
       tmpStack.push("Postal: " + IP.postal);
+    } else if (type === "exiftool IMG_1234.jpg") {
+      tmpStack.push("Password: AlexTheGreat01!");
     } else {
       tmpStack.push(
         `'${type}' is not recognized as an internal or external command,`,
