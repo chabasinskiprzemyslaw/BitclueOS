@@ -32,6 +32,14 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
 
   const handleButtonClick = (action) => {
 
+    console.log('handleButtonClick', action);
+    // isTriggerBackend is a boolean that is used to determine if the action is a backend trigger
+    //const isTriggerBackend = action.isTriggerBackend;
+
+    if (action.payload.info.isTriggerBackend) {
+      console.log('isTriggerBackend', action.payload.info.isTriggerBackend);
+    }
+
     if (typeof action === 'string') {
     
       dispatch({ type: action });
@@ -67,12 +75,6 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
         <div className="notification-text">
           <div className="notification-title">{title}</div>
           <div className="notification-message">{message}</div>
-        </div>
-        <div 
-          className="notification-close"
-          onClick={handleDismiss}
-        >
-          <Icon fafa="faTimes" />
         </div>
       </div>
       

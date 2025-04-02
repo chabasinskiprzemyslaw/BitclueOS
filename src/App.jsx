@@ -19,7 +19,7 @@ import { MediaViewer } from "./components/MediaViewer";
 import AudioPlayer from "./components/AudioPlayer";
 import ObjectivesBubble from "./components/objectives/ObjectivesBubble";
 import NotificationCenter from "./components/NotificationCenter";
-import { initNotificationService } from "./utils/notifications";
+import { fetchUnrespondedNotifications } from "./utils/notifications";
 
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
@@ -142,7 +142,11 @@ function App() {
 
   // Initialize notification service when app mounts
   useEffect(() => {
-    initNotificationService();
+    const userInfo = JSON.parse(localStorage.getItem('user_info'));
+    const userId = userInfo?.id;
+    if (userId) {
+      fetchUnrespondedNotifications(userId);
+    }
   }, []);
 
   return (

@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './exifHidingGuide.css';
+import { triggerPageTracking } from './internalDNS';
 
 const ExifHidingGuide = () => {
+  useEffect(() => {
+    // Trigger tracking when the component mounts
+    triggerPageTracking("techxplorer.com/forums/exif-hiding");
+  }, []);
+
   return (
     <div className="forum-container">
       <div className="forum-header">

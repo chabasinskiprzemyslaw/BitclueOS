@@ -2,7 +2,7 @@ import { allApps } from "../utils";
 
 const debugLogger = (action, state, payload) => {
   // Set to true to enable logging, false to disable
-  const enableLogging = true;
+  const enableLogging = false;
   
   if (enableLogging) {
     console.log(`[AppReducer][reducers/apps.js] ${action}`, payload || '', state ? { cdir: state.cdir, hid: state.hid } : '');

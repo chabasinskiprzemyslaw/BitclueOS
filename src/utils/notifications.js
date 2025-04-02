@@ -49,6 +49,63 @@ export const clearAllNotifications = () => {
 };
 
 /**
+ * Fetch unresponded notifications from the backend
+ * @param {string} userId The user ID to fetch notifications for
+ * @returns {Promise} Promise that resolves when notifications are fetched and displayed
+ */
+export const fetchUnrespondedNotifications = async (userId) => {
+  try {
+    const authToken = localStorage.getItem('auth_token');
+    const response = await fetch(`https://localhost:5001/story-engine/notifications/unresponded?userId=${userId}`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.status === 204) {
+      // No notifications found
+      return [];
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Failed to fetch notifications:', errorData);
+      throw new Error(errorData.message || 'Failed to fetch notifications');
+    }
+    
+    const notifications = await response.json();
+    
+    // Process and display each notification
+    notifications.forEach(notification => {
+      // Map API notification format to the format expected by showNotification
+      const formattedButtons = notification.buttons.map(button => ({
+        text: button.text,
+        action: {
+          type: button.actionType,
+          payload: JSON.parse(button.actionPayload),
+          id: notification.id
+        }
+      }));
+      
+      showNotification({
+        title: notification.title,
+        message: notification.message,
+        icon: notification.icon,
+        buttons: formattedButtons,
+        // Default time if not specified
+        time: 10000
+      });
+    });
+    
+    return notifications;
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    throw error;
+  }
+};
+
+/**
  * Setup WebSocket for backend-triggered notifications
  * This is a mock implementation - replace with actual backend connection
  */
