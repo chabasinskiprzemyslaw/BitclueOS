@@ -604,6 +604,75 @@ export const WhatsApp = () => {
     if (username === correctUsername && password === correctPassword) {
       setWhatsappLoggedIn(true);
       localStorage.setItem(STORAGE_KEYS.WHATSAPP_LOGIN, "true");
+      
+      // Trigger backend event for successful login
+      const triggerLoginEvent = async () => {
+        try {
+          // Get the stored authentication token
+          const authToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || localStorage.getItem('auth_token');
+          const scenarioId = localStorage.getItem(STORAGE_KEYS.SCENARIO_ID);
+          
+          if (!authToken) {
+            console.warn("No auth token available for triggering login event");
+            return;
+          }
+          
+          // Get user identity ID
+          let userIdentityId = userId;
+          if (!userIdentityId) {
+            const userInfo = localStorage.getItem(STORAGE_KEYS.USER_INFO);
+            if (userInfo) {
+              try {
+                const parsedUserInfo = JSON.parse(userInfo);
+                userIdentityId = parsedUserInfo.id;
+              } catch (error) {
+                console.error("Error parsing user info:", error);
+              }
+            }
+          }
+          
+          if (!userIdentityId) {
+            console.warn("No user identity ID available for triggering login event");
+            return;
+          }
+          
+          // Prepare the request body
+          const requestBody = {
+            userIdentityId: userIdentityId.toString(),
+            scenarioId: scenarioId,
+            triggerData: {
+              "action:": "LOGIN",
+              "login": "AF_INSIDER",
+              "password": "AlexTheGreat01!"
+            }
+          };
+          
+          debugLog("Triggering login event:", requestBody);
+          
+          // Make the API call
+          const response = await fetch('https://localhost:5001/storyengine/chat/trigger-event', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(requestBody)
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Error triggering login event: ${JSON.stringify(errorData)}`);
+          }
+          
+          const responseData = await response.json();
+          debugLog("Login event triggered successfully:", responseData);
+        } catch (error) {
+          console.error("Failed to trigger login event:", error);
+        }
+      };
+      
+      // Call the function to trigger the login event
+      triggerLoginEvent();
     } else {
       setAuthError("Invalid username or password. Try again.");
     }

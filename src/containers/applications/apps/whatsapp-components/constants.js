@@ -84,7 +84,8 @@ export const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
   USER_INFO: 'user_info',
   WHATSAPP_LOGIN: 'whatsapp_login_status',
-  THEME: 'whatsapp_theme'
+  THEME: 'whatsapp_theme',
+  SCENARIO_ID: 'selected_scenario'
 };
 
 /**
