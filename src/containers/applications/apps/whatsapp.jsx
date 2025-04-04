@@ -596,6 +596,8 @@ export const WhatsApp = () => {
 
   // Handle WhatsApp-specific login
   const handleWhatsAppLogin = (e) => {
+
+    console.log('handleWhatsAppLogin', e)
     e.preventDefault();
     
     const correctUsername = "AF_INSIDER";

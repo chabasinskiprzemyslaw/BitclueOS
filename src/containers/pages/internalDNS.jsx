@@ -7,6 +7,7 @@ import ExifHidingGuide from "./exifHidingGuide";
 import BuzzHub from "./buzzHub";
 import QuickBite from "./quickBite";
 import ExifTool from "./ExifTool";
+import SilentChat from "./silentChat";
 
 // Helper function to get the selected scenario from localStorage
 export const getSelectedScenario = () => {
@@ -24,6 +25,11 @@ const trackedPages = {
     name: "ExifTool Utility",
     importance: "high",
     description: "User accessed the ExifTool utility"
+  },
+  "www.silent.com/room-01": {
+    name: "Private Encrypted Chat",
+    importance: "high",
+    description: "User accessed the private encrypted chat room"
   }
 };
 
@@ -180,7 +186,8 @@ const internalDNS = {
   "techxplorer.com/forums/exif-hiding": ExifHidingGuide,
   "buzzhub.com": BuzzHub,
   "quickbite.com": QuickBite,
-  "localhost/exiftool": ExifTool
+  "localhost/exiftool": ExifTool,
+  "www.silent.com/room-01": SilentChat
 };
 
 export default internalDNS;
