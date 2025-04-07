@@ -17,10 +17,26 @@
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.2);
     gap: 4px;
+    position: relative;
 
     &:hover {
       background: rgba(0, 0, 0, 0.4);
       transform: scale(1.1);
+    }
+
+    &.has-new-objectives {
+      animation: pulse 2s infinite;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 10px;
+      height: 10px;
+      background-color: #ff4757;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px #fff;
     }
   }
 
@@ -88,6 +104,12 @@
       padding: 8px;
       border-radius: 4px;
       background: rgba(255, 255, 255, 0.05);
+      
+      &.new-objective {
+        background: rgba(58, 130, 246, 0.2);
+        border-left: 3px solid #3a82f6;
+        animation: fadeIn 0.5s ease-in-out;
+      }
 
       .objective-content {
         display: flex;
@@ -141,4 +163,15 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 } 

@@ -202,7 +202,7 @@ function App() {
             <SidePane />
             <WidPane />
             <CalnWid />
-            <ObjectivesBubble />
+            {isAuthenticated && <ObjectivesBubble />}
           </div>
           <Taskbar />
           <ActMenu />
