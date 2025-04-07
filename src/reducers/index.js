@@ -13,6 +13,7 @@ import settReducer from "./settings";
 import fileReducer from "./files";
 import browserReducer from "./browser";
 import notificationsReducer from "./notifications";
+import authReducer from "./auth";
 
 const allReducers = combineReducers({
   wallpaper: wallReducer,
@@ -28,6 +29,7 @@ const allReducers = combineReducers({
   files: fileReducer,
   browser: browserReducer,
   notifications: notificationsReducer,
+  auth: authReducer,
 });
 
 var store = createStore(allReducers);

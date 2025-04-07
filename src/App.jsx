@@ -81,6 +81,7 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 function App() {
   const apps = useSelector((state) => state.apps);
   const wall = useSelector((state) => state.wallpaper);
+  const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated);
   const dispatch = useDispatch();
 
   const afterMath = (event) => {
@@ -146,8 +147,10 @@ function App() {
     }
   });
 
-  // Initialize notification service and SignalR connection when app mounts
+  // Initialize notification service and SignalR connection when app mounts and user is authenticated
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     const userInfo = JSON.parse(localStorage.getItem('user_info'));
     const userId = userInfo?.id;
     
@@ -169,7 +172,7 @@ function App() {
         console.error('Error stopping notification service:', err);
       });
     };
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <div className="App">
@@ -203,9 +206,9 @@ function App() {
           </div>
           <Taskbar />
           <ActMenu />
-          <MediaViewer />
-          <AudioPlayer />
-          <NotificationCenter />
+          { isAuthenticated && <MediaViewer />}
+          { isAuthenticated && <AudioPlayer />}
+          { isAuthenticated && <NotificationCenter />}
           
           {/* Dev Tool for Pinned Notes - Remove or comment out in production */}
           <PinnedNotesDevTool />

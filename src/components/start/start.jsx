@@ -276,7 +276,10 @@ export const StartMenu = () => {
               <div className="powerCont" data-vis={start.pwctrl}>
                 <div
                   className="flex prtclk items-center gap-2"
-                  onClick={clickDispatch}
+                  onClick={(e) => {
+                    clickDispatch(e);
+                    dispatch({ type: "AUTH_LOGOUT" });
+                  }}
                   data-action="WALLALOCK"
                 >
                   <svg
@@ -295,7 +298,10 @@ export const StartMenu = () => {
                 </div>
                 <div
                   className="flex prtclk items-center gap-2"
-                  onClick={clickDispatch}
+                  onClick={(e) => {
+                    clickDispatch(e);
+                    dispatch({ type: "AUTH_LOGOUT" });
+                  }}
                   data-action="WALLSHUTDN"
                 >
                   <svg
@@ -306,7 +312,7 @@ export const StartMenu = () => {
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M8.204 4.82a.75.75 0 0 1 .634 1.36A7.51 7.51 0 0 0 4.5 12.991c0 4.148 3.358 7.51 7.499 7.51s7.499-3.362 7.499-7.51a7.51 7.51 0 0 0-4.323-6.804.75.75 0 1 1 .637-1.358 9.01 9.01 0 0 1 5.186 8.162c0 4.976-4.029 9.01-9 9.01C7.029 22 3 17.966 3 12.99a9.01 9.01 0 0 1 5.204-8.17ZM12 2.496a.75.75 0 0 1 .743.648l.007.102v7.5a.75.75 0 0 1-1.493.102l-.007-.102v-7.5a.75.75 0 0 1 .75-.75Z"
+                      d="M8.204 4.82a.75.75 0 0 1-.133 1.05A9.004 9.004 0 0 0 3 15a9 9 0 1 0 18 0 9.004 9.004 0 0 0-5.071-8.13.75.75 0 1 1 .67-1.34c3.06 1.53 5.15 4.67 5.15 8.22a10.5 10.5 0 1 1-21 0c0-3.55 2.09-6.69 5.154-8.22a.75.75 0 0 1 1.051.14ZM12 2.25a.75.75 0 0 1 .75.75v8a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75Z"
                       fill="currentColor"
                     />
                   </svg>
@@ -314,7 +320,10 @@ export const StartMenu = () => {
                 </div>
                 <div
                   className="flex prtclk items-center gap-2"
-                  onClick={clickDispatch}
+                  onClick={(e) => {
+                    clickDispatch(e);
+                    dispatch({ type: "AUTH_LOGOUT" });
+                  }}
                   data-action="WALLRESTART"
                 >
                   <svg
@@ -325,7 +334,7 @@ export const StartMenu = () => {
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M12 4.5a7.5 7.5 0 1 1-7.419 6.392c.067-.454-.265-.892-.724-.892a.749.749 0 0 0-.752.623A9 9 0 1 0 6 5.292V4.25a.75.75 0 0 0-1.5 0v3c0 .414.336.75.75.75h3a.75.75 0 0 0 0-1.5H6.9a7.473 7.473 0 0 1 5.1-2Z"
+                      d="M12 4.5a7.5 7.5 0 1 1-7.404 6.293.75.75 0 1 1 1.485-.205A6 6 0 1 0 12 6v4.5l2.853-3.157c.159-.175.108-.443-.096-.565a7.5 7.5 0 0 0-2.757-.778V4.5Zm1.5 0v1.78a9.01 9.01 0 0 1 1.881.446.75.75 0 0 1-.764 1.289A7.5 7.5 0 0 0 12 7.5V12a.75.75 0 0 1-1.28.53l-3.53-3.53a.75.75 0 0 1 0-1.06l3.53-3.53A.75.75 0 0 1 12 4.94V4.5h1.5Z"
                       fill="currentColor"
                     />
                   </svg>

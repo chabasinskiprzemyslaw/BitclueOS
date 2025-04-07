@@ -141,20 +141,38 @@ export const LockScreen = (props) => {
 
   // Initialize Keycloak
   const initKeycloak = async () => {
-    console.log("Initializing Keycloak");
     try {
-      // Try to refresh the token if user was previously logged in
       const authenticated = await keycloak.init({
         onLoad: 'check-sso',
         silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-        checkLoginIframe: false
+        pkceMethod: 'S256'
       });
-
-      console.log("Keycloak initialized");
-
+      
       if (authenticated) {
-        console.log("Keycloak authenticated");
-
+        console.log("User is already authenticated");
+        
+        // Decode the token to extract user information
+        try {
+          // JWT tokens are in the format: header.payload.signature
+          const tokenPayload = JSON.parse(atob(keycloak.token.split('.')[1]));
+          
+          // Extract user info from token claims
+          const userInfo = {
+            id: tokenPayload.sub,
+            name: tokenPayload.name || tokenPayload.preferred_username,
+            email: tokenPayload.email
+          };
+          
+          // Store user info in localStorage for other components to use
+          localStorage.setItem('user_info', JSON.stringify(userInfo));
+          console.log("User info stored:", userInfo);
+          setTimeout(() => {
+            dispatch({ type: "AUTH_SUCCESS" });
+          }, 500);
+        } catch (err) {
+          console.error("Error extracting user info from token:", err);
+        }
+        
         // User is authenticated
         setIsAuthenticated(true);
         
@@ -170,6 +188,7 @@ export const LockScreen = (props) => {
         setUnLock(true);
         setTimeout(() => {
           dispatch({ type: "WALLUNLOCK" });
+          dispatch({ type: "AUTH_SUCCESS" });
         }, 500);
         
         // Set up token refresh
@@ -188,6 +207,7 @@ export const LockScreen = (props) => {
             setUnLock(true);
             setTimeout(() => {
               dispatch({ type: "WALLUNLOCK" });
+              dispatch({ type: "AUTH_SUCCESS" });
               // Enter fullscreen mode
               if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen();
@@ -306,6 +326,7 @@ export const LockScreen = (props) => {
         setUnLock(true);
         setTimeout(() => {
           dispatch({ type: "WALLUNLOCK" });
+          dispatch({ type: "AUTH_SUCCESS" });
         }, 1000);
       } else {
         // Authentication failed
@@ -337,6 +358,10 @@ export const LockScreen = (props) => {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("token_expiry");
+    localStorage.removeItem("user_info");
+    
+    // Dispatch logout action
+    dispatch({ type: "AUTH_LOGOUT" });
     
     // Logout from Keycloak
     keycloak.logout({ redirectUri: window.location.origin });
