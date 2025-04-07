@@ -1,11 +1,14 @@
 import React from 'react';
 import { showNotification, simulateBackendNotification } from '../utils/notifications';
+import { useDispatch } from 'react-redux';
 
 /**
  * Example component demonstrating how to use notifications
  * NOTE: This component is for demonstration purposes only and doesn't need to be added to your app
  */
 const ExampleNotificationUsage = () => {
+  const dispatch = useDispatch();
+
   // Example 1: Simple notification
   const showSimpleNotification = () => {
     showNotification({
@@ -63,13 +66,82 @@ const ExampleNotificationUsage = () => {
     });
   };
 
+  // Example of manually triggering a notification (for testing purposes)
+  const triggerLocalNotification = () => {
+    dispatch({
+      type: 'ADD_NOTIFICATION',
+      payload: {
+        id: `local-${Date.now()}`,
+        title: 'Local Notification',
+        message: 'This is a local notification triggered from the application',
+        icon: 'bxs-bell',
+        buttons: [
+          {
+            text: 'Dismiss',
+            action: 'NOTIFICATION_DISMISSED'
+          },
+          {
+            text: 'View',
+            action: {
+              type: 'OPEN_APP',
+              payload: {
+                app: 'settings',
+                info: { isTriggerBackend: true }
+              }
+            }
+          }
+        ],
+        time: 8000 // 8 seconds
+      }
+    });
+  };
+
+  // Example of manually triggering a notification that looks like it came from SignalR
+  const simulateRealtimeNotification = () => {
+    dispatch({
+      type: 'ADD_NOTIFICATION',
+      payload: {
+        id: `realtime-${Date.now()}`,
+        title: 'Real-time Notification',
+        message: 'This simulates a notification received via SignalR',
+        icon: 'bxs-message-dots',
+        buttons: [
+          {
+            text: 'Dismiss',
+            action: 'NOTIFICATION_DISMISSED'
+          },
+          {
+            text: 'Take Action',
+            action: {
+              type: 'OPEN_APP',
+              payload: {
+                app: 'mail',
+                info: { isTriggerBackend: true, id: `realtime-${Date.now()}` }
+              }
+            }
+          }
+        ],
+        time: 10000 // 10 seconds
+      }
+    });
+  };
+
   return (
-    <div>
-      <h2>Notification Examples</h2>
-      <button onClick={showSimpleNotification}>Show Simple Notification</button>
-      <button onClick={showActionNotification}>Show Action Notification</button>
-      <button onClick={showLongNotification}>Show Long Notification</button>
-      <button onClick={triggerBackendNotification}>Simulate Backend Notification</button>
+    <div className="example-notification-tools">
+      <h3>Notification Test Tools</h3>
+      <p>Use these buttons to test the notification system:</p>
+      <div className="example-buttons">
+        <button onClick={showSimpleNotification}>Show Simple Notification</button>
+        <button onClick={showActionNotification}>Show Action Notification</button>
+        <button onClick={showLongNotification}>Show Long Notification</button>
+        <button onClick={triggerBackendNotification}>Simulate Backend Notification</button>
+        <button onClick={triggerLocalNotification}>
+          Trigger Local Notification
+        </button>
+        <button onClick={simulateRealtimeNotification}>
+          Simulate Real-time Notification
+        </button>
+      </div>
     </div>
   );
 };

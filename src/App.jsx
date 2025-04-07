@@ -21,7 +21,11 @@ import ObjectivesBubble from "./components/objectives/ObjectivesBubble";
 import NotificationCenter from "./components/NotificationCenter";
 import PinnedNotes from "./components/PinnedNotes";
 import PinnedNotesDevTool from "./components/PinnedNotesDevTool";
-import { fetchUnrespondedNotifications } from "./utils/notifications";
+import { 
+  fetchUnrespondedNotifications, 
+  initNotificationService, 
+  stopNotificationService 
+} from "./utils/notifications";
 
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
@@ -142,13 +146,29 @@ function App() {
     }
   });
 
-  // Initialize notification service when app mounts
+  // Initialize notification service and SignalR connection when app mounts
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem('user_info'));
     const userId = userInfo?.id;
+    
     if (userId) {
-      fetchUnrespondedNotifications(userId);
+      // First fetch any unresponded notifications via REST API
+      fetchUnrespondedNotifications(userId).catch(err => {
+        console.error('Error fetching initial notifications:', err);
+      });
+      
+      // Then set up real-time SignalR connection
+      initNotificationService().catch(err => {
+        console.error('Error initializing notification service:', err);
+      });
     }
+    
+    // Clean up SignalR connection when component unmounts
+    return () => {
+      stopNotificationService().catch(err => {
+        console.error('Error stopping notification service:', err);
+      });
+    };
   }, []);
 
   return (

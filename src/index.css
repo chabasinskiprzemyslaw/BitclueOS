@@ -937,6 +937,10 @@ a {
   animation-name: slideOutRight;
 }
 
+.notification-realtime {
+  animation-name: pulseInRight;
+}
+
 @keyframes slideInRight {
   from {
     transform: translateX(120%);
@@ -956,6 +960,24 @@ a {
   to {
     transform: translateX(120%);
     opacity: 0;
+  }
+}
+
+@keyframes pulseInRight {
+  0% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  85% {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(0, 120, 215, 0.7);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 

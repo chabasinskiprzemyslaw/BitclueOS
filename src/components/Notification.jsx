@@ -9,6 +9,11 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
   const [remainingTime, setRemainingTime] = useState(time || 5000);
   const [timerPaused, setTimerPaused] = useState(false);
 
+  // Update remaining time if the time prop changes (for real-time notifications)
+  useEffect(() => {
+    setRemainingTime(time || 5000);
+  }, [time]);
+
   useEffect(() => {
     if (!hovered && !timerPaused && remainingTime > 0) {
       const timer = setTimeout(() => {
@@ -38,8 +43,6 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
       const scenarioId = localStorage.getItem('selected_scenario');
       const authToken = localStorage.getItem('auth_token');
 
-      console.log('getting local storage values');
-      
       if (!userIdentityId || !scenarioId) {
         console.error('Missing userIdentityId or scenarioId in localStorage');
         return;
@@ -49,10 +52,6 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
         console.error('Missing auth_token in localStorage');
         return;
       }
-
-      console.log('all local storage values are present');
-
-      console.log('sending request to backend');  
 
       const response = await fetch(`https://localhost:5001/story-engine/notifications/${notificationId}/respond`, {
         method: 'POST',
@@ -66,8 +65,6 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
         }),
       });
 
-      console.log('response from backend', response); 
-
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Failed to respond to notification:', errorData);
@@ -80,16 +77,12 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
   };
 
   const handleButtonClick = (action) => {
-    console.log('handleButtonClick', action);
-
     // Safe check for action.payload?.info?.isTriggerBackend
     if (action && 
         typeof action === 'object' && 
         action.payload && 
         action.payload.info && 
         action.payload.info.isTriggerBackend) {
-      
-      console.log('isTriggerBackend', action.payload.info.isTriggerBackend);
       
       // If notificationId exists in action, respond to it
       if (action.id) {
@@ -107,9 +100,14 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
     handleDismiss();
   };
 
+  // Determine animation class - use different class for real-time notifications
+  const animationClass = id.toString().includes('realtime') 
+    ? 'notification-realtime' 
+    : (isExiting ? 'notification-exit' : 'notification-enter');
+
   return (
     <div 
-      className={`notification-container ${isExiting ? 'notification-exit' : 'notification-enter'}`}
+      className={`notification-container ${animationClass}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

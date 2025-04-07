@@ -1,4 +1,5 @@
 import store from '../reducers';
+import * as signalR from '@microsoft/signalr';
 
 /**
  * Create and show a new notification
@@ -105,49 +106,169 @@ export const fetchUnrespondedNotifications = async (userId) => {
   }
 };
 
-/**
- * Setup WebSocket for backend-triggered notifications
- * This is a mock implementation - replace with actual backend connection
- */
-let notificationSocket = null;
+// SignalR connection for real-time notifications
+let hubConnection = null;
 
-export const initNotificationService = () => {
-  // In a real implementation, you would connect to your actual backend
-  // This is just a simulation for demonstration purposes
-  
-  // Mock WebSocket events for demonstration
-  setTimeout(() => {
-    // Simulate receiving a notification from backend
-    showNotification({
-      title: 'Last record was not saved',
-      message: 'Do you want to save it?',
-      icon: 'settings',
-      buttons: [
-        {
-          text: 'Open and save',
-          action: {
-            type: 'AUDIOPLAYER',
-            payload: { 
-                "info": {
-                          "icon": "music",
-                          "url": "https://samplelib.com/lib/preview/mp3/sample-15s.mp3",
-                          "size": "2.1 MB",
-                          "duration": "0:15",
-                          "dateCreated": "2023-09-17",
-                          "dateModified": "2023-09-17",
-                          "type": "audio",
-                          "isDirTrigger": true
-                        } 
-                    }
-          }
+/**
+ * Initialize the SignalR notification service
+ * @returns {Promise} A promise that resolves when the connection is established
+ */
+export const initNotificationService = async () => {
+  try {
+    // Get authentication data
+    const userInfo = JSON.parse(localStorage.getItem('user_info'));
+    const userIdentityId = userInfo?.id;
+    const authToken = localStorage.getItem('auth_token');
+
+    if (!userIdentityId || !authToken) {
+      console.error('Missing required authentication data for SignalR connection');
+      return;
+    }
+
+    // Build the SignalR connection
+    hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl(`https://localhost:5001/hubs/notification`, {
+        accessTokenFactory: () => authToken
+      })
+      .withAutomaticReconnect([0, 2000, 10000, 30000]) // Retry intervals in milliseconds
+      .configureLogging(signalR.LogLevel.Information)
+      .build();
+
+    // Set up the notification handler
+    hubConnection.on('NotificationReceived', (notification) => {
+      console.log('Real-time notification received:', notification);
+      
+      // Format the buttons if present
+      const buttons = notification.buttons ? notification.buttons.map(button => ({
+        text: button.text,
+        action: {
+          type: button.actionType || 'NOTIFICATION_ACTION',
+          payload: typeof button.actionPayload === 'string' 
+            ? JSON.parse(button.actionPayload)
+            : button.actionPayload,
+          id: notification.id
         }
-      ],
-      time: 10000
+      })) : [];
+      
+      // Add a special ID prefix for real-time notifications to trigger the animation
+      store.dispatch({
+        type: 'ADD_NOTIFICATION',
+        payload: {
+          id: `realtime-${notification.id || Date.now()}`,
+          title: notification.title,
+          message: notification.message,
+          icon: notification.icon,
+          buttons: buttons,
+          time: notification.time || 10000
+        }
+      });
     });
-  }, 3000);
+
+    // Connection event handlers
+    hubConnection.onreconnecting((error) => {
+      console.log('Attempting to reconnect to notification hub...', error);
+    });
+
+    hubConnection.onreconnected((connectionId) => {
+      console.log('Reconnected to notification hub with ID:', connectionId);
+      joinUserNotificationGroup(userIdentityId);
+    });
+
+    hubConnection.onclose((error) => {
+      console.log('Disconnected from notification hub', error);
+    });
+
+    // Start the connection
+    await hubConnection.start();
+    console.log('Connected to notification hub');
+
+    // Join the user's notification group
+    await joinUserNotificationGroup(userIdentityId);
+
+    return hubConnection;
+  } catch (error) {
+    console.error('Error initializing SignalR connection:', error);
+    throw error;
+  }
+};
+
+/**
+ * Join the user's notification group
+ * @param {string} userIdentityId The user ID to join the group for
+ * @returns {Promise} A promise that resolves when the user has joined the group
+ */
+export const joinUserNotificationGroup = async (userIdentityId) => {
+  if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) {
+    console.error('Cannot join notification group: SignalR connection not established');
+    return;
+  }
+
+  try {
+    await hubConnection.invoke('JoinUserNotificationGroup', userIdentityId);
+    console.log('Joined notification group for user:', userIdentityId);
+  } catch (error) {
+    console.error('Error joining notification group:', error);
+    throw error;
+  }
+};
+
+/**
+ * Leave the user's notification group
+ * @param {string} userIdentityId The user ID to leave the group for
+ * @returns {Promise} A promise that resolves when the user has left the group
+ */
+export const leaveUserNotificationGroup = async (userIdentityId) => {
+  if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) {
+    console.error('Cannot leave notification group: SignalR connection not established');
+    return;
+  }
+
+  try {
+    await hubConnection.invoke('LeaveUserNotificationGroup', userIdentityId);
+    console.log('Left notification group for user:', userIdentityId);
+  } catch (error) {
+    console.error('Error leaving notification group:', error);
+    throw error;
+  }
+};
+
+/**
+ * Stop the SignalR connection
+ * @returns {Promise} A promise that resolves when the connection is stopped
+ */
+export const stopNotificationService = async () => {
+  if (hubConnection) {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('user_info'));
+      const userIdentityId = userInfo?.id;
+      
+      if (userIdentityId && hubConnection.state === signalR.HubConnectionState.Connected) {
+        await leaveUserNotificationGroup(userIdentityId);
+      }
+      
+      await hubConnection.stop();
+      console.log('SignalR notification service stopped');
+    } catch (error) {
+      console.error('Error stopping SignalR connection:', error);
+    }
+  }
 };
 
 // Function to simulate backend trigger (for testing)
 export const simulateBackendNotification = (options) => {
-  return showNotification(options);
+  const id = `realtime-${Date.now()}`;
+  
+  store.dispatch({
+    type: 'ADD_NOTIFICATION',
+    payload: {
+      id,
+      title: options.title || 'Test Notification',
+      message: options.message || 'This is a test notification',
+      icon: options.icon || 'notification',
+      buttons: options.buttons || [],
+      time: options.time || 5000
+    }
+  });
+  
+  return id;
 }; 
