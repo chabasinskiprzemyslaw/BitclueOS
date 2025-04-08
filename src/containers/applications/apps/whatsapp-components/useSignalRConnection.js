@@ -139,46 +139,8 @@ const useSignalRConnection = ({
             debugLog("Received real-time message:", message);
             
             // Format the received message
-            const formattedMessage = {
-              id: message.id,
-              content: message.content,
-              isCurrentUser: message.isCurrentUser,
-              sentAt: message.timestamp || message.sentAt,
-              senderDisplayName: message.senderDisplayName,
-              // Extract response data if available
-              responseData: message.response ? {
-                id: message.response.id,
-                messageId: message.response.messageId,
-                nextMessageId: message.response.nextMessageId,
-                options: message.response.options || [],
-                scenarioId: message.response.scenarioId
-              } : null,
-              attachments: message.attachments || []
-            };
+            const formattedMessage = formatMsg(message);
             
-            // Extract options immediately if they exist
-            if (message.response && message.response.options && message.response.options.length > 0) {
-              debugLog("Message contains response options, setting immediately:", message.response.options);
-              
-              // Format the response options for the UI - handle both string arrays and object arrays
-              const formattedOptions = message.response.options.map((option, index) => {
-                // If option is a string, create a simple option object
-                if (typeof option === 'string') {
-                  return {
-                    optionIndex: index,
-                    text: option
-                  };
-                }
-                // If option is an object, extract relevant properties
-                return {
-                  optionIndex: option.id || index,
-                  text: option.text || option.content || option.optionText || String(option)
-                };
-              });
-              
-              // Set the possible responses immediately
-              setPossibleResponses(formattedOptions);
-            }
             
             // Get the current activeChat from the ref
             // This ensures we're always using the latest value
@@ -187,35 +149,7 @@ const useSignalRConnection = ({
             
             // Check if we have an active chat
             if (!currentActiveChat) {
-              debugLog("No active chat, updating chat list only");
-              // If no active chat, just update the chat list
-              setChats(prevChats => {
-                // Find the chat this message belongs to
-                const chatIndex = prevChats.findIndex(chat => 
-                  chat.id.toString() === message.chatSessionId.toString()
-                );
-                
-                if (chatIndex === -1) {
-                  // If we don't have this chat in our list yet, fetch chats again
-                  debugLog("Chat not found in list, fetching chat sessions");
-                  setTimeout(() => fetchChatSessions(), 500);
-                  return prevChats;
-                }
-                
-                // Create a new array to avoid mutation
-                const updatedChats = [...prevChats];
-                
-                // Update the specific chat
-                updatedChats[chatIndex] = {
-                  ...updatedChats[chatIndex],
-                  lastMessage: message.content,
-                  timestamp: formattedMessage.sentAt,
-                  unread: true
-                };
-                
-                return updatedChats;
-              });
-              return;
+              return updateChatsList(setChats, message, fetchChatSessions, formattedMessage);
             }
             
             // Update the active chat with the new message
@@ -264,6 +198,8 @@ const useSignalRConnection = ({
                     
                     // Now add the message
                     addMessageAfterTyping();
+                    updateChatsList(setChats, message, fetchChatSessions, formattedMessage);
+                    addResponses(message, setPossibleResponses);
                   }, typingDelay);
                 } else {
                   // If it's the current user's message, add it immediately
@@ -345,6 +281,25 @@ const useSignalRConnection = ({
                 return updatedChats;
               });
             }
+
+            function formatMsg(message) {
+              return {
+                id: message.id,
+                content: message.content,
+                isCurrentUser: message.isCurrentUser,
+                sentAt: message.timestamp || message.sentAt,
+                senderDisplayName: message.senderDisplayName,
+                // Extract response data if available
+                responseData: message.response ? {
+                  id: message.response.id,
+                  messageId: message.response.messageId,
+                  nextMessageId: message.response.nextMessageId,
+                  options: message.response.options || [],
+                  scenarioId: message.response.scenarioId
+                } : null,
+                attachments: message.attachments || []
+              };
+            }
           });
           
           // Set up typing indicator handler
@@ -420,3 +375,59 @@ const useSignalRConnection = ({
 };
 
 export default useSignalRConnection; 
+
+function updateChatsList(setChats, message, fetchChatSessions, formattedMessage) {
+  debugLog("No active chat, updating chat list only");
+  // If no active chat, just update the chat list
+  setChats(prevChats => {
+    // Find the chat this message belongs to
+    const chatIndex = prevChats.findIndex(chat => chat.id.toString() === message.chatSessionId.toString()
+    );
+
+    if (chatIndex === -1) {
+      // If we don't have this chat in our list yet, fetch chats again
+      debugLog("Chat not found in list, fetching chat sessions");
+      setTimeout(() => fetchChatSessions(), 500);
+      return prevChats;
+    }
+
+    // Create a new array to avoid mutation
+    const updatedChats = [...prevChats];
+
+    // Update the specific chat
+    updatedChats[chatIndex] = {
+      ...updatedChats[chatIndex],
+      lastMessage: message.content,
+      timestamp: formattedMessage.sentAt,
+      unread: true
+    };
+
+    return updatedChats;
+  });
+  return;
+}
+
+function addResponses(message, setPossibleResponses) {
+  if (message.response && message.response.options && message.response.options.length > 0) {
+    debugLog("Message contains response options, setting immediately:", message.response.options);
+
+    // Format the response options for the UI - handle both string arrays and object arrays
+    const formattedOptions = message.response.options.map((option, index) => {
+      // If option is a string, create a simple option object
+      if (typeof option === 'string') {
+        return {
+          optionIndex: index,
+          text: option
+        };
+      }
+      // If option is an object, extract relevant properties
+      return {
+        optionIndex: option.id || index,
+        text: option.text || option.content || option.optionText || String(option)
+      };
+    });
+
+    // Set the possible responses immediately
+    setPossibleResponses(formattedOptions);
+  }
+}

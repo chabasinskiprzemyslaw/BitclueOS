@@ -81,15 +81,6 @@ const ChatArea = ({
     }
   }, [activeChat?.messages]);
 
-  if (activeChat) {
-    console.log('Active Chat:', {
-      id: activeChat.id,
-      name: activeChat.name,
-      messageCount: activeChat.messages?.length || 0,
-      messages: activeChat.messages
-    });
-  }
-
   // Add early return with debug info
   if (!activeChat?.messages) {
     console.log('No messages available:', { activeChat });
@@ -108,13 +99,6 @@ const ChatArea = ({
       </div>
     );
   }
-
-  // Add debug log before rendering messages
-  console.log('Rendering messages:', {
-    messageCount: activeChat.messages.length,
-    firstMessage: activeChat.messages[0],
-    lastMessage: activeChat.messages[activeChat.messages.length - 1]
-  });
 
   return (
     <div className="flex flex-col h-full">
@@ -216,6 +200,25 @@ const ChatArea = ({
               </div>
             ))
           )}
+          {/* Typing Indicator */}
+          {typingUsers && typingUsers.length > 0 && (
+            <div className="flex justify-start">
+              <div className="max-w-[60%] rounded-lg p-3 bg-[#202C33]">
+                <div className="flex items-center">
+                  <span className="text-sm text-gray-300">
+                    {typingUsers.length === 1 
+                      ? `${typingUsers[0].displayName} is typing...` 
+                      : `${typingUsers.length} people are typing...`}
+                  </span>
+                  <div className="ml-2 flex">
+                    <div className="dot-typing"></div>
+                    <div className="dot-typing animation-delay-200"></div>
+                    <div className="dot-typing animation-delay-400"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
@@ -265,5 +268,39 @@ const ChatArea = ({
     </div>
   );
 };
+
+/* Add typing indicator animation styles */
+const styles = `
+  .dot-typing {
+    width: 4px;
+    height: 4px;
+    background-color: #8B98A5;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 2px;
+    animation: dotTyping 1.5s infinite ease-in-out;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes dotTyping {
+    0% { transform: scale(0); opacity: 0.5; }
+    50% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0); opacity: 0.5; }
+  }
+`;
+
+// Add the styles to the head
+if (typeof document !== 'undefined') {
+  const styleEl = document.createElement('style');
+  styleEl.textContent = styles;
+  document.head.appendChild(styleEl);
+}
 
 export default ChatArea; 
