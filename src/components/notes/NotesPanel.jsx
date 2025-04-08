@@ -178,9 +178,6 @@ const NotesPanel = ({ isOpen, onClose, onNewNotes }) => {
           ) : (
             notes.map(note => (
               <div key={note.id} className={`note-item ${note.isNew ? 'new-note' : ''}`}>
-                <div className="note-icon">
-                  <Icon src={getSourceIcon(note.sourceDescription)} width={20} />
-                </div>
                 <div className="note-content">
                   <div 
                     className="note-text"

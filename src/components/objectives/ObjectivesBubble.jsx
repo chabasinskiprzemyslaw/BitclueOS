@@ -173,11 +173,6 @@ const ObjectivesBubble = () => {
                   className={`objective-item ${objective.isNew ? 'new-objective' : ''} ${objective.completed ? 'completed' : ''}`}
                 >
                   <div className="objective-content">
-                    <input
-                      type="checkbox"
-                      checked={objective.completed}
-                      onChange={() => toggleObjective(objective.id)}
-                    />
                     <span className={objective.completed ? 'completed' : ''}>
                       {objective.text}
                     </span>
