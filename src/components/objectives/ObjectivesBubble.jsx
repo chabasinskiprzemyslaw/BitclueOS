@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '../../utils/general';
 import { getCurrentStepObjectives } from '../../services/storyEngineService';
 import './objectives.scss';
@@ -12,6 +12,8 @@ const ObjectivesBubble = () => {
   const [error, setError] = useState(null);
   const [hasNewObjectives, setHasNewObjectives] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [maxHeight, setMaxHeight] = useState(null);
+  const objectivesPanelRef = useRef(null);
 
   const scenarioId = localStorage.getItem('selected_scenario');
   const userInfo = JSON.parse(localStorage.getItem('user_info'));
@@ -36,9 +38,16 @@ const ObjectivesBubble = () => {
         };
         return updatedObjectives;
       } else {
-        // Add new objective
+        // Add new objective and mark existing ones as completed
+        // (assuming that when new objectives arrive, previous ones are completed)
         setHasNewObjectives(true);
-        return [...currentObjectives, {
+        
+        const updatedObjectives = currentObjectives.map(obj => ({
+          ...obj,
+          completed: true // Mark all existing objectives as completed
+        }));
+        
+        return [...updatedObjectives, {
           id: objective.id,
           text: objective.description,
           completed: objective.isCompleted,
@@ -57,6 +66,21 @@ const ObjectivesBubble = () => {
     setConnectionStatus,
     onNewObjective: handleNewObjective
   });
+
+  // Calculate max height based on screen size
+  useEffect(() => {
+    const updateMaxHeight = () => {
+      const screenHeight = window.innerHeight;
+      setMaxHeight(screenHeight * 0.75); // 3/4 of the screen height
+    };
+
+    updateMaxHeight();
+    window.addEventListener('resize', updateMaxHeight);
+    
+    return () => {
+      window.removeEventListener('resize', updateMaxHeight);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchObjectives = async () => {
@@ -105,6 +129,12 @@ const ObjectivesBubble = () => {
     setShowHint(showHint === id ? null : id);
   };
 
+  // Sort objectives to show incomplete ones first
+  const sortedObjectives = [...objectives].sort((a, b) => {
+    if (a.completed === b.completed) return 0;
+    return a.completed ? 1 : -1;
+  });
+
   return (
     <div className="objectives-bubble">
       <div 
@@ -117,7 +147,7 @@ const ObjectivesBubble = () => {
       </div>
       
       {isOpen && (
-        <div className="objectives-panel">
+        <div className="objectives-panel" ref={objectivesPanelRef}>
           <h3>Investigation Objectives</h3>
           {isLoading ? (
             <div className="loading-state">
@@ -129,9 +159,19 @@ const ObjectivesBubble = () => {
               <p>{error}</p>
             </div>
           ) : (
-            <div className="objectives-list">
-              {objectives.map(objective => (
-                <div key={objective.id} className={`objective-item ${objective.isNew ? 'new-objective' : ''}`}>
+            <div 
+              className="objectives-list" 
+              style={{ 
+                maxHeight: maxHeight ? `${maxHeight - 90}px` : 'auto', 
+                overflowY: 'auto',
+                paddingRight: '8px'
+              }}
+            >
+              {sortedObjectives.map(objective => (
+                <div 
+                  key={objective.id} 
+                  className={`objective-item ${objective.isNew ? 'new-objective' : ''} ${objective.completed ? 'completed' : ''}`}
+                >
                   <div className="objective-content">
                     <input
                       type="checkbox"
