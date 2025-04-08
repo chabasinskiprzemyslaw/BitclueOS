@@ -18,6 +18,7 @@ import { Background, BootScreen, LockScreen } from "./containers/background";
 import { MediaViewer } from "./components/MediaViewer";
 import AudioPlayer from "./components/AudioPlayer";
 import ObjectivesBubble from "./components/objectives/ObjectivesBubble";
+import NotesBubble from "./components/notes/NotesBubble";
 import NotificationCenter from "./components/NotificationCenter";
 import PinnedNotes from "./components/PinnedNotes";
 import PinnedNotesDevTool from "./components/PinnedNotesDevTool";
@@ -203,6 +204,7 @@ function App() {
             <WidPane />
             <CalnWid />
             {isAuthenticated && <ObjectivesBubble />}
+            {isAuthenticated && <NotesBubble />}
           </div>
           <Taskbar />
           <ActMenu />
