@@ -4,6 +4,18 @@ import { getNotes, markNotesAsRead } from '../../services/notesService';
 import { useNotesSignalR } from './useNotesSignalR';
 import './notes.scss';
 
+// Function to safely format note content with line breaks
+const formatNoteContent = (content) => {
+  if (!content) return '';
+  
+  // Replace newlines with <br> tags
+  const formattedContent = content
+    .replace(/\n/g, '<br>')
+    .replace(/\r/g, '');
+    
+  return formattedContent;
+};
+
 const NotesPanel = ({ isOpen, onClose, onNewNotes }) => {
   const [notes, setNotes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -170,7 +182,10 @@ const NotesPanel = ({ isOpen, onClose, onNewNotes }) => {
                   <Icon src={getSourceIcon(note.sourceDescription)} width={20} />
                 </div>
                 <div className="note-content">
-                  <div className="note-text">{note.content}</div>
+                  <div 
+                    className="note-text"
+                    dangerouslySetInnerHTML={{ __html: formatNoteContent(note.content) }}
+                  ></div>
                   <div className="note-meta">
                     {note.sourceDescription && (
                       <span className="note-source">{note.sourceDescription}</span>

@@ -1,6 +1,6 @@
 export const getNotes = async (scenarioId, userIdentityId) => {
   try {
-    const response = await fetch(`https://localhost:5001/api/scenarios/${scenarioId}/notes`, {
+    const response = await fetch(`https://localhost:5001/story-engine/scenarios/${scenarioId}/notes?userId=${userIdentityId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

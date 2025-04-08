@@ -36,6 +36,7 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
   };
 
   const respondToNotification = async (notificationId) => {
+    console.log('Notification ID:', notificationId);
     console.log('respondToNotification', notificationId);
     try {
       const userInfo = JSON.parse(localStorage.getItem('user_info'));
@@ -78,11 +79,15 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
 
   const handleButtonClick = (action) => {
     // Safe check for action.payload?.info?.isTriggerBackend
+
+    console.log(' handleButtonClick action:', action); 
     if (action && 
         typeof action === 'object' && 
         action.payload && 
         action.payload.info && 
         action.payload.info.isTriggerBackend) {
+
+          console.log(' handleButtonClick action:', action); 
       
       // If notificationId exists in action, respond to it
       if (action.id) {
