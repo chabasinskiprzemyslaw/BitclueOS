@@ -36,12 +36,6 @@ const PinnedNotesDevTool = () => {
 
   return (
     <div className="pinned-notes-dev-tool">
-      <button 
-        className="toggle-button"
-        onClick={toggleTool}
-      >
-        {showTool ? 'Hide Note Tool' : 'Show Note Tool'}
-      </button>
       
       {showTool && (
         <div className="tool-panel">

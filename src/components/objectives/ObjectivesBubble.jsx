@@ -183,6 +183,7 @@ const ObjectivesBubble = () => {
                       onClick={() => toggleHint(objective.id)}
                     >
                       <Icon src="hint" width={16} />
+                      <span>Hint</span>
                     </button>
                   )}
                   {showHint === objective.id && objective.hint && (

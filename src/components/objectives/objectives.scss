@@ -167,15 +167,30 @@
 
       .hint-button {
         align-self: flex-end;
-        background: none;
-        border: none;
+        background: rgba(58, 130, 246, 0.2);
+        border: 1px solid rgba(58, 130, 246, 0.4);
+        color: #ffffff;
         cursor: pointer;
-        padding: 4px;
+        padding: 6px 12px;
         border-radius: 4px;
-        transition: background 0.2s ease;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        
+        span {
+          display: inline-block;
+        }
 
         &:hover {
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(58, 130, 246, 0.3);
+          transform: translateY(-1px);
+        }
+        
+        &:active {
+          transform: translateY(0);
         }
       }
 
