@@ -74,8 +74,8 @@ function Messages() {
 
   // Group messages by conversation
   const conversations = messages.reduce((acc, message) => {
-    const otherUserId = message.senderId === userInfoId ? message.receiverId : message.senderId
-    const otherUsername = message.senderId === userInfoId ? message.receiverUsername : message.senderUsername
+    const otherUserId = message.senderUserId === userInfoId ? message.receiverUserId : message.senderUserId
+    const otherUsername = message.senderUserId === userInfoId ? message.receiverUsername : message.senderUsername
     if (!acc[otherUserId]) {
       acc[otherUserId] = {
         userId: otherUserId,
@@ -85,7 +85,7 @@ function Messages() {
         unreadCount: 0
       }
     }
-    if (!message.isRead && message.receiverId === userInfoId) {
+    if (!message.isRead && message.receiverUserId === userInfoId) {
       acc[otherUserId].unreadCount++
     }
     acc[otherUserId].messages.push(message)
@@ -142,13 +142,13 @@ function Messages() {
             <div className="messages-list">
               {selectedConversation.messages.map((message) => (
                 <div
-                  key={message.id}
-                  className={`message-item ${message.senderId === userInfoId ? "sent" : "received"}`}
+                  key={message.directMessageId}
+                  className={`message-item ${message.senderUserId === userInfoId ? "sent" : "received"}`}
                 >
                   <div className="message-content">{message.content}</div>
                   <div className="message-footer">
                     <span className="message-time">{formatDate(message.sentAt)}</span>
-                    {message.senderId === userInfoId && (
+                    {message.senderUserId === userInfoId && (
                       <span className="message-status">
                         {message.isRead ? <div><Check size={16} /><Check size={16} /></div> : <Check size={16} />}
                       </span>

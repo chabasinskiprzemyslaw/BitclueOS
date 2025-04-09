@@ -56,13 +56,13 @@ function Login({ onLogin }) {
   }
 
   return (
-    <div className="login-container">
+    <div className="login-container h-full">
       <div className="login-form-container">
         <div className="login-logo">
           <Twitter size={40} />
         </div>
 
-        <h1>Sign in to X</h1>
+        <h1>Social Summit</h1>
 
         {error && <div className="login-error">{error}</div>}
 
@@ -93,12 +93,6 @@ function Login({ onLogin }) {
             {isLoading ? "Signing in..." : "Sign in"}
           </button>
         </form>
-
-        <div className="login-links">
-          <a href="#">Forgot password?</a>
-          <span>·</span>
-          <a href="#">Sign up for X</a>
-        </div>
       </div>
     </div>
   )

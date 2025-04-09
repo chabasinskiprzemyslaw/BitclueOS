@@ -92,16 +92,11 @@ const LoginScreen = ({ onLogin }) => {
   }
 
   return (
-    <div className="h-screen flex items-center justify-center bg-background">
+    <div className="h-full flex items-center justify-center">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
         <div className="text-center">
-          <img
-            src="https://www.google.com/gmail/about/static-2.0/images/logo-gmail.png?fingerprint=c2eaf4aae389c3f885e97081bb197b97"
-            alt="Gmail"
-            className="h-10 mx-auto mb-6"
-          />
-          <h2 className="text-2xl font-bold">Sign in</h2>
-          <p className="mt-2 text-gray-600">to continue to Gmail</p>
+          <h2 className="text-2xl font-bold text-black">Sign in</h2>
+          <p className="mt-2 text-gray-600">to continue to SecMail</p>
         </div>
         
         {error && (
@@ -228,15 +223,10 @@ const ForgotPasswordScreen = ({ onCancel }) => {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-background">
+    <div className="h-full flex items-center justify-center">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
         <div className="text-center">
-          <img
-            src="https://www.google.com/gmail/about/static-2.0/images/logo-gmail.png?fingerprint=c2eaf4aae389c3f885e97081bb197b97"
-            alt="Gmail"
-            className="h-10 mx-auto mb-6"
-          />
-          <h2 className="text-2xl font-bold">Forgot Password</h2>
+          <h2 className="text-2xl font-bold text-black">Forgot Password</h2>
           <p className="mt-2 text-gray-600">Recover access to your account</p>
         </div>
         

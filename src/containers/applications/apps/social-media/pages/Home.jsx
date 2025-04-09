@@ -95,7 +95,7 @@ function Home() {
   }
 
   return (
-    <div className="home-container">
+    <div className="h-full">
       <div className="home-header">
         <h2>Home</h2>
       </div>
@@ -123,7 +123,11 @@ function Home() {
         </form>
       </div>
 
-      <div className="tweets-container">
+      <div className="tweets-container" style={{ 
+        height: 'calc(100vh - 220px)', 
+        overflowY: 'auto',
+        paddingRight: '10px'
+      }}>
         {isLoading ? (
           <div className="loading">Loading tweets...</div>
         ) : error ? (

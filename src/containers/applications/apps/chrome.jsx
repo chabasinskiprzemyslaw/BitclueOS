@@ -295,7 +295,7 @@ export const Chrome = () => {
         onHistoryClick={toggleHistoryPanel}
       />
       <BookmarksBar onNavigate={handleUrlChange} recentHistory={history} />
-      <div className="flex-1 bg-white dark:bg-[#202124] text-black dark:text-white p-4 overflow-auto">
+      <div className="flex-1 bg-white text-black dark:text-white overflow-auto">
         {loading ? (
           <div className="flex justify-center items-center h-full">
             <div className="loader">Loading...</div>
