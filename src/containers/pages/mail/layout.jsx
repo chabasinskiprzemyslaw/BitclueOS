@@ -38,6 +38,7 @@ const LoginScreen = ({ onLogin }) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -85,6 +86,10 @@ const LoginScreen = ({ onLogin }) => {
       setIsLoading(false);
     }
   };
+
+  if (showForgotPassword) {
+    return <ForgotPasswordScreen onCancel={() => setShowForgotPassword(false)} />;
+  }
 
   return (
     <div className="h-screen flex items-center justify-center bg-background">
@@ -161,7 +166,10 @@ const LoginScreen = ({ onLogin }) => {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+              <a href="#" onClick={(e) => {
+                e.preventDefault();
+                setShowForgotPassword(true);
+              }} className="font-medium text-blue-600 hover:text-blue-500">
                 Forgot your password?
               </a>
             </div>
@@ -174,6 +182,161 @@ const LoginScreen = ({ onLogin }) => {
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "Sign in"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Forgot Password Screen Component
+const ForgotPasswordScreen = ({ onCancel }) => {
+  const [emailAddress, setEmailAddress] = useState("alex.freeman.priv@hiddentruth.com");
+  const [securityAnswer, setSecurityAnswer] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
+  const [activeTab, setActiveTab] = useState("security"); // "security" or "support"
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+    setIsError(false);
+
+    try {
+      // Simulating password reset request
+      emailDebugLog("Password reset attempt", { emailAddress, method: activeTab });
+
+      // For simulation purposes, we'll just show a success message
+      setTimeout(() => {
+        if (activeTab === "security") {
+          setMessage("If this email exists in our system, password reset instructions will be sent to it.");
+        } else {
+          setMessage("Our support team will contact you shortly in connected chat account AF_INSIDER");
+        }
+        setIsLoading(false);
+      }, 1500);
+
+    } catch (error) {
+      emailDebugLog("Password reset error", { error: error.message });
+      setMessage(error.message);
+      setIsError(true);
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
+        <div className="text-center">
+          <img
+            src="https://www.google.com/gmail/about/static-2.0/images/logo-gmail.png?fingerprint=c2eaf4aae389c3f885e97081bb197b97"
+            alt="Gmail"
+            className="h-10 mx-auto mb-6"
+          />
+          <h2 className="text-2xl font-bold">Forgot Password</h2>
+          <p className="mt-2 text-gray-600">Recover access to your account</p>
+        </div>
+        
+        {message && (
+          <div className={`p-3 ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} rounded-md text-sm`}>
+            {message}
+          </div>
+        )}
+        
+        {/* Tab navigation */}
+        <div className="flex border-b">
+          <button
+            className={`py-2 px-4 text-sm font-medium ${activeTab === 'security' 
+              ? 'text-blue-600 border-b-2 border-blue-600' 
+              : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('security')}
+          >
+            Security Question
+          </button>
+          <button
+            className={`py-2 px-4 text-sm font-medium ${activeTab === 'support' 
+              ? 'text-blue-600 border-b-2 border-blue-600' 
+              : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('support')}
+          >
+            Contact Support
+          </button>
+        </div>
+        
+        <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>
+          <div className="rounded-md shadow-sm space-y-4">
+            <div>
+              <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="reset-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="pl-10"
+                  placeholder="Email address"
+                  value={emailAddress}
+                  onChange={(e) => setEmailAddress(e.target.value)}
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Enter the email address associated with your account
+              </p>
+            </div>
+            
+            {activeTab === "security" ? (
+              <div>
+                <label htmlFor="security-question" className="block text-sm font-medium text-gray-700 mb-1">
+                  Security Question
+                </label>
+                <p className="text-sm text-gray-600 mb-2">
+                  What was the name of your first pet?
+                </p>
+                <Input
+                  id="security-question"
+                  name="security-answer"
+                  type="text"
+                  required
+                  className=""
+                  placeholder="Your answer"
+                  value={securityAnswer}
+                  onChange={(e) => setSecurityAnswer(e.target.value)}
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Support Request
+                </label>
+                <p className="text-sm text-gray-600 mb-2">
+                  Our support team is available 24/7 to help you recover your account.
+                  Click below to initiate a chat with our support team.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex space-x-4">
+            <Button
+              type="button"
+              className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              onClick={onCancel}
+            >
+              Back to Login
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              disabled={isLoading}
+            >
+              {isLoading ? "Processing..." : activeTab === "security" ? "Reset Password" : "Contact Support"}
             </Button>
           </div>
         </form>
