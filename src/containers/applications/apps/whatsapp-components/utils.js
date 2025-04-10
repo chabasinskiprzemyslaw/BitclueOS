@@ -8,9 +8,9 @@ import { DEBUG_MODE } from './constants';
 export const debugLog = (message, data) => {
   if (DEBUG_MODE) {
     if (data) {
-      console.log(`[WhatsApp Debug] ${message}`, data);
+      console.log(`[ChatApp Debug] ${message}`, data);
     } else {
-      console.log(`[WhatsApp Debug] ${message}`);
+      console.log(`[ChatApp Debug] ${message}`);
     }
   }
 };

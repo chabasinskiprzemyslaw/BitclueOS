@@ -15,7 +15,7 @@ var { taskbar, desktop, pinned, recent } = {
     "File Explorer",
     "Github",
     "Web Browser",
-    "WhatsApp",
+    "ChatApp",
     "Social Media",
     "Antivirus",
     "Audio Player"
@@ -35,7 +35,7 @@ var { taskbar, desktop, pinned, recent } = {
     "Discord",
     "Camera",
     "Web Browser",
-    "WhatsApp",
+    "ChatApp",
     "Social Media",
     "Antivirus",
     "Audio Player"

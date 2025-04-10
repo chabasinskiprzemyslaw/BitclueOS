@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { getChatDisplayName } from './utils';
 
 /**
- * Chat sidebar component for WhatsApp
+ * Chat sidebar component for ChatApp
  */
 const ChatSidebar = ({ 
   chats, 
@@ -89,7 +89,7 @@ const ChatSidebar = ({
               </DropdownMenuItem>
               <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer">
                 <Download className="mr-2 h-4 w-4" />
-                <span>Get WhatsApp for Windows</span>
+                <span>Get ChatApp for Windows</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

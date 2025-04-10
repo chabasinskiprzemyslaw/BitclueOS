@@ -24,7 +24,7 @@ const formatMessageTime = (timestamp) => {
 };
 
 /**
- * Chat area component for WhatsApp
+ * Chat area component for ChatApp
  */
 const ChatArea = ({
   activeChat,

@@ -3,7 +3,7 @@ import { API_URL, API_MESSAGES_URL, STORAGE_KEYS } from './constants';
 import { debugLog, formatDateTime } from './utils';
 
 /**
- * Custom hook for WhatsApp API calls
+ * Custom hook for ChatApp API calls
  * @param {Object} params - Parameters for the hook
  * @param {string} params.token - Authentication token
  * @param {Object} params.activeChat - The active chat

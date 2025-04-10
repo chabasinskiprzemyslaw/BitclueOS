@@ -21,7 +21,7 @@ const LoginScreen = ({
         <div className="flex justify-center mb-6">
           <Lock className="h-12 w-12 text-[#00A884]" />
         </div>
-        <h2 className="text-xl font-semibold text-center mb-6">Sign in to WhatsApp</h2>
+        <h2 className="text-xl font-semibold text-center mb-6">Sign in to ChatApp</h2>
         
         {authError && (
           <div className="mb-4 p-2 bg-red-900/30 border border-red-800 rounded text-red-200 text-sm">

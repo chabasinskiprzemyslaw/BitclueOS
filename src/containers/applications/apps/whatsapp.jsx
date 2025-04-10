@@ -24,7 +24,7 @@ const MAX_FILE_SIZE = 16 * 1024 * 1024; // 16MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
 
-// Add this function before the WhatsApp component
+// Add this function before the ChatApp component
 const getFileType = (file) => {
   if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
     return 'image';
@@ -34,7 +34,7 @@ const getFileType = (file) => {
   return null;
 };
 
-// Add this function before the WhatsApp component
+// Add this function before the ChatApp component
 const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -67,7 +67,7 @@ export const WhatsApp = () => {
   const [token, setToken] = useState("");
   const [userId, setUserId] = useState("");
   
-  // WhatsApp-specific login states
+  // ChatApp-specific login states
   const [whatsappLoggedIn, setWhatsappLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -393,7 +393,7 @@ export const WhatsApp = () => {
   useEffect(() => {
     const initializeApp = async () => {
       setAppLoading(true);
-      debugLog("Initializing WhatsApp application...");
+      debugLog("Initializing ChatApp application...");
       
       // Wait for Keycloak to be initialized
       if (!keycloakInitialized) {
@@ -594,7 +594,7 @@ export const WhatsApp = () => {
     }
   };
 
-  // Handle WhatsApp-specific login
+  // Handle ChatApp-specific login
   const handleWhatsAppLogin = (e) => {
 
     console.log('handleWhatsAppLogin', e)
@@ -909,17 +909,17 @@ export const WhatsApp = () => {
       <ToolBar app={wnapp.action}
               icon={wnapp.icon}
               size={wnapp.size}
-              name="WhatsApp"
+              name="ChatApp"
             />
       
       {/* App Loading Screen */}
       {(!keycloakInitialized || appLoading) ? (
         <div className="flex-1 flex flex-col items-center justify-center h-full bg-[#111B21] text-gray-300">
           <div className="w-16 h-16 mb-4">
-            <img src="/icons/whatsapp.png" alt="WhatsApp" className="w-full h-full" />
+            <img src="/icons/whatsapp.png" alt="ChatApp" className="w-full h-full" />
           </div>
           <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-lg">Loading WhatsApp</p>
+          <p className="text-lg">Loading ChatApp</p>
           <p className="text-sm text-gray-500">
             {!keycloakInitialized ? "Waiting for authentication..." : "End-to-end encrypted"}
           </p>

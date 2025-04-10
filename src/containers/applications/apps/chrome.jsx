@@ -286,7 +286,7 @@ export const Chrome = () => {
         app={wnapp.action}
         icon={wnapp.icon}
         size={wnapp.size}
-        name="Chrome"
+        name="Web browser"
       />
       <TabBar />
       <NavigationBar 

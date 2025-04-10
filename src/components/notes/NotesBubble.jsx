@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Icon } from '../../utils/general';
 import NotesPanel from './NotesPanel';
 import './notes.scss';
 
@@ -22,10 +21,14 @@ const NotesBubble = () => {
   return (
     <div className="notes-bubble">
       <div 
-        className={`bubble-trigger ${hasNewNotes ? 'has-new-notes' : ''}`}
+        className={`notes-trigger ${hasNewNotes ? 'has-new-notes' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
+        style={{
+          backgroundImage: 'url(/img/icon/player-notes.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
       >
-        <Icon src="notepad" width={24} />
         {hasNewNotes && <div className="notification-badge"></div>}
       </div>
       
