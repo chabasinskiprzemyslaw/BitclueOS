@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
+import { showGameNotification } from '../../utils/gameNotifications';
 
 // Constants
 const HUB_URL = "https://localhost:5001/hubs/objective";

@@ -28,6 +28,8 @@ import {
   stopNotificationService 
 } from "./utils/notifications";
 
+import TopNotification from './components/TopNotification';
+
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
 import * as Drafts from "./containers/applications/draft";
@@ -161,17 +163,19 @@ function App() {
         console.error('Error fetching initial notifications:', err);
       });
       
-      // Then set up real-time SignalR connection
+      // Then set up real-time SignalR connection for general notifications
       initNotificationService().catch(err => {
         console.error('Error initializing notification service:', err);
       });
+      
     }
     
-    // Clean up SignalR connection when component unmounts
+    // Clean up SignalR connections when component unmounts
     return () => {
       stopNotificationService().catch(err => {
         console.error('Error stopping notification service:', err);
       });
+      
     };
   }, [isAuthenticated]);
 
@@ -211,9 +215,10 @@ function App() {
           { isAuthenticated && <MediaViewer />}
           { isAuthenticated && <AudioPlayer />}
           { isAuthenticated && <NotificationCenter />}
+          { isAuthenticated && <TopNotification />}
           
           {/* Dev Tool for Pinned Notes - Remove or comment out in production */}
-          <PinnedNotesDevTool />
+          <PinnedNotesDevTool />        
         </div>
       </ErrorBoundary>
     </div>

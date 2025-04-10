@@ -14,6 +14,7 @@ import fileReducer from "./files";
 import browserReducer from "./browser";
 import notificationsReducer from "./notifications";
 import authReducer from "./auth";
+import gameNotificationsReducer from "./gameNotifications";
 
 const allReducers = combineReducers({
   wallpaper: wallReducer,
@@ -30,6 +31,7 @@ const allReducers = combineReducers({
   browser: browserReducer,
   notifications: notificationsReducer,
   auth: authReducer,
+  gameNotifications: gameNotificationsReducer,
 });
 
 var store = createStore(allReducers);

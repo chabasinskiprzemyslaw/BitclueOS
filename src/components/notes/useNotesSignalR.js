@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
+import { showGameNotification } from '../../utils/gameNotifications';
 
 // Constants
 const HUB_URL = "https://localhost:5001/hubs/notes";
@@ -111,22 +112,29 @@ export const useNotesSignalR = ({
           });
           
           // Set up notes notification handler
-          connection.on("ReceiveObjective", (objective) => {
-            if (!objective) {
+          connection.on("NewNote", (noteData) => {
+            if (!noteData) {
               notesDebugLog("Received empty objective notification, ignoring");
               return;
             }
             
-            notesDebugLog("Received real-time objective update:", objective);
+            notesDebugLog("Received real-time note update:", noteData);
             
             // Convert objective to note format
             const note = {
-              id: objective.id,
-              content: objective.description,
-              sourceDescription: 'System Objective',
+              id: noteData.id,
+              content: noteData.content,
+              sourceDescription: 'System Note',
               timestamp: new Date().toISOString(),
               isNew: true
             };
+
+            // Show top notification banner
+            showGameNotification({
+              message: 'Clue',
+              details: note.content || note.sourceDescription || 'A new note has been added',
+              type: 'note'
+            });
             
             // Call the onNewNote callback with the received note
             if (onNewNote && typeof onNewNote === 'function') {
