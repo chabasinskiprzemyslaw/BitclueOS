@@ -12,6 +12,10 @@ export const AudioPlayer = () => {
   const [volume, setVolume] = useState(0.5);
   const audioRef = useRef(null);
   const [audioFile, setAudioFile] = useState(null);
+  const [triggerBackendOnTime, setTriggerBackendOnTime] = useState(false);
+  const [triggerTime, setTriggerTime] = useState(0);
+  const [audioId, setAudioId] = useState(null);
+  const [backendTriggered, setBackendTriggered] = useState(false);
 
   useEffect(() => {
     if (wnapp?.hide && playing) {
@@ -20,14 +24,29 @@ export const AudioPlayer = () => {
   }, [wnapp?.hide, playing]);
 
   useEffect(() => {
-    // Load audio file if provided in props
+    console.log("wnapp", wnapp);
     if (wnapp?.data && wnapp.data.info && wnapp.data.info.url) {
       setAudioFile({
         name: wnapp.data.name,
         url: wnapp.data.info.url
       });
+      
+      setTriggerBackendOnTime(!!wnapp.data.info.triggerBackendOnTime);
+      setTriggerTime(wnapp.data.info.triggerTime || 0);
+      
+      const id = wnapp.data.info.audioId || 
+                (wnapp.data.info.properties && wnapp.data.info.properties.id) || 
+                null;
+      setAudioId(id);
+      
+      setBackendTriggered(false);
     } else if (wnapp?.data && wnapp.data.url) {
       setAudioFile(wnapp.data);
+      
+      setTriggerBackendOnTime(false);
+      setTriggerTime(0);
+      setAudioId(null);
+      setBackendTriggered(false);
     }
   }, [wnapp?.data]);
 
@@ -54,10 +73,49 @@ export const AudioPlayer = () => {
     audioRef.current.currentTime = 0;
     setPlaying(false);
     setCurrentTime(0);
+    setBackendTriggered(false);
   };
 
   const handleTimeUpdate = () => {
-    setCurrentTime(audioRef.current.currentTime);
+    const newCurrentTime = audioRef.current.currentTime;
+    setCurrentTime(newCurrentTime);
+    
+    if (triggerBackendOnTime && !backendTriggered && newCurrentTime >= triggerTime) {
+      triggerBackendRequest();
+    }
+  };
+  
+  const triggerBackendRequest = async () => {
+    setBackendTriggered(true);
+    
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+      const userIdentityId = userInfo.id;
+      const scenarioId = localStorage.getItem('selected_scenario');
+      const authToken = localStorage.getItem('auth_token');
+      
+      const payload = {
+        userIdentityId: userIdentityId,
+        scenarioId: scenarioId,
+        triggerData: { 
+          audioId: audioId,
+          triggerApp: "AudioPlayer"
+        }
+      };
+      
+      const response = await fetch('https://localhost:5001/storyengine/fileexplorer/files/trigger-app', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log('Backend trigger response:', response);
+    } catch (error) {
+      console.error('Error triggering backend:', error);
+    }
   };
 
   const handleLoadedMetadata = () => {

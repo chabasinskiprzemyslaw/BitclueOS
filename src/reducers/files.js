@@ -12,7 +12,7 @@ const debugLogger = (action, state, payload) => {
 };
 
 // Function to send data to backend when triggered files are opened
-const sendToBackend = (fileData) => {
+export const sendToBackend = (fileData) => {
   debugLogger('sendToBackend', null, fileData);
   const userInfo = JSON.parse(localStorage.getItem('user_info'));
   const scenarioId = localStorage.getItem('selected_scenario');
@@ -47,11 +47,13 @@ const sendToBackend = (fileData) => {
       scenarioId
     });
     
+    //TODO: Add bearer token to the request
     // Actual backend request - replace URL with your API endpoint
     fetch('https://localhost:5001/storyengine/fileexplorer/files/trigger-action', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       },
       body: JSON.stringify({
         fileId,

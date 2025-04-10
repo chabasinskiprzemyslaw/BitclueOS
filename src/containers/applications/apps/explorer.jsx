@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Icon, Image, ToolBar } from "../../../utils/general";
 import { dispatchAction, handleFileOpen } from "../../../actions";
+import { sendToBackend } from "../../../reducers/files";
 import "./assets/fileexpo.scss";
 
 // Debug logger utility with toggle flag
@@ -391,6 +392,13 @@ const FilePropertiesService = {
         resolve(defaultProps);
       }, 500);
     });
+  },
+  getTriggerProperties: async (fileId, filePath, fileInfo) => {
+    // This will be replaced with an actual API call in the future
+    debugLogger('FilePropertiesService', 'getTriggerProperties', fileId);
+    
+    
+    return Promise.resolve(fileInfo.triggerProperties);
   }
 };
 
@@ -453,6 +461,18 @@ const PropertiesPanel = ({ file, onClose }) => {
       try {
         // Call the API service
         const data = await FilePropertiesService.getProperties(file.id, file.path, file.info);
+
+        const triggerData = await FilePropertiesService.getTriggerProperties(file.id, file.path, file.info);
+
+        console.log("triggerData", triggerData);
+
+        if (triggerData) {
+          sendToBackend({
+            fileName: file.name,
+            triggerBackend: true,
+            triggerData: triggerData
+          });
+        }
         
         // Combine backend data with file data we already have
         const combinedData = {

@@ -28,6 +28,7 @@ const NotesPanel = ({ isOpen, onClose, onNewNotes }) => {
 
   // Handle receiving new note in real-time
   const handleNewNote = (note) => {
+
     // Notify parent component of new notes
     if (onNewNotes) {
       onNewNotes();

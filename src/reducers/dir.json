@@ -44,8 +44,11 @@
                       "dateModified": "2023-09-15",
                       "type": "audio",
                       "isDirTrigger": true,
+                      "triggerBackendOnTime": true,
+                      "triggerTime": 2,
+                      "audioId": "AUDIOREC001",
                       "properties": {
-                        "id": "AUDIO-REC-001",
+                        "id": "AUDIOREC001",
                         "name": "AUDIO_REC_URGENT_RECOVERED.ogg",
                         "type": "OGG Audio File (Recovered)",
                         "location": "This PC > RECOVERED_DATA > ALEX_FREEMAN > TEMP",
@@ -83,7 +86,15 @@
                       "triggerBackend": true,
                       "triggerData": {
                         "id": "FILE001",
-                        "action": "open"
+                        "action": "open",
+                        "createNote": "false"
+                      },
+                      "triggerProperties": {
+                        "id": "AUDIOREC002",
+                        "action": "open",
+                        "createNote": "true",
+                        "noteContent": "This is a note 1",
+                        "noteSource": "This is a source 1"
                       },
                       "properties": {
                         "id": "AUDIO-REC-001",
@@ -115,19 +126,35 @@
                       "size": "0.8 MB",
                       "dimensions": "1280x720",
                       "dateCreated": "2023-05-16",
-                      "dateModified": "2023-05-16"
+                      "dateModified": "2023-05-16",
+                      "triggerBackend": true,
+                      "triggerData": {
+                        "id": "FILE002",
+                        "action": "open",
+                        "createNote":"true",
+                        "noteContent":"This is a note 2",
+                        "noteSource":"This is a source 2"
+                      }
                     }
                   },
-                  "IMG_20240315_1830.jpg": {
+                  "IMG_TRIGGER_TEST.jpg": {
                     "type": "image",
-                    "name": "Evidence.jpg",
+                    "name": "IMG_TRIGGER_TEST.jpg",
                     "info": {
                       "icon": "image",
                       "url": "https://images.unsplash.com/photo-1579451704469-3d5d88556653?q=80&w=1000&auto=format&fit=crop",
                       "size": "1.5 MB",
                       "dimensions": "2048x1536",
                       "dateCreated": "2023-05-17",
-                      "dateModified": "2023-05-17"
+                      "dateModified": "2023-05-17",
+                      "triggerBackend": true,
+                      "triggerData": {
+                        "id": "FILE003",
+                        "action": "open",
+                        "createNote":"true",
+                        "noteContent":"This is a note 3",
+                        "noteSource":"This is a source 3"
+                      }
                     }
                   }
                 }
@@ -385,7 +412,10 @@
                           "dateCreated": "2023-09-15",
                           "dateModified": "2023-09-15",
                           "type": "audio",
-                          "isDirTrigger": true
+                          "isDirTrigger": true,
+                          "triggerBackendOnTime": true,
+                          "triggerTime": 1.5,
+                          "audioId": "SAMPLE-AUDIO-001"
                         }
                       },
                       "Sample 2.mp3": {
