@@ -19,10 +19,10 @@ export const getNotes = async (scenarioId, userIdentityId) => {
   }
 };
 
-export const markNotesAsRead = async (scenarioId, noteId) => {
+export const markNotesAsRead = async (scenarioId, noteId, userIdentityId) => {
   try {
-    const response = await fetch(`https://localhost:5001/api/scenarios/${scenarioId}/notes/${noteId}/mark-read`, {
-      method: 'POST',
+    const response = await fetch(`https://localhost:5001/story-engine/scenarios/${scenarioId}/notes/${noteId}/mark-read?userIdentityId=${userIdentityId}`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`

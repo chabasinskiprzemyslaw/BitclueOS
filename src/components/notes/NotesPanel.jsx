@@ -113,7 +113,7 @@ const NotesPanel = ({ isOpen, onClose, onNewNotes }) => {
           
           // Process each new note individually
           for (const note of newNotes) {
-            await markNotesAsRead(scenarioId, note.id);
+            await markNotesAsRead(scenarioId, note.id, userIdentityId);
           }
           
           // Update local state to reflect that notes are no longer new
@@ -130,7 +130,7 @@ const NotesPanel = ({ isOpen, onClose, onNewNotes }) => {
       
       markAsRead();
     }
-  }, [isOpen, scenarioId, notes]);
+  }, [isOpen, scenarioId, notes, userIdentityId]);
 
   // Helper to format date
   const formatDate = (timestamp) => {
