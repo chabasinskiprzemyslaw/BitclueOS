@@ -161,9 +161,9 @@
               },
               "Videos": {
                 "type": "folder",
-                "name": "Wideo",
+                "name": "Video",
                 "data": {
-                  "Filmiki111": {
+                  "Videos!1": {
                     "type": "folder",
                     "name": "Filmiki111",
                     "data": {
@@ -199,16 +199,16 @@
               },
               "Work": {
                 "type": "folder",
-                "name": "Praca",
+                "name": "Work",
                 "data": {
-                  "Scenariusze": {
+                  "Scenarios": {
                     "type": "folder",
                     "name": "Scenariusze",
                     "data": {
                       
                     }
                   },
-                  "Płatności": {
+                  "Payments": {
                     "type": "folder",
                     "name": "Płatności",
                     "data": {
@@ -254,27 +254,12 @@
           }
         }
       },
-      "Macrosoft": {},
       "Programs": {
         "data": {
-          "Z-Zip": {},
-          "BraveSoftware": {},
-          "Common Files": {},
-          "dotnet": {},
-          "Internet Adventure": {},
           "Macrosoft Office 15": {},
-          "Macrosoft OneDrive": {},
-          "Macrosoft Update Health Tools": {},
-          "ModifiableWindowsApps": {},
-          "SQL": {},
-          "VPN": {},
-          "PCHealthCheck": {},
-          "Shell": {},
-          "PowerToys": {},
-          "Realtek": {},
-          "Reference Assemblies": {},
-          "Rivet Networks": {},
-          "Waves": {}
+          "CloudDrive": {},
+          "Health Tools": {},
+          "Shell": {}
         }
       },
       "temp": {},
@@ -336,15 +321,12 @@
                 },
                 "data": {
                   "Attachments": {},
-                  "Custom": {},
                   "Downloadable": {},
                   "Fax": {},
                   "FeedbackHub": {},
                   "Freelancing": {},
-                  "My Games": {},
                   "Notebooks": {},
                   "OnScreen Control": {},
-                  "Outlook Files": {},
                   "secure_document.docx": {
                     "type": "file",
                     "name": "secure_document.docx",
@@ -505,21 +487,14 @@
                   }
                 }
               },
-              "OneDrive": {
+              "CloudDrive": {
                 "type": "folder",
-                "name": "OneDrive",
+                "name": "CloudDrive",
                 "info": {
                   "spid": "%onedrive%",
                   "icon": "onedrive"
                 },
                 "data": {
-                  "Atom": {
-                    "data": {
-                      "Codeforces": {},
-                      "JavaScript": {},
-                      "Github": {}
-                    }
-                  },
                   "Attachments": {},
                   "october": {},
                   "Office": {},
@@ -530,13 +505,11 @@
               "Contacts": {},
               "Favorites": {},
               "gif": {},
-              "Programs": {},
-              "Postman": {}
+              "Programs": {}
             }
           }
         }
-      },
-      "Windows": {}
+      }
     }
   },
   "D:": {
@@ -545,8 +518,6 @@
       "spid": "%ddrive%"
     },
     "data": {
-      "Programs": {},
-      "WindowsApp": {},
       "Temp": {}
     }
   }

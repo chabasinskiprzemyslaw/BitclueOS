@@ -785,13 +785,13 @@ const ContentArea = ({ searchtxt }) => {
   // Helper to get appropriate icon based on file type
   const getFileIcon = (item) => {
     if (item.type === "folder") {
-      return `icon/win/${item.info.icon || "folder"}`;
+      return `icon/win/${item.info && item.info.icon || "folder"}`;
     } else if (item.type === "image") {
       return `icon/win/image`;
     } else if (item.type === "video") {
       return `icon/win/video`;
     } else {
-      return `icon/win/${item.info.icon || "file"}`;
+      return `icon/win/${item.info && item.info.icon || "file"}`;
     }
   };
 
@@ -823,6 +823,9 @@ const ContentArea = ({ searchtxt }) => {
                 >
                   <Image src={getFileIcon(item)} />
                   <span>{item.name}</span>
+                  {item.type === "folder" && item.data && item.data.length === 0 && (
+                    <span className="empty-folder-indicator">(No data)</span>
+                  )}
                 </div>
               )
             );
