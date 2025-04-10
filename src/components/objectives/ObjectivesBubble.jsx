@@ -140,8 +140,12 @@ const ObjectivesBubble = () => {
       <div 
         className={`bubble-trigger ${hasNewObjectives ? 'has-new-objectives' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
+        style={{
+          backgroundImage: 'url(/img/icon/objectives.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
       >
-        <Icon src="objectives" width={24} />
         {hasNewObjectives && <div className="notification-badge"></div>}
         <Icon src="help-circle" width={16} />
       </div>
