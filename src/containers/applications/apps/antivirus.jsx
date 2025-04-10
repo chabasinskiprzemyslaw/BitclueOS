@@ -263,7 +263,7 @@ export const Antivirus = () => {
         app={wnapp.action}
         icon={wnapp.icon}
         size={wnapp.size}
-        name="Windows Defender"
+        name="Antivirus"
       />
       <div className="windowScreen" data-dock="true">
         <div className="av-content">

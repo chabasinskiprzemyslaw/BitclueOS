@@ -43,7 +43,7 @@ function Login({ onLogin }) {
       }
 
       const sessionId = await response.json();
-      console.log("--->", sessionId);
+
       // Store the session ID if needed
       localStorage.setItem('socialMediaSessionId', sessionId)
       

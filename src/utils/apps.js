@@ -41,7 +41,7 @@ const apps = [
     action: "EXPLORER",
   },
   {
-    name: "Chrome",
+    name: "Web Browser",
     icon: "chrome",
     type: "app",
     action: "CHROME",
@@ -274,7 +274,7 @@ const apps = [
     action: "SOCIALMEDIA",
   },
   {
-    name: "Windows Defender",
+    name: "Antivirus",
     icon: "defender",
     type: "app",
     action: "ANTIVIRUS",
