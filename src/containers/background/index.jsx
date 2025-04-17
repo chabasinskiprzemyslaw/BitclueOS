@@ -252,17 +252,6 @@ export const LockScreen = (props) => {
   };
 
   const handleLogin = async () => {
-    // Validate inputs
-    if (!username.trim()) {
-      setAuthError("Email is required");
-      return;
-    }
-    
-    if (!password.trim()) {
-      setAuthError("Password is required");
-      return;
-    }
-
     if (!selectedScenario) {
       console.log("No scenario selected");
       setAuthError("Please select a scenario");
@@ -422,27 +411,6 @@ export const LockScreen = (props) => {
               )}
               
               <div className="w-full space-y-4">
-                <div>
-                  <input
-                    type="email"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Email"
-                    className="px-3 py-2 bg-white/10 border border-white/30 rounded text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 w-full"
-                    autoFocus
-                  />
-                </div>
-                
-                <div>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Password"
-                    className="px-3 py-2 bg-white/10 border border-white/30 rounded text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 w-full"
-                  />
-                </div>
                 
                 <div>
                   {loadingScenarios ? (
