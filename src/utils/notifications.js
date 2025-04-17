@@ -1,5 +1,6 @@
 import store from '../reducers';
 import * as signalR from '@microsoft/signalr';
+import { API_ENDPOINTS, HUB_URLS } from '../config/api';
 
 /**
  * Create and show a new notification
@@ -57,7 +58,7 @@ export const clearAllNotifications = () => {
 export const fetchUnrespondedNotifications = async (userId) => {
   try {
     const authToken = localStorage.getItem('auth_token');
-    const response = await fetch(`https://localhost:5001/story-engine/notifications/unresponded?userId=${userId}`, {
+    const response = await fetch(API_ENDPOINTS.STORY_ENGINE.UNRESPONDED_NOTIFICATIONS(userId), {
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json'
@@ -127,7 +128,7 @@ export const initNotificationService = async () => {
 
     // Build the SignalR connection
     hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl(`https://localhost:5001/hubs/notification`, {
+      .withUrl(HUB_URLS.NOTIFICATION, {
         accessTokenFactory: () => authToken
       })
       .withAutomaticReconnect([0, 2000, 10000, 30000]) // Retry intervals in milliseconds

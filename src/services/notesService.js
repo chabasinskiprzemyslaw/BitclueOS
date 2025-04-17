@@ -1,6 +1,8 @@
+import { API_ENDPOINTS } from '../config/api';
+
 export const getNotes = async (scenarioId, userIdentityId) => {
   try {
-    const response = await fetch(`https://localhost:5001/story-engine/scenarios/${scenarioId}/notes?userId=${userIdentityId}`, {
+    const response = await fetch(API_ENDPOINTS.STORY_ENGINE.NOTES(scenarioId, userIdentityId), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -21,7 +23,7 @@ export const getNotes = async (scenarioId, userIdentityId) => {
 
 export const markNotesAsRead = async (scenarioId, noteId, userIdentityId) => {
   try {
-    const response = await fetch(`https://localhost:5001/story-engine/scenarios/${scenarioId}/notes/${noteId}/mark-read?userIdentityId=${userIdentityId}`, {
+    const response = await fetch(API_ENDPOINTS.STORY_ENGINE.MARK_NOTE_READ(scenarioId, noteId, userIdentityId), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Notification from './Notification';
 import * as signalR from '@microsoft/signalr';
+import { API_ENDPOINTS, HUB_URLS } from '../config/api';
 
 const NotificationCenter = () => {
   const notifications = useSelector(state => state.notifications || []);
@@ -39,7 +40,7 @@ const NotificationCenter = () => {
         return;
       }
 
-      const response = await fetch(`https://localhost:5001/story-engine/notifications`, {
+      const response = await fetch(API_ENDPOINTS.STORY_ENGINE.NOTIFICATIONS, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ const NotificationCenter = () => {
 
       // Create the connection
       const connection = new signalR.HubConnectionBuilder()
-        .withUrl(`https://localhost:5001/hubs/notification`, {
+        .withUrl(HUB_URLS.NOTIFICATION, {
           accessTokenFactory: () => authToken
         })
         .withAutomaticReconnect()

@@ -54,7 +54,10 @@
   },
   "scripts": {
     "start": "vite",
-    "build": "vite build",
+    "dev": "vite --mode development",
+    "dev:prod": "vite --mode production",
+    "build": "vite build --mode production",
+    "build:dev": "vite build --mode development",
     "ghbuild": "CI=false vite build",
     "prettier": "prettier --write .",
     "turbuild": "react-scripts build",

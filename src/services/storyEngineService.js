@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://localhost:5001';
+import { API_ENDPOINTS } from '../config/api';
 
 export const getCurrentStepObjectives = async (scenarioId, userIdentityId) => {
   try {
@@ -9,7 +9,7 @@ export const getCurrentStepObjectives = async (scenarioId, userIdentityId) => {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/story-engine/scenarios/${scenarioId}/current-step-objectives?userIdentityId=${userIdentityId}`,
+      API_ENDPOINTS.STORY_ENGINE.CURRENT_STEP_OBJECTIVES(scenarioId, userIdentityId),
       {
         method: 'GET',
         headers: {

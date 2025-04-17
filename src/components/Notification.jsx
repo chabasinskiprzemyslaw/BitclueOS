@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Icon } from '../utils/general';
+import { API_ENDPOINTS } from '../config/api';
 
 const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) => {
   const dispatch = useDispatch();
@@ -36,8 +37,6 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
   };
 
   const respondToNotification = async (notificationId) => {
-    console.log('Notification ID:', notificationId);
-    console.log('respondToNotification', notificationId);
     try {
       const userInfo = JSON.parse(localStorage.getItem('user_info'));
       const userIdentityId = userInfo?.id;
@@ -54,7 +53,7 @@ const Notification = ({ id, title, message, icon, buttons, time, onDismiss }) =>
         return;
       }
 
-      const response = await fetch(`https://localhost:5001/story-engine/notifications/${notificationId}/respond`, {
+      const response = await fetch(API_ENDPOINTS.STORY_ENGINE.RESPOND_NOTIFICATION(notificationId), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
