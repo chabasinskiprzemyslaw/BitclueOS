@@ -18,22 +18,26 @@ export const WnTerminal = () => {
 
   let IpDetails = [];
   const getIPDetails = async () => {
-    try {
-      const response = await fetch("https://ipapi.co/json")
-        .then((response) => response.json())
-        .then((data) => {
-          IpDetails.push(data);
+    // Only fetch if IpDetails is empty
+    if (IpDetails.length === 0) {
+      try {
+        console.log("Fetching IP details");
+        const response = await fetch("")
+          .then((response) => response.json())
+          .then((data) => {
+            IpDetails.push(data);
+          });
+      } catch (error) {
+        // handling the error
+        IpDetails.push({
+          ip: "__network_error",
+          network: "__kindly check internet connection",
+          city: "",
+          region: "",
+          org: "",
+          postal: "",
         });
-    } catch (error) {
-      // handling the error
-      IpDetails.push({
-        ip: "__network_error",
-        network: "__kindly check internet connection",
-        city: "",
-        region: "",
-        org: "",
-        postal: "",
-      });
+      }
     }
   };
 
@@ -320,6 +324,12 @@ export const WnTerminal = () => {
       }
     } else if (type == "") {
     } else if (type == "ipconfig") {
+      // Only fetch IP details when the ipconfig command is used
+      if (IpDetails.length === 0) {
+        tmpStack.push("Fetching IP configuration...");
+        await getIPDetails();
+      }
+      
       const IP = IpDetails[0];
       tmpStack.push("Windows IP Configuration");
       tmpStack.push("");
@@ -329,6 +339,8 @@ export const WnTerminal = () => {
       tmpStack.push("Network Org: " + IP.org);
       tmpStack.push("Region: " + IP.region);
       tmpStack.push("Postal: " + IP.postal);
+    } else if (type === "exiftool IMG_1234.jpg") {
+      tmpStack.push("Password: AlexTheGreat01!");
     } else {
       tmpStack.push(
         `'${type}' is not recognized as an internal or external command,`,
@@ -476,13 +488,11 @@ export const WnTerminal = () => {
   };
 
   useEffect(() => {
-    getIPDetails();
-
     if (wnapp.dir && wnapp.dir != pwd) {
       setPwd(wnapp.dir);
       dispatch({ type: "OPENTERM", payload: null });
     }
-  });
+  }, [wnapp.dir, pwd]);
 
   return (
     <div

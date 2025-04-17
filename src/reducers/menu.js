@@ -85,25 +85,6 @@ const defState = {
         type: "hr",
       },
       {
-        name: "New",
-        icon: "New",
-        type: "svg",
-        opts: [
-          {
-            name: "Folder",
-          },
-          {
-            name: "Shortcut",
-          },
-          {
-            name: "Text Document",
-          },
-          {
-            name: "Compressed (zipped) Folder",
-          },
-        ],
-      },
-      {
         type: "hr",
       },
       {
@@ -122,10 +103,6 @@ const defState = {
       },
       {
         type: "hr",
-      },
-      {
-        name: "Next desktop background",
-        action: "WALLNEXT",
       },
       {
         name: "Open in Terminal",

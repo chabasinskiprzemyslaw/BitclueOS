@@ -41,33 +41,22 @@ const apps = [
     action: "EXPLORER",
   },
   {
-    name: "Chrome",
+    name: "Web Browser",
     icon: "chrome",
     type: "app",
     action: "CHROME",
   },
   {
-    name: "WhatsApp",
+    name: "ChatApp",
     icon: "whatsapp",
     type: "app",
     action: "WHATSAPP",
   },
   {
-    name: "Browser",
-    icon: "edge",
-    type: "app",
-    action: "MSEDGE",
-  },
-  {
-    name: "Store",
-    icon: "store",
-    type: "app",
-    action: "WNSTORE",
-  },
-  {
     name: "Recycle Bin",
     icon: "bin0",
     type: "app",
+    action: "RECYCLEBIN",
   },
   {
     name: "PC",
@@ -135,7 +124,7 @@ const apps = [
     icon: "mail",
     type: "app",
     action: "EXTERNAL",
-    payload: "mailto:blueedgetechno@gmail.com",
+    payload: "mailto:chabasinski.przemyslaw@gmail.com",
   },
   {
     name: "Movies",
@@ -211,12 +200,6 @@ const apps = [
     type: "app",
   },
   {
-    name: "Spotify",
-    icon: "spotify",
-    type: "app",
-    action: "SPOTIFY",
-  },
-  {
     name: "Sharepoint",
     icon: "share",
     type: "app",
@@ -230,13 +213,6 @@ const apps = [
     name: "Snipping Tool",
     icon: "snip",
     type: "app",
-  },
-  {
-    name: "Twitter",
-    icon: "twitter",
-    type: "app",
-    action: "EXTERNAL",
-    payload: "https://twitter.com/blueedgetechno",
   },
   {
     name: "Teams",
@@ -291,6 +267,24 @@ const apps = [
     type: "app",
     action: "DISCORD",
   },
+  {
+    name: "Social Media",
+    icon: "socialmedia",
+    type: "app",
+    action: "SOCIALMEDIA",
+  },
+  {
+    name: "Antivirus",
+    icon: "defender",
+    type: "app",
+    action: "ANTIVIRUS",
+  },
+  {
+    name: "Audio Player",
+    icon: "mediaplay",
+    type: "app",
+    action: "AUDIOPLAYER",
+  }
 ];
 
 for (let i = 0; i < installed.length; i++) {

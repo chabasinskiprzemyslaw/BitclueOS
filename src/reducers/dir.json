@@ -5,57 +5,261 @@
     "info": {
       "size": "104000000000",
       "used": "90000000000",
-      "spid": "%cdrive%"
+      "spid": "%cdrive%",
+      "properties": {
+        "id": "drive-c",
+        "name": "Local Disk (C:)",
+        "type": "NTFS Drive",
+        "location": "This PC",
+        "size": "104 GB",
+        "free": "14 GB",
+        "created": "2022-01-01",
+        "modified": "2023-12-01",
+        "accessed": "2024-04-30",
+        "attributes": ["System", "Hidden"]
+      }
     },
     "data": {
+      "RECOVERED_DATA": {
+        "type": "folder",
+        "name": "RECOVERED_DATA",
+        "data": {
+          "ALEX_FREEMAN": {
+            "type": "folder",
+            "name": "ALEX_FREEMAN",
+            "data": {
+              "TEMP": {
+                "type": "folder",
+                "name": "TEMP",
+                "data": {
+                  "AUDIO_REC_URGENT_RECOVERED.ogg": {
+                    "type": "audio",
+                    "name": "AUDIO_REC_URGENT_RECOVERED.ogg",
+                    "info": {
+                      "icon": "music",
+                      "url": "https://samplelib.com/lib/preview/mp3/sample-3s.mp3",
+                      "size": "1.2 MB",
+                      "duration": "0:03",
+                      "dateCreated": "2023-09-15",
+                      "dateModified": "2023-09-15",
+                      "type": "audio",
+                      "isDirTrigger": true,
+                      "triggerBackendOnTime": true,
+                      "triggerTime": 2,
+                      "audioId": "AUDIOREC001",
+                      "properties": {
+                        "id": "AUDIOREC001",
+                        "name": "AUDIO_REC_URGENT_RECOVERED.ogg",
+                        "type": "OGG Audio File (Recovered)",
+                        "location": "This PC > RECOVERED_DATA > ALEX_FREEMAN > TEMP",
+                        "size": "1.2 MB",
+                        "created": "2023-09-15",
+                        "modified": "2023-09-15",
+                        "accessed": "2024-04-28",
+                        "attributes": ["Login: AF_INSIDER", "Hint: in terminal use 'exiftool AUDIO_REC_URGENT_RECOVERED.ogg'"],
+                        "codec": "Vorbis",
+                        "bitrate": "128 kbps",
+                        "sampleRate": "44.1 kHz",
+                        "channels": "2 (Stereo)",
+                        "recoveryDate": "2024-04-15",
+                        "recoveryMethod": "Data recovery scan",
+                        "originalPath": "Unknown (deleted)"
+                      }
+                    }
+                  }
+                }
+              },
+              "Photos": {
+                "type": "folder",
+                "name": "Photos",
+                "data": {
+                  "IMG_1234.jpg": {
+                    "type": "image",
+                    "name": "IMG_1234.jpg",
+                    "info": {
+                      "icon": "image",
+                      "url": "https://images.unsplash.com/photo-1589903308904-1010c2294adc?q=80&w=1000&auto=format&fit=crop",
+                      "size": "1.2 MB",
+                      "dimensions": "1920x1080",
+                      "dateCreated": "2023-05-15",
+                      "dateModified": "2023-05-15",
+                      "triggerBackend": true,
+                      "triggerData": {
+                        "id": "FILE001",
+                        "action": "open",
+                        "createNote": "false"
+                      },
+                      "triggerProperties": {
+                        "id": "AUDIOREC002",
+                        "action": "open",
+                        "createNote": "true",
+                        "noteContent": "This is a note 1",
+                        "noteSource": "This is a source 1"
+                      },
+                      "properties": {
+                        "id": "AUDIO-REC-001",
+                        "name": "AUDIO_REC_URGENT_RECOVERED.ogg",
+                        "type": "OGG Audio File (Recovered)",
+                        "location": "This PC > RECOVERED_DATA > ALEX_FREEMAN > TEMP",
+                        "size": "1.2 MB",
+                        "created": "2023-09-15",
+                        "modified": "2023-09-15",
+                        "accessed": "2024-04-28",
+                        "attributes": ["Login: AF_INSIDER", "Hint: got to localhost/exiftool in browser"],
+                        "codec": "Vorbis",
+                        "bitrate": "128 kbps",
+                        "sampleRate": "44.1 kHz",
+                        "channels": "2 (Stereo)",
+                        "recoveryDate": "2024-04-15",
+                        "recoveryMethod": "Data recovery scan",
+                        "originalPath": "Unknown (deleted)"
+                      }
+
+                    }
+                  },
+                  "IMG_20240312_0911.jpg": {
+                    "type": "image",
+                    "name": "IMG_20240312_0911.jpg",
+                    "info": {
+                      "icon": "image",
+                      "url": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1000&auto=format&fit=crop",
+                      "size": "0.8 MB",
+                      "dimensions": "1280x720",
+                      "dateCreated": "2023-05-16",
+                      "dateModified": "2023-05-16",
+                      "triggerBackend": true,
+                      "triggerData": {
+                        "id": "FILE002",
+                        "action": "open",
+                        "createNote":"true",
+                        "noteContent":"This is a note 2",
+                        "noteSource":"This is a source 2"
+                      }
+                    }
+                  },
+                  "IMG_TRIGGER_TEST.jpg": {
+                    "type": "image",
+                    "name": "IMG_TRIGGER_TEST.jpg",
+                    "info": {
+                      "icon": "image",
+                      "url": "https://images.unsplash.com/photo-1579451704469-3d5d88556653?q=80&w=1000&auto=format&fit=crop",
+                      "size": "1.5 MB",
+                      "dimensions": "2048x1536",
+                      "dateCreated": "2023-05-17",
+                      "dateModified": "2023-05-17",
+                      "triggerBackend": true,
+                      "triggerData": {
+                        "id": "FILE003",
+                        "action": "open",
+                        "createNote":"true",
+                        "noteContent":"This is a note 3",
+                        "noteSource":"This is a source 3"
+                      }
+                    }
+                  }
+                }
+              },
+              "Videos": {
+                "type": "folder",
+                "name": "Video",
+                "data": {
+                  "Videos!1": {
+                    "type": "folder",
+                    "name": "Filmiki111",
+                    "data": {
+                      "Big buck bunny": {
+                        "type": "video",
+                        "name": "Big buck bunny",
+                        "info": {
+                          "icon": "vid",
+                          "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                          "size": "5.6 MB",
+                          "duration": "9:56",
+                          "resolution": "720p",
+                          "dateCreated": "2023-05-18",
+                          "dateModified": "2023-05-18"
+                        }
+                      },
+                      "Surveillance.mp4": {
+                        "type": "video",
+                        "name": "Surveillance.mp4",
+                        "info": {
+                          "icon": "vid",
+                          "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                          "size": "8.2 MB",
+                          "duration": "10:53",
+                          "resolution": "1080p",
+                          "dateCreated": "2023-05-19",
+                          "dateModified": "2023-05-19"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "Work": {
+                "type": "folder",
+                "name": "Work",
+                "data": {
+                  "Scenarios": {
+                    "type": "folder",
+                    "name": "Scenariusze",
+                    "data": {
+                      
+                    }
+                  },
+                  "Payments": {
+                    "type": "folder",
+                    "name": "Płatności",
+                    "data": {
+                      
+                    }
+                  }
+              }
+            }
+            }
+          }
+        }
+      },
       "backup": {
         "type": "folder",
         "name": "backup",
         "data": {
+          "notes.txt": {
+          "type": "notepad",
+            "info": {
+              "icon": "90",
+              "size": "1.2 MB",
+              "dateModified": "2023-05-15"
+            },
+            "data": {
+              "content": "Super secret notes"
+            }
+          },
           "config": {
             "type": "folder",
             "name": "config"
+          },
+          "important_report.pdf": {
+            "type": "folder",
+            "name": "important_report",
+            "info": {
+              "triggerBackend": true,
+              "triggerData": {
+                "reportId": "REP-2023-001",
+                "confidential": true,
+                "category": "financial"
+              }
+            }
           }
         }
       },
-      "Microsoft": {},
-      "Program Files": {
+      "Programs": {
         "data": {
-          "7-Zip": {},
-          "Adobe": {},
-          "AMD": {},
-          "BraveSoftware": {},
-          "Common Files": {},
-          "Dell": {},
-          "dotnet": {},
-          "Goodix": {},
-          "heroku": {},
-          "Intel": {},
-          "Internet Explorer": {},
-          "mcafee": {},
-          "Microsoft Office 15": {},
-          "Microsoft OneDrive": {},
-          "Microsoft Update Health Tools": {},
-          "ModifiableWindowsApps": {},
-          "MongoDB": {},
-          "MSBuild": {},
-          "MySQL": {},
-          "nodejs": {},
-          "OpenVPN": {},
-          "PCHealthCheck": {},
-          "PowerShell": {},
-          "PowerToys": {},
-          "Realtek": {},
-          "Reference Assemblies": {},
-          "Rivet Networks": {},
-          "Waves": {},
-          "Windows Defender": {},
-          "Windows Mail": {},
-          "Windows Media Player": {},
-          "Windows NT": {},
-          "Windows Photo Viewer": {},
-          "WindowsPowerShell": {},
-          "WinRAR": {}
+          "Macrosoft Office 15": {},
+          "CloudDrive": {},
+          "Health Tools": {},
+          "Shell": {}
         }
       },
       "temp": {},
@@ -77,7 +281,18 @@
             "name": "PC",
             "info": {
               "spid": "%user%",
-              "icon": "user"
+              "icon": "user",
+              "properties": {
+                "id": "user-pc",
+                "name": "PC",
+                "type": "User Folder",
+                "location": "This PC > Users",
+                "size": "5.8 GB",
+                "created": "2023-01-15",
+                "modified": "2024-04-25",
+                "accessed": "2024-04-30",
+                "attributes": ["User", "System"]
+              }
             },
             "data": {
               ".config": {},
@@ -91,29 +306,58 @@
               "Documents": {
                 "info": {
                   "spid": "%documents%",
-                  "icon": "docs"
+                  "icon": "docs",
+                  "properties": {
+                    "id": "user-documents",
+                    "name": "Documents",
+                    "type": "System Folder",
+                    "location": "This PC > Users > PC",
+                    "size": "2.1 GB",
+                    "created": "2023-01-15",
+                    "modified": "2024-04-20",
+                    "accessed": "2024-04-30",
+                    "attributes": ["User", "Read-Write"]
+                  }
                 },
                 "data": {
-                  "2020": {
-                    "data": {
-                      "Covid": {},
-                      "Lockdown": {},
-                      "Windows 11 Release": {},
-                      "Vaccination": {}
-                    }
-                  },
-                  "Adobe": {},
                   "Attachments": {},
-                  "Custom": {},
                   "Downloadable": {},
                   "Fax": {},
                   "FeedbackHub": {},
                   "Freelancing": {},
-                  "My Games": {},
-                  "OneNote notebooks": {},
+                  "Notebooks": {},
                   "OnScreen Control": {},
-                  "Outlook Files": {},
-                  "Visual Studio": {}
+                  "secure_document.docx": {
+                    "type": "file",
+                    "name": "secure_document.docx",
+                    "info": {
+                      "icon": "file",
+                      "size": "1.7 MB",
+                      "dateCreated": "2023-08-15",
+                      "dateModified": "2023-09-02",
+                      "triggerBackend": true,
+                      "triggerData": {
+                        "documentId": "DOC-2023-042",
+                        "accessLevel": "restricted",
+                        "department": "legal"
+                      },
+                      "properties": {
+                        "id": "DOC-2023-042",
+                        "name": "secure_document.docx",
+                        "type": "Microsoft Word Document",
+                        "location": "This PC > Users > PC > Documents",
+                        "size": "1.7 MB",
+                        "created": "2023-08-15",
+                        "modified": "2023-09-02",
+                        "accessed": "2024-04-29",
+                        "attributes": ["Read-only", "Confidential", "Restricted"],
+                        "author": "John Smith",
+                        "company": "Acme Corp",
+                        "description": "Legal contract document with restricted access",
+                        "security": "Confidential"
+                      }
+                    }
+                  }
                 }
               },
               "Downloads": {
@@ -134,7 +378,58 @@
                 "data": {
                   "Hip Hop": {},
                   "Old School": {},
-                  "60s Songs": {}
+                  "60s Songs": {},
+                  "Audio Samples": {
+                    "type": "folder",
+                    "name": "Audio Samples",
+                    "data": {
+                      "Sample 1.mp3": {
+                        "type": "audio",
+                        "name": "Sample 1.mp3",
+                        "info": {
+                          "icon": "music",
+                          "url": "https://samplelib.com/lib/preview/mp3/sample-3s.mp3",
+                          "size": "1.2 MB",
+                          "duration": "0:03",
+                          "dateCreated": "2023-09-15",
+                          "dateModified": "2023-09-15",
+                          "type": "audio",
+                          "isDirTrigger": true,
+                          "triggerBackendOnTime": true,
+                          "triggerTime": 1.5,
+                          "audioId": "SAMPLE-AUDIO-001"
+                        }
+                      },
+                      "Sample 2.mp3": {
+                        "type": "audio",
+                        "name": "Sample 2.mp3",
+                        "info": {
+                          "icon": "music",
+                          "url": "https://samplelib.com/lib/preview/mp3/sample-9s.mp3",
+                          "size": "1.5 MB",
+                          "duration": "0:09",
+                          "dateCreated": "2023-09-16",
+                          "dateModified": "2023-09-16",
+                          "type": "audio",
+                          "isDirTrigger": true
+                        }
+                      },
+                      "Sample 3.mp3": {
+                        "type": "audio",
+                        "name": "Sample 3.mp3",
+                        "info": {
+                          "icon": "music",
+                          "url": "https://samplelib.com/lib/preview/mp3/sample-15s.mp3",
+                          "size": "2.1 MB",
+                          "duration": "0:15",
+                          "dateCreated": "2023-09-17",
+                          "dateModified": "2023-09-17",
+                          "type": "audio",
+                          "isDirTrigger": true
+                        }
+                      }
+                    }
+                  }
                 }
               },
               "Pictures": {
@@ -156,23 +451,50 @@
                 "info": {
                   "spid": "%videos%",
                   "icon": "vid"
+                },
+                "data": {
+                  "Investigation Footage": {
+                    "type": "folder",
+                    "name": "Investigation Footage",
+                    "data": {
+                      "Interview.mp4": {
+                        "type": "video",
+                        "name": "Interview.mp4",
+                        "info": {
+                          "icon": "vid",
+                          "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                          "size": "5.6 MB",
+                          "duration": "9:56",
+                          "resolution": "720p",
+                          "dateCreated": "2023-05-18",
+                          "dateModified": "2023-05-18"
+                        }
+                      },
+                      "Surveillance.mp4": {
+                        "type": "video",
+                        "name": "Surveillance.mp4",
+                        "info": {
+                          "icon": "vid",
+                          "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                          "size": "8.2 MB",
+                          "duration": "10:53",
+                          "resolution": "1080p",
+                          "dateCreated": "2023-05-19",
+                          "dateModified": "2023-05-19"
+                        }
+                      }
+                    }
+                  }
                 }
               },
-              "OneDrive": {
+              "CloudDrive": {
                 "type": "folder",
-                "name": "OneDrive",
+                "name": "CloudDrive",
                 "info": {
                   "spid": "%onedrive%",
                   "icon": "onedrive"
                 },
                 "data": {
-                  "Atom": {
-                    "data": {
-                      "Codeforces": {},
-                      "JavaScript": {},
-                      "Github": {}
-                    }
-                  },
                   "Attachments": {},
                   "october": {},
                   "Office": {},
@@ -183,13 +505,11 @@
               "Contacts": {},
               "Favorites": {},
               "gif": {},
-              "Programs": {},
-              "Postman": {}
+              "Programs": {}
             }
           }
         }
-      },
-      "Windows": {}
+      }
     }
   },
   "D:": {
@@ -198,10 +518,6 @@
       "spid": "%ddrive%"
     },
     "data": {
-      "Adobe": {},
-      "Programs": {},
-      "Unity": {},
-      "WindowsApp": {},
       "Temp": {}
     }
   }

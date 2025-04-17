@@ -15,6 +15,20 @@ import {
 } from "./components/start";
 import Taskbar from "./components/taskbar";
 import { Background, BootScreen, LockScreen } from "./containers/background";
+import { MediaViewer } from "./components/MediaViewer";
+import AudioPlayer from "./components/AudioPlayer";
+import ObjectivesBubble from "./components/objectives/ObjectivesBubble";
+import NotesBubble from "./components/notes/NotesBubble";
+import NotificationCenter from "./components/NotificationCenter";
+import PinnedNotes from "./components/PinnedNotes";
+import PinnedNotesDevTool from "./components/PinnedNotesDevTool";
+import { 
+  fetchUnrespondedNotifications, 
+  initNotificationService, 
+  stopNotificationService 
+} from "./utils/notifications";
+
+import TopNotification from './components/TopNotification';
 
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
@@ -70,6 +84,7 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 function App() {
   const apps = useSelector((state) => state.apps);
   const wall = useSelector((state) => state.wallpaper);
+  const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated);
   const dispatch = useDispatch();
 
   const afterMath = (event) => {
@@ -135,6 +150,35 @@ function App() {
     }
   });
 
+  // Initialize notification service and SignalR connection when app mounts and user is authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const userInfo = JSON.parse(localStorage.getItem('user_info'));
+    const userId = userInfo?.id;
+    
+    if (userId) {
+      // First fetch any unresponded notifications via REST API
+      fetchUnrespondedNotifications(userId).catch(err => {
+        console.error('Error fetching initial notifications:', err);
+      });
+      
+      // Then set up real-time SignalR connection for general notifications
+      initNotificationService().catch(err => {
+        console.error('Error initializing notification service:', err);
+      });
+      
+    }
+    
+    // Clean up SignalR connections when component unmounts
+    return () => {
+      stopNotificationService().catch(err => {
+        console.error('Error stopping notification service:', err);
+      });
+      
+    };
+  }, [isAuthenticated]);
+
   return (
     <div className="App">
       <ErrorBoundary FallbackComponent={ErrorFallback}>
@@ -144,6 +188,7 @@ function App() {
           <Background />
           <div className="desktop" data-menu="desk">
             <DesktopApp />
+            <PinnedNotes />
             {Object.keys(Applications).map((key, idx) => {
               var WinApp = Applications[key];
               return <WinApp key={idx} />;
@@ -162,9 +207,18 @@ function App() {
             <SidePane />
             <WidPane />
             <CalnWid />
+            {isAuthenticated && <ObjectivesBubble />}
+            {isAuthenticated && <NotesBubble />}
           </div>
           <Taskbar />
           <ActMenu />
+          { isAuthenticated && <MediaViewer />}
+          { isAuthenticated && <AudioPlayer />}
+          { isAuthenticated && <NotificationCenter />}
+          { isAuthenticated && <TopNotification />}
+          
+          {/* Dev Tool for Pinned Notes - Remove or comment out in production */}
+          <PinnedNotesDevTool />        
         </div>
       </ErrorBoundary>
     </div>

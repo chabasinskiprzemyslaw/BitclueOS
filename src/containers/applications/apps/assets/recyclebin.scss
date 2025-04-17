@@ -1,0 +1,28 @@
+// This file is kept minimal as most styles are now handled with Tailwind
+
+.recyclebinApp {
+  // Keep the base app styles that may be needed for the Windows app container
+  background-color: var(--bg1);
+  color: var(--dark-txt);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  height: 100%;
+  width: 100%;
+  
+  // Add dark theme support
+  &.dark {
+    --bg1: #111b21;
+    --bg2: #202c33;
+    --bg3: #303c44;
+    --gray-txt: #8696a0;
+    --dark-txt: #e9edef;
+    --light-txt: #ffffff;
+  }
+  
+  // Any custom styles that can't be easily achieved with Tailwind can be kept here
+  
+  // Custom scrollbar styling if not covered by win11Scroll class
+  .win11Scroll {
+    // Add any custom scrollbar styles needed
+  }
+} 

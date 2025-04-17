@@ -128,9 +128,8 @@ export const Settings = () => {
                                   className="device_img"
                                 />
                                 <div className="column_device">
-                                  <p className="device_name">Liber-V</p>
-                                  <p className="device_model">NS14A8</p>
-                                  <p className="device_rename">Rename</p>
+                                  <p className="device_name">SecPC</p>
+                                  <p className="device_model">SXC001</p>
                                 </div>
                               </div>
                               <div className="right">
@@ -219,11 +218,11 @@ export const Settings = () => {
                                         className={
                                           wall.src.includes(e) ? "selected" : ""
                                         }
-                                        src={`img/wallpaper/${e}/img0.jpg`}
+                                        src={`img/wallpaper/${e}/img0.png`}
                                         ext
                                         onClick={handleWallAndTheme}
                                         click="WALLSET"
-                                        payload={`${e}/img0.jpg`}
+                                        payload={`${e}/img0.png`}
                                       />
                                     );
                                   })}

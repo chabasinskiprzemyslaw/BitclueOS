@@ -123,7 +123,7 @@ export const delApp = (act, menu) => {
       var app = Object.keys(apps).filter((x) => apps[x].action == data.type);
       if (app) {
         app = apps[app];
-        if (app.pwa == true || app.pwa == False /*what is that for ?*/) {
+        if (app.pwa == true || app.pwa == false /*what is that for ?*/) {
           store.dispatch({ type: app.action, payload: "close" });
           store.dispatch({ type: "DELAPP", payload: app.icon });
 
@@ -258,11 +258,64 @@ export const handleFileOpen = (id) => {
   const item = store.getState().files.data.getId(id);
   if (item != null) {
     if (item.type == "folder") {
-      store.dispatch({ type: "FILEDIR", payload: item.id });
+      console.log("FILEDIR", item);
+      store.dispatch({ type: "FILEDIR", 
+        payload: {
+        id: item.id,
+        type: item.type,
+        triggerBackend: item.info.triggerBackend,
+        triggerData: item.info.triggerData
+      }  });
+    } else if (item.type === "image" || item.type === "video") {
+      store.dispatch({ 
+        type: "OPENFILEVIEW", 
+        payload: {
+          id: item.id,
+          type: item.type,
+          url: item.info.url,
+          name: item.name,
+          triggerBackend: item.info.triggerBackend,
+          triggerData: item.info.triggerData
+        } 
+      });
+    } else if (item.type === "notepad") {
+      console.log("NOTEPAD", item);
+      
+      // Use a single dispatch for notepad with file data and "show" flag
+      store.dispatch({
+        type: "NOTEPAD", 
+        payload: {
+          id: item.id,
+          type: item.type,
+          name: item.name,
+          content: item.data && item.data.content,
+          triggerBackend: item.info && item.info.triggerBackend,
+          triggerData: item.info && item.info.triggerData,
+          action: "show" // Flag to indicate we want to show the app
+        }
+      });
+    }
+    else if (item.type === "audio") {
+      console.log("AUDIO", item);
+      store.dispatch({
+        type: "AUDIOPLAYER",
+        payload: item
+      });
     }
   }
 };
 
 export const flightMode = () => {
   store.dispatch({ type: "TOGGAIRPLNMD", payload: "" });
+};
+
+export const launchNotepad = () => {
+  console.log("Launching Notepad application");
+  store.dispatch({ 
+    type: "NOTEPAD", 
+    payload: {
+      action: "show",
+      name: "Untitled"
+    }
+  });
 };
