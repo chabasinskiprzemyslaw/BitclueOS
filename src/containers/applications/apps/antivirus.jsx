@@ -143,7 +143,6 @@ export const Antivirus = () => {
   };
 
   const viewScanDetails = (scan) => {
-    console.log(scan);
     setSelectedScan(scan);
   };
 

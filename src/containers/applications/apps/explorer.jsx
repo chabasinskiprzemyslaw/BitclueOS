@@ -464,8 +464,6 @@ const PropertiesPanel = ({ file, onClose }) => {
 
         const triggerData = await FilePropertiesService.getTriggerProperties(file.id, file.path, file.info);
 
-        console.log("triggerData", triggerData);
-
         if (triggerData) {
           sendToBackend({
             fileName: file.name,

@@ -258,7 +258,6 @@ export const handleFileOpen = (id) => {
   const item = store.getState().files.data.getId(id);
   if (item != null) {
     if (item.type == "folder") {
-      console.log("FILEDIR", item);
       store.dispatch({ type: "FILEDIR", 
         payload: {
         id: item.id,
@@ -279,8 +278,6 @@ export const handleFileOpen = (id) => {
         } 
       });
     } else if (item.type === "notepad") {
-      console.log("NOTEPAD", item);
-      
       // Use a single dispatch for notepad with file data and "show" flag
       store.dispatch({
         type: "NOTEPAD", 
@@ -296,7 +293,6 @@ export const handleFileOpen = (id) => {
       });
     }
     else if (item.type === "audio") {
-      console.log("AUDIO", item);
       store.dispatch({
         type: "AUDIOPLAYER",
         payload: item
@@ -310,7 +306,6 @@ export const flightMode = () => {
 };
 
 export const launchNotepad = () => {
-  console.log("Launching Notepad application");
   store.dispatch({ 
     type: "NOTEPAD", 
     payload: {

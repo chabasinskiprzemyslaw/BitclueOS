@@ -112,7 +112,6 @@ const fileReducer = (state = defState, action) => {
         };
 
         // Send the complete file data to the backend
-        console.log("file trigger 1");
         sendToBackend(fileData);
       }
       
@@ -156,7 +155,6 @@ const fileReducer = (state = defState, action) => {
       let fileData = tmp.data.getId(action.payload.id);
       
       if (fileData) {
-        console.log("file trigger 2");
         sendToBackend(fileData);
       }
     }
@@ -191,7 +189,6 @@ const fileReducer = (state = defState, action) => {
       }
       
       // Send the complete file data to the backend
-      console.log("file trigger 3");
       sendToBackend(fileData);
     }
     

@@ -12,8 +12,6 @@ export const Notepad = () => {
   useEffect(() => {
     // Get file data if it was opened from file explorer
     if (wnapp.payload && typeof wnapp.payload === 'object') {
-      console.log("Notepad file data:", wnapp.payload);
-      
       // Set the file name if available
       if (wnapp.payload.name) {
         setFileName(wnapp.payload.name);

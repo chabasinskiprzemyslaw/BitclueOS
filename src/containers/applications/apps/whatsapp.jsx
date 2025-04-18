@@ -596,8 +596,6 @@ export const WhatsApp = () => {
 
   // Handle ChatApp-specific login
   const handleWhatsAppLogin = (e) => {
-
-    console.log('handleWhatsAppLogin', e)
     e.preventDefault();
     
     const correctUsername = "AF_INSIDER";
@@ -797,8 +795,6 @@ export const WhatsApp = () => {
 
   // Modify the handleSendMessage function to handle attachments
   const handleSendMessage = (e) => {
-    console.log('handleSendMessage', e)
-
     e.preventDefault();
     
     if (!activeChat || !activeChat.id) {

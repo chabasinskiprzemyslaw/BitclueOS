@@ -148,8 +148,6 @@ export const LockScreen = (props) => {
       });
       
       if (authenticated) {
-        console.log("User is already authenticated");
-        
         // Decode the token to extract user information
         try {
           // JWT tokens are in the format: header.payload.signature
@@ -164,7 +162,6 @@ export const LockScreen = (props) => {
           
           // Store user info in localStorage for other components to use
           localStorage.setItem('user_info', JSON.stringify(userInfo));
-          console.log("User info stored:", userInfo);
           setTimeout(() => {
             dispatch({ type: "AUTH_SUCCESS" });
           }, 500);
@@ -177,11 +174,8 @@ export const LockScreen = (props) => {
         
         // Store tokens in localStorage
         localStorage.setItem("auth_token", keycloak.token);
-        console.log("Auth token stored");
         localStorage.setItem("refresh_token", keycloak.refreshToken);
-        console.log("Refresh token stored");
         localStorage.setItem("token_expiry", new Date().getTime() + (keycloak.tokenParsed.exp * 1000));
-        console.log("Token expiry stored");
         
         // Auto unlock if user is already authenticated
         setUnLock(true);
@@ -210,13 +204,10 @@ export const LockScreen = (props) => {
               // Enter fullscreen mode
               if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen();
-                console.log("Entered fullscreen mode");
               } else if (document.documentElement.webkitRequestFullscreen) {
                 document.documentElement.webkitRequestFullscreen();
-                console.log("Entered fullscreen mode (webkit)");
               } else if (document.documentElement.msRequestFullscreen) {
                 document.documentElement.msRequestFullscreen();
-                console.log("Entered fullscreen mode (ms)");
               }
             }, 500);
           } else {
@@ -242,7 +233,6 @@ export const LockScreen = (props) => {
           localStorage.setItem("auth_token", keycloak.token);
           localStorage.setItem("refresh_token", keycloak.refreshToken);
           localStorage.setItem("token_expiry", new Date().getTime() + (keycloak.tokenParsed.exp * 1000));
-          console.log('Token refreshed');
         }
       }).catch(() => {
         console.error('Failed to refresh token');
@@ -252,7 +242,6 @@ export const LockScreen = (props) => {
 
   const handleLogin = async () => {
     if (!selectedScenario) {
-      console.log("No scenario selected");
       setAuthError("Please select a scenario");
       return;
     }

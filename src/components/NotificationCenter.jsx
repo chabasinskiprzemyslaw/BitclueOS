@@ -115,7 +115,6 @@ const NotificationCenter = () => {
       // Start the connection
       await connection.start();
       setConnectionStatus('connected');
-      console.log('Connected to notification hub');
 
       // Store the connection in the ref
       hubConnectionRef.current = connection;

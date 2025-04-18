@@ -21,7 +21,6 @@ export const WnTerminal = () => {
     // Only fetch if IpDetails is empty
     if (IpDetails.length === 0) {
       try {
-        console.log("Fetching IP details");
         const response = await fetch("")
           .then((response) => response.json())
           .then((data) => {

@@ -23,7 +23,6 @@ export const AudioPlayer = () => {
   }, [wnapp?.hide, playing]);
 
   useEffect(() => {
-    console.log("wnapp", wnapp);
     if (wnapp?.data && wnapp.data.info && wnapp.data.info.url) {
       setAudioFile({
         name: wnapp.data.name,
@@ -110,8 +109,6 @@ export const AudioPlayer = () => {
         },
         body: JSON.stringify(payload)
       });
-      
-      console.log('Backend trigger response:', response);
     } catch (error) {
       console.error('Error triggering backend:', error);
     }
