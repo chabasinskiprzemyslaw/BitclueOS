@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 
 // Constants
-const HUB_URL = "https://localhost:5001/hubs/email";
+const HUB_URL = `${import.meta.env.VITE_API_BASE_URL}/hubs/email`;
 const CONNECTION_STATUS = {
   DISCONNECTED: 'disconnected',
   CONNECTING: 'connecting',

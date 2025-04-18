@@ -28,7 +28,7 @@ function Messages() {
         }
 
         const response = await fetch(
-          `https://localhost:5001/social-media/users/${userInfoId}/direct-messages?scenarioId=${scenarioId}`
+          `${import.meta.env.VITE_API_BASE_URL}/social-media/users/${userInfoId}/direct-messages?scenarioId=${scenarioId}`
         )
 
         if (!response.ok) {

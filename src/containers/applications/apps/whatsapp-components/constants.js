@@ -2,14 +2,14 @@
  * API URLs
  */
 // Use the original URLs that were working
-export const API_URL = "https://localhost:5001/chats/sessions";
-export const API_MESSAGES_URL = "https://localhost:5001/chats";
-export const API_AUTH_URL = "https://localhost:5001/auth";
+export const API_URL = `${import.meta.env.VITE_API_BASE_URL}/chats/sessions`;
+export const API_MESSAGES_URL = `${import.meta.env.VITE_API_BASE_URL}/chats`;
+export const API_AUTH_URL = `${import.meta.env.VITE_API_BASE_URL}/auth`;
 
 /**
  * SignalR Hub URL
  */
-export const SIGNALR_HUB_URL = "https://localhost:5001/hubs/chat";
+export const SIGNALR_HUB_URL = `${import.meta.env.VITE_API_BASE_URL}/hubs/chat`;
 
 /**
  * Debug mode flag

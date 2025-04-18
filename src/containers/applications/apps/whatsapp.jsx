@@ -652,7 +652,7 @@ export const WhatsApp = () => {
           debugLog("Triggering login event:", requestBody);
           
           // Make the API call
-          const response = await fetch('https://localhost:5001/storyengine/chat/trigger-event', {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/storyengine/chat/trigger-event`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

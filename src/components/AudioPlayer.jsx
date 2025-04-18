@@ -5,7 +5,6 @@ import { Icon, ToolBar } from "../utils/general";
 export const AudioPlayer = () => {
   const wnapp = useSelector((state) => state.apps.mediaplay || {});
 
-  console.log("AudioPlayer", wnapp);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -103,7 +102,7 @@ export const AudioPlayer = () => {
         }
       };
       
-      const response = await fetch('https://localhost:5001/storyengine/fileexplorer/files/trigger-app', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/storyengine/fileexplorer/files/trigger-app`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

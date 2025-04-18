@@ -110,8 +110,7 @@ export const LockScreen = (props) => {
   const fetchScenarios = async () => {
     try {
       setLoadingScenarios(true);
-      // Using HTTPS for security
-      const response = await fetch('https://localhost:5001/story-engine/scenarios', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/story-engine/scenarios`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

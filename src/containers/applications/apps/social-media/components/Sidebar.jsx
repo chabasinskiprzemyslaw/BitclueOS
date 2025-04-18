@@ -17,7 +17,7 @@ function Sidebar({ activePage, onChangePage, isLoggedIn }) {
           return
         }
 
-        const response = await fetch(`https://localhost:5001/social-media/users/${userId}`)
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/social-media/users/${userId}`)
         if (!response.ok) {
           throw new Error('Failed to fetch user details')
         }

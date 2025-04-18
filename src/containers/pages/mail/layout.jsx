@@ -57,7 +57,7 @@ const LoginScreen = ({ onLogin }) => {
       }
 
       emailDebugLog("Making login request");
-      const response = await fetch("https://localhost:5001/emails/accounts/login", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/emails/accounts/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -512,7 +512,7 @@ export default function Layout() {
     setIsLoadingProfile(true);
     
     try {
-      const url = `https://localhost:5001/emails/accounts/${accountId}/profile`;
+      const url = `${import.meta.env.VITE_API_BASE_URL}/emails/accounts/${accountId}/profile`;
       emailDebugLog("Fetching profile with URL", { url });
       
       const response = await makeAuthenticatedRequest(url, {
@@ -561,7 +561,7 @@ export default function Layout() {
     const selectedScenario = localStorage.getItem("selected_scenario");
     
     try {
-      const url = `https://localhost:5001/emails/${accountId}/messages/folder/${folderName}`;
+      const url = `${import.meta.env.VITE_API_BASE_URL}/emails/${accountId}/messages/folder/${folderName}`;
       emailDebugLog("Fetching emails with URL", { url });
       
       const response = await makeAuthenticatedRequest(url, {

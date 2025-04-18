@@ -42,7 +42,7 @@ export function EmailList({
       const userInfo = JSON.parse(localStorage.getItem("user_info"));
       const selectedScenario = localStorage.getItem("selected_scenario");
       
-      const response = await makeAuthenticatedRequest(`https://localhost:5001/emails/${emailAccountId}/messages/folder/${currentFolder}`, {
+      const response = await makeAuthenticatedRequest(`${import.meta.env.VITE_API_BASE_URL}/emails/${emailAccountId}/messages/folder/${currentFolder}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

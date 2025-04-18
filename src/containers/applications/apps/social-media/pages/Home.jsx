@@ -32,7 +32,7 @@ function Home() {
         
        
         // Construct the URL with query parameters
-        const url = `https://localhost:5001/api/social-media/feed?authorUserId=${encodeURIComponent(authorUserId)}&scenarioId=${encodeURIComponent(scenarioId)}&userIdentityId=${encodeURIComponent(userIdentityId)}`
+        const url = `${import.meta.env.VITE_API_BASE_URL}/api/social-media/feed?authorUserId=${encodeURIComponent(authorUserId)}&scenarioId=${encodeURIComponent(scenarioId)}&userIdentityId=${encodeURIComponent(userIdentityId)}`
         
         const response = await fetch(url)
         

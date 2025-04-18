@@ -99,7 +99,7 @@ const triggerBrowserEvent = async (browserUrl, timestamp, additionalData) => {
     };
     
     // Send request to backend
-    const response = await fetch(`https://localhost:5001/storyengine/browser/trigger-event`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/storyengine/browser/trigger-event`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -49,7 +49,7 @@ export const sendToBackend = (fileData) => {
     
     //TODO: Add bearer token to the request
     // Actual backend request - replace URL with your API endpoint
-    fetch('https://localhost:5001/storyengine/fileexplorer/files/trigger-action', {
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/storyengine/fileexplorer/files/trigger-action`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

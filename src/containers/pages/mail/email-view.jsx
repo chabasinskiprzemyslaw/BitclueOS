@@ -40,7 +40,7 @@ export function EmailView({ email, onClose }) {
       const authToken = localStorage.getItem("auth_token");
       const scenarioId = getSelectedScenario();
       
-      const response = await fetch(`https://localhost:5001/emails/messages/${messageId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/emails/messages/${messageId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export function EmailView({ email, onClose }) {
       const authToken = localStorage.getItem("auth_token");
       const scenarioId = getSelectedScenario();
       
-      await fetch(`https://localhost:5001/emails/messages/${messageId}/read`, {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/emails/messages/${messageId}/read`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

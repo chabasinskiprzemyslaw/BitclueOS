@@ -3,7 +3,7 @@ import * as signalR from '@microsoft/signalr';
 import { showGameNotification } from '../../utils/gameNotifications';
 
 // Constants
-const HUB_URL = "https://localhost:5001/hubs/notes";
+const HUB_URL = `${import.meta.env.VITE_API_BASE_URL}/hubs/notes`;
 const CONNECTION_STATUS = {
   DISCONNECTED: 'disconnected',
   CONNECTING: 'connecting',

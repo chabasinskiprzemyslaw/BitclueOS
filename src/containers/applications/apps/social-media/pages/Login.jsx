@@ -30,7 +30,7 @@ function Login({ onLogin }) {
         password
       }
 
-      const response = await fetch('https://localhost:5001/social-media/users/login', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/social-media/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

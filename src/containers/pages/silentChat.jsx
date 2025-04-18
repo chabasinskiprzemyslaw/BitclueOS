@@ -4,13 +4,13 @@ import * as signalR from '@microsoft/signalr';
 import { ScrollArea } from "../../components/ui/scroll-area";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
-import { Avatar } from "../../components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Send, RefreshCw } from "lucide-react";
 
 // Constants for the app
-const API_PRIVATE_SESSIONS_URL = "https://localhost:5001/chats/sessions/priv";
-const API_MESSAGES_URL = "https://localhost:5001/chats";
-const SIGNALR_HUB_URL = "https://localhost:5001/hubs/chat";
+const API_PRIVATE_SESSIONS_URL = `${import.meta.env.VITE_API_BASE_URL}/chats/sessions/priv`;
+const API_MESSAGES_URL = `${import.meta.env.VITE_API_BASE_URL}/chats`;
+const SIGNALR_HUB_URL = `${import.meta.env.VITE_API_BASE_URL}/hubs/chat`;
 const DEFAULT_AVATAR = "/placeholder.svg";
 
 // Connection status constants
