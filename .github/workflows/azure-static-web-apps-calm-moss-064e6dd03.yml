@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - test
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
@@ -14,6 +15,8 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
+    env:
+      APP_BUILD_COMMAND: npm run build
     permissions:
        id-token: write
        contents: read
@@ -24,6 +27,9 @@ jobs:
           lfs: false
       - name: Install OIDC Client from Core Package
         run: npm install @actions/core@1.6.0 @actions/http-client
+      - name: Set build command for test env
+        if: github.ref_name == 'test'
+        run: echo "APP_BUILD_COMMAND=npm run build -- --mode test" >> $GITHUB_ENV
       - name: Get Id Token
         uses: actions/github-script@v6
         id: idtoken
@@ -43,6 +49,7 @@ jobs:
           app_location: "/" # App source code path
           api_location: "" # Api source code path - optional
           output_location: "build" # Built app content directory - optional
+          app_build_command: ${{ env.APP_BUILD_COMMAND }}
           github_id_token: ${{ steps.idtoken.outputs.result }}
           ###### End of Repository/Build Configurations ######
 
