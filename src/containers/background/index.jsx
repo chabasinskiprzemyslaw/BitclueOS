@@ -8,9 +8,9 @@ import Keycloak from 'keycloak-js';
 
 // Initialize Keycloak instance
 const keycloakConfig = {
-  url: 'http://localhost:18080',
-  realm: 'evently',
-  clientId: 'evently-public-client'
+  url: import.meta.env.VITE_KEYCLOAK_URL,
+  realm: import.meta.env.VITE_KEYCLOAK_REALM,
+  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID
 };
 
 // Create Keycloak instance
