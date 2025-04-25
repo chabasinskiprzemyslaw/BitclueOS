@@ -19,7 +19,7 @@ const TypingIndicator = ({ typingUsers = [] }) => {
   // Create the typing message text
   const getTypingText = () => {
     if (typingUsers.length === 1) {
-      return `${firstUser.name} is typing...`;
+      return `Someone is typing...`;
     } else if (typingUsers.length === 2) {
       return `${firstUser.name} and ${typingUsers[1].name} are typing...`;
     } else {

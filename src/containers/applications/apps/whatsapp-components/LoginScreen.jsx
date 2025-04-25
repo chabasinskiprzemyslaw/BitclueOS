@@ -16,10 +16,10 @@ const LoginScreen = ({
   authError 
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-[#111B21] text-gray-100">
-      <div className="w-80 p-6 bg-[#202C33] rounded-lg shadow-lg">
+    <div className="flex flex-col items-center justify-center h-full bg-[#0f172a] text-gray-100">
+      <div className="w-80 p-6 bg-[#1a2a3a] rounded-lg shadow-lg">
         <div className="flex justify-center mb-6">
-          <Lock className="h-12 w-12 text-[#00A884]" />
+          <Lock className="h-12 w-12 text-[#4299e1]" />
         </div>
         <h2 className="text-xl font-semibold text-center mb-6">Sign in to ChatApp</h2>
         
@@ -40,7 +40,7 @@ const LoginScreen = ({
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-1 focus-visible:ring-[#00A884]"
+                className="bg-[#1e3a5f] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-1 focus-visible:ring-[#4299e1]"
                 placeholder="Enter your username"
                 required
               />
@@ -54,14 +54,14 @@ const LoginScreen = ({
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-1 focus-visible:ring-[#00A884]"
+                className="bg-[#1e3a5f] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-1 focus-visible:ring-[#4299e1]"
                 placeholder="Enter your password"
                 required
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-[#00A884] hover:bg-[#008f6e] text-white"
+              className="w-full bg-[#2b6cb0] hover:bg-[#4299e1] text-white"
               disabled={authLoading}
             >
               {authLoading ? "Signing in..." : "Sign in"}

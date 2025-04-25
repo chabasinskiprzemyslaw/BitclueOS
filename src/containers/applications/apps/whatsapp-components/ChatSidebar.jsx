@@ -46,7 +46,7 @@ const ChatSidebar = ({
   return (
     <div className="border-r border-gray-800 flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="p-4 flex items-center justify-between bg-[#202C33]">
+      <div className="p-4 flex items-center justify-between bg-[#1a2a3a]">
         <Avatar className="h-10 w-10">
           <AvatarImage src="/placeholder.svg" />
           <AvatarFallback>{userName ? userName[0] : "U"}</AvatarFallback>
@@ -61,38 +61,6 @@ const ChatSidebar = ({
           >
             <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-          <Button variant="ghost" size="icon" className="text-gray-400">
-            <Settings className="h-5 w-5" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-gray-400">
-                <MoreVertical className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-[#233138] border-none text-gray-100">
-              <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer">
-                <Users className="mr-2 h-4 w-4" />
-                <span>New group</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer">
-                <Star className="mr-2 h-4 w-4" />
-                <span>Starred messages</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer">
-                <Check className="mr-2 h-4 w-4" />
-                <span>Select chats</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-[#202C33] cursor-pointer">
-                <Download className="mr-2 h-4 w-4" />
-                <span>Get ChatApp for Windows</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 
@@ -102,7 +70,7 @@ const ChatSidebar = ({
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search"
-            className="pl-9 bg-[#202C33] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0"
+            className="pl-9 bg-[#1e3a5f] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0"
           />
         </div>
       </div>
@@ -112,32 +80,20 @@ const ChatSidebar = ({
         <TabsList className="bg-transparent gap-2">
           <TabsTrigger
             value="all"
-            className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100"
+            className="data-[state=active]:bg-[#1e3a5f] text-gray-400 data-[state=active]:text-gray-100"
           >
             All
           </TabsTrigger>
           <TabsTrigger
             value="unread"
-            className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100 relative"
+            className="data-[state=active]:bg-[#1e3a5f] text-gray-400 data-[state=active]:text-gray-100 relative"
           >
             Unread
             {unreadChats.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-[#2b6cb0] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                 {unreadChats.length}
               </span>
             )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="favorites"
-            className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100"
-          >
-            Favorites
-          </TabsTrigger>
-          <TabsTrigger
-            value="groups"
-            className="data-[state=active]:bg-[#202C33] text-gray-400 data-[state=active]:text-gray-100"
-          >
-            Groups
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -174,14 +130,14 @@ const ChatSidebar = ({
                 key={chat.id}
                 onClick={() => handleChatSelect(chat)}
                 className={`flex items-center gap-3 p-3 cursor-pointer transition-colors
-                  ${activeChat && activeChat.id === chat.id ? "bg-[#2A3942]" : "hover:bg-[#202C33]"}
-                  ${chat.unread ? "bg-[#202C33]" : ""}`}
+                  ${activeChat && activeChat.id === chat.id ? "bg-[#1e3a5f]" : "hover:bg-[#1a2a3a]"}
+                  ${chat.unread ? "bg-[#1a2a3a]" : ""}`}
               >
                 <Avatar className="h-12 w-12 relative">
                   <AvatarImage src={chat.avatar} />
                   <AvatarFallback>{getChatDisplayName(chat)[0]}</AvatarFallback>
                   {chat.unread && (
-                    <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-[#2b6cb0] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {typeof chat.unreadCount === 'number' && chat.unreadCount > 0 
                         ? chat.unreadCount > 9 ? '9+' : chat.unreadCount 
                         : ''}
@@ -193,12 +149,12 @@ const ChatSidebar = ({
                     <p className={`text-sm font-medium truncate ${chat.unread ? "text-white" : "text-gray-300"}`}>
                       {getChatDisplayName(chat)}
                     </p>
-                    <span className={`text-xs ${chat.unread ? "text-teal-400" : "text-gray-400"}`}>
+                    <span className={`text-xs ${chat.unread ? "text-[#4299e1]" : "text-gray-400"}`}>
                       {chat.timestamp}
                     </span>
                   </div>
                   <div className="flex items-center">
-                    {chat.unread && <div className="w-2 h-2 bg-teal-400 rounded-full mr-2"></div>}
+                    {chat.unread && <div className="w-2 h-2 bg-[#4299e1] rounded-full mr-2"></div>}
                     <p className={`text-sm truncate ${chat.unread ? "text-white" : "text-gray-400"}`}>
                       {chat.lastMessage}
                     </p>

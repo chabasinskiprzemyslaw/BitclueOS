@@ -327,8 +327,6 @@ const SilentChat = () => {
     
     // Handle user typing
     connection.on("UserTyping", (user, chatSessionId) => {
-      console.log(`User ${user.displayName} is typing in chat ${chatSessionId}`);
-      
       if (activeChatRef.current && activeChatRef.current.id === chatSessionId) {
         setTypingUsers(prevUsers => {
           // Check if user is already in the list

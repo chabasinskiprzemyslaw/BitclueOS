@@ -105,9 +105,6 @@ const ChatArea = ({
       {/* Chat Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <img src={activeChat.avatar} alt={activeChat.name} />
-          </Avatar>
           <div>
             <h2 className="text-lg font-semibold">{activeChat.name}</h2>
             <p className="text-sm text-gray-400">{connectionStatus}</p>
@@ -136,9 +133,9 @@ const ChatArea = ({
                 <div className={`max-w-[60%] rounded-lg p-3 ${
                   message.isCurrentUser 
                     ? message.isSending 
-                      ? "bg-[#004238]" // Darker background for sending messages
-                      : "bg-[#005C4B]" 
-                    : "bg-[#202C33]"
+                      ? "bg-[#1a365d]" // Darker blue for sending messages
+                      : "bg-[#2b6cb0]" // Regular blue for sent messages
+                    : "bg-[#2D3748]"   // Dark slate for received messages
                 }`}>
                   {message.senderDisplayName && !message.isCurrentUser && (
                     <p className="text-xs text-teal-400 mb-1">{message.senderDisplayName}</p>
@@ -207,7 +204,7 @@ const ChatArea = ({
                 <div className="flex items-center">
                   <span className="text-sm text-gray-300">
                     {typingUsers.length === 1 
-                      ? `${typingUsers[0].displayName} is typing...` 
+                      ? `Someone is typing...` 
                       : `${typingUsers.length} people are typing...`}
                   </span>
                   <div className="ml-2 flex">
@@ -234,7 +231,7 @@ const ChatArea = ({
                 type="submit"
                 data-response-id={response.optionIndex}
                 variant="outline"
-                className="bg-[#202C33] hover:bg-[#2A3942] text-white border-gray-700"
+                className="bg-[#1e3a5f] hover:bg-[#2b6cb0] text-white border-gray-700"
                 onClick={handleSendMessage}
               >
                 {response.text}
@@ -242,12 +239,12 @@ const ChatArea = ({
             ))}
           </div>
         )}
-        <form onSubmit={handleSendMessage} className="p-4 bg-[#202C33] flex items-center gap-4">
+        <form onSubmit={handleSendMessage} className="p-4 bg-[#1a2a3a] flex items-center gap-4">
           <Input
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             placeholder={possibleResponses.length > 0 ? "Choose a response above or type a message" : "Waiting for response options..."}
-            className="bg-[#2A3942] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="bg-[#2d3748] border-0 text-gray-100 placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
             disabled={false}
           />
           <Button type="submit" variant="ghost" size="icon" className="text-gray-400">
