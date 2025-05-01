@@ -119,7 +119,7 @@ const LoginScreen = ({ onLogin }) => {
                   type="email"
                   autoComplete="email"
                   required
-                  className="pl-10"
+                  className="pl-10 bg-gray-50 text-gray-800"
                   placeholder="Email address"
                   value={emailAddress}
                   onChange={(e) => setEmailAddress(e.target.value)}
@@ -138,7 +138,7 @@ const LoginScreen = ({ onLogin }) => {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="pl-10"
+                  className="pl-10 bg-gray-50 text-gray-800"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -148,17 +148,6 @@ const LoginScreen = ({ onLogin }) => {
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
 
             <div className="text-sm">
               <a href="#" onClick={(e) => {
@@ -270,7 +259,7 @@ const ForgotPasswordScreen = ({ onCancel }) => {
                   type="email"
                   autoComplete="email"
                   required
-                  className="pl-10"
+                  className="pl-10 bg-gray-50 text-gray-800"
                   placeholder="Email address"
                   value={emailAddress}
                   onChange={(e) => setEmailAddress(e.target.value)}
@@ -294,7 +283,7 @@ const ForgotPasswordScreen = ({ onCancel }) => {
                   name="security-answer"
                   type="text"
                   required
-                  className=""
+                  className="bg-gray-50 text-gray-800"
                   placeholder="Your answer"
                   value={securityAnswer}
                   onChange={(e) => setSecurityAnswer(e.target.value)}
@@ -658,7 +647,7 @@ export default function Layout() {
         <div className="flex-1 max-w-2xl">
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search mail" className="pl-10 bg-secondary" />
+            <Input placeholder="Search mail" className="pl-10 bg-secondary text-gray-800" />
           </div>
         </div>
         <div className="flex items-center gap-2 ml-4">

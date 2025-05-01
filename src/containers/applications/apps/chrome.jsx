@@ -265,6 +265,22 @@ export const Chrome = () => {
     }, 2000);
   }, [currentUrl, loading, addToHistory]);
 
+  // Listen for custom navigation events from the Searchly component
+  useEffect(() => {
+    const handleBrowserNavigate = (event) => {
+      const { url } = event.detail;
+      if (url) {
+        handleUrlChange(url);
+      }
+    };
+
+    window.addEventListener('browserNavigate', handleBrowserNavigate);
+    
+    return () => {
+      window.removeEventListener('browserNavigate', handleBrowserNavigate);
+    };
+  }, [handleUrlChange]);
+
   // Toggle history panel
   const toggleHistoryPanel = useCallback(() => {
     setIsHistoryPanelOpen(prev => !prev);

@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs"
 import { cn } from "../../../lib/utils";
 import { Loader2, Paperclip, RefreshCw } from "lucide-react";
 import { Button } from "../../../components/ui/button"
+import staticEmails from "./data/static-emails"
 
 export function EmailList({ 
   activeTab, 
@@ -22,8 +23,11 @@ export function EmailList({
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const listRef = useRef(null);
 
+  // Combine static and dynamic emails
+  const combinedEmails = [...staticEmails.filter(email => email.folder === currentFolder), ...emails];
+  
   // Filter emails by category if we're using tabs
-  const filteredEmails = emails;
+  const filteredEmails = combinedEmails;
 
   // Handle email selection
   const handleEmailSelect = (email) => {

@@ -102,7 +102,7 @@ export const NavigationBar = ({ onUrlChange, initialUrl = "", onHistoryClick }) 
             value={url}
             onChange={handleUrlChange}
             onKeyPress={handleKeyPress}
-            placeholder="Search Google or type a URL"
+            placeholder="Search or type a URL"
             className="flex-1 bg-transparent outline-none"
           />
         </div>

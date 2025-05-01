@@ -27,12 +27,19 @@ const BuzzHub = () => {
 
       <main className="main-content">
         <div className="featured-story">
-          <div className="story-image"></div>
+          <div 
+            className="story-image" 
+            style={{
+              backgroundImage: "url('https://images.unsplash.com/photo-1633613286991-611fe299c4be?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80')",
+              backgroundSize: "cover",
+              backgroundPosition: "center"
+            }}
+          ></div>
           <div className="story-content">
             <div className="story-category">BREAKING NEWS</div>
-            <h1>Famous Tech Influencer Disappears from Social Media After Cryptic Post</h1>
+            <h1>Famous Tech Influencer Disappears from Social Media</h1>
             <p className="story-excerpt">
-              Fans are worried after the sudden disappearance of @TechWhisperer, known for exposing industry secrets...
+              Fans are worried after the sudden disappearance of ...
             </p>
             <div className="story-meta">
               <span className="author">By Sarah Chen</span>
@@ -45,7 +52,14 @@ const BuzzHub = () => {
         <div className="content-grid">
           <div className="main-column">
             <article className="news-card">
-              <div className="card-image lifestyle"></div>
+              <div 
+                className="card-image lifestyle"
+                style={{
+                  backgroundImage: "url('https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center"
+                }}
+              ></div>
               <div className="card-content">
                 <span className="category">LIFESTYLE</span>
                 <h2>"Living My Best Digital Life": Influencers Share Their Morning Routines</h2>
@@ -58,7 +72,14 @@ const BuzzHub = () => {
             </article>
 
             <article className="news-card">
-              <div className="card-image controversy"></div>
+              <div 
+                className="card-image controversy"
+                style={{
+                  backgroundImage: "url('https://images.unsplash.com/photo-1620712943543-bcc4688e7485?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center"
+                }}
+              ></div>
               <div className="card-content">
                 <span className="category">CONTROVERSY</span>
                 <h2>Popular Creator Accused of Using AI to Generate Content</h2>

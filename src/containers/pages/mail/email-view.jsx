@@ -28,6 +28,17 @@ export function EmailView({ email, onClose }) {
 
   useEffect(() => {
     if (email?.id) {
+      // If this is a static email, we already have all the details
+      if (email.isStatic) {
+        setEmailDetails({
+          ...email,
+          recipients: email.recipients || [{ type: 1, emailAddress: email.to || 'your.email@domain.com' }],
+          attachments: email.attachments || []
+        });
+        return;
+      }
+      
+      // Otherwise fetch from API
       fetchEmailDetails(email.id);
     }
   }, [email]);
@@ -69,6 +80,9 @@ export function EmailView({ email, onClose }) {
   };
   
   const markAsRead = async (messageId) => {
+    // Don't try to mark static emails as read on the server
+    if (email?.isStatic) return;
+    
     try {
       const authToken = localStorage.getItem("auth_token");
       const scenarioId = getSelectedScenario();

@@ -179,7 +179,7 @@ export const initializeHistoryWithSamples = () => {
 // Base internal DNS mapping
 const internalDNS = {
   "mypage.com": MyPage,
-  "doogle.com": GoogleClone,
+  "search.com": GoogleClone,
   "secmail.com": Layout,
   "audio-guide.com": AudioEditingGuide,
   "exif-guide.com": ExifGuide,

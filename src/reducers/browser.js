@@ -1,15 +1,7 @@
 "use client";
 
 export const initialState = {
-  tabs: [
-    {
-      id: "1",
-      url: "",
-      title: "New Tab",
-      isActive: true,
-      content: "Welcome to the new tab!",
-    },
-  ],
+  tabs: [],
   isMenuOpen: false,
   isDarkMode: true,
   zoom: 100,
@@ -24,16 +16,7 @@ export default function browserReducer(state = initialState, action) {
     case "ADD_TAB":
       return {
         ...state,
-        tabs: [
-          ...state.tabs.map((tab) => ({ ...tab, isActive: false })),
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            url: "",
-            title: "New Tab",
-            isActive: true,
-            content: "Welcome to the new tab!",
-          },
-        ],
+        tabs: [],
       };
     case "CLOSE_TAB":
       return {
